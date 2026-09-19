@@ -1,0 +1,160 @@
+import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+
+import '../../presentation/splash/splash_screen.dart';
+import '../../presentation/language_selection/language_selection_screen.dart';
+import '../../presentation/onboarding/onboarding_wizard.dart';
+import '../../presentation/auth/register_screen.dart';
+import '../../presentation/auth/login_screen.dart';
+import '../../presentation/home/home_screen.dart';
+import '../../presentation/epds/epds_screen.dart';
+import '../../presentation/epds/epds_result_screen.dart';
+import '../../presentation/notifications/notifications_screen.dart';
+import '../../presentation/privacy/privacy_screen.dart';
+
+/// Central routing configuration using go_router.
+///
+/// Route names are string constants — update here only, never inline strings.
+/// Guards (redirect) check auth state and onboarding completion.
+abstract final class AppRoutes {
+  AppRoutes._();
+  static const String splash = '/';
+  static const String languageSelection = '/language';
+  static const String onboarding = '/onboarding';
+  static const String register = '/register';
+  static const String login = '/login';
+  static const String home = '/home';           // Phase 2
+  static const String epds = '/epds';           // Phase 1
+  static const String epdsResult = '/epds-result'; // Phase 1
+  static const String notifications = '/notifications';
+  static const String privacy = '/privacy';
+  static const String guardian = '/guardian';   // Phase 2
+  static const String chatbot = '/chatbot';     // Phase 2
+  static const String crisis = '/crisis';       // Phase 3
+}
+
+abstract final class AppRouter {
+  AppRouter._();
+
+  static final GoRouter router = GoRouter(
+    initialLocation: AppRoutes.splash,
+    debugLogDiagnostics: true, // disable in release
+    routes: [
+      GoRoute(
+        path: AppRoutes.splash,
+        name: 'splash',
+        builder: (_, __) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.languageSelection,
+        name: 'languageSelection',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LanguageSelectionScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        name: 'onboarding',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const OnboardingWizard(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        name: 'register',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        name: 'login',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.home,
+        name: 'home',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.epds,
+        name: 'epds',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const EpdsScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.epdsResult,
+        name: 'epds-result',
+        pageBuilder: (_, state) {
+          final score = state.extra as int? ?? 0;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: EpdsResultScreen(score: score),
+            transitionsBuilder: _fadeSlideTransition,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        name: 'notifications',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const NotificationsScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        name: 'privacy',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PrivacyScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+    ],
+
+    // 404 fallback
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Text('Page not found: ${state.uri}'),
+      ),
+    ),
+  );
+
+  // ─── Shared Page Transition ───────────────────────────────────────────────
+  static Widget _fadeSlideTransition(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.05, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      )),
+      child: FadeTransition(opacity: animation, child: child),
+    );
+  }
+}
