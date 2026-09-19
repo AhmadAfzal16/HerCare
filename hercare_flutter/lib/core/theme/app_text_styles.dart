@@ -12,59 +12,50 @@ abstract final class AppTextStyles {
         fontSize: 57,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.25,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get displayMedium => GoogleFonts.poppins(
         fontSize: 45,
         fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get displaySmall => GoogleFonts.poppins(
         fontSize: 36,
         fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
       );
 
   // ─── Headline ─────────────────────────────────────────────────────────────
   static TextStyle get headlineLarge => GoogleFonts.poppins(
         fontSize: 32,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get headlineMedium => GoogleFonts.poppins(
         fontSize: 28,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get headlineSmall => GoogleFonts.poppins(
         fontSize: 24,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
       );
 
   // ─── Title ────────────────────────────────────────────────────────────────
   static TextStyle get titleLarge => GoogleFonts.poppins(
         fontSize: 22,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get titleMedium => GoogleFonts.poppins(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.15,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get titleSmall => GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-        color: AppColors.textPrimary,
       );
 
   // ─── Body ─────────────────────────────────────────────────────────────────
@@ -72,21 +63,18 @@ abstract final class AppTextStyles {
         fontSize: 16,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.5,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get bodyMedium => GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.25,
-        color: AppColors.textSecondary,
       );
 
   static TextStyle get bodySmall => GoogleFonts.poppins(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.4,
-        color: AppColors.textSecondary,
       );
 
   // ─── Label ────────────────────────────────────────────────────────────────
@@ -94,21 +82,18 @@ abstract final class AppTextStyles {
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get labelMedium => GoogleFonts.poppins(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
-        color: AppColors.textSecondary,
       );
 
   static TextStyle get labelSmall => GoogleFonts.poppins(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
-        color: AppColors.textSecondary,
       );
 
   // ─── Urdu Typography ──────────────────────────────────────────────────────

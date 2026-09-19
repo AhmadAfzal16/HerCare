@@ -8,6 +8,7 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+import 'providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const HerCareApp(),
     ),
@@ -52,6 +54,7 @@ class HerCareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageProvider = context.watch<LanguageProvider>();
+    final themeProvider    = context.watch<ThemeProvider>();
 
     return MaterialApp.router(
       title: 'HerCare',
@@ -59,6 +62,8 @@ class HerCareApp extends StatelessWidget {
 
       // Theming
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
 
       // Routing
       routerConfig: AppRouter.router,

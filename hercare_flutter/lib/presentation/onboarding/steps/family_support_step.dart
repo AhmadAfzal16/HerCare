@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/onboarding_model.dart';
 
@@ -109,10 +110,10 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
               style: widget.isUrdu
                   ? AppTextStyles.urduBody.copyWith(
                       fontSize: 15,
-                      color: AppColors.textPrimary,
+                      color: context.hcTextPrimary,
                     )
                   : AppTextStyles.bodyLarge
-                      .copyWith(color: AppColors.textPrimary),
+                      .copyWith(color: context.hcTextPrimary),
               hint: Text(
                 widget.isUrdu ? 'آمدنی کی حد منتخب کریں' : 'Select range',
                 textDirection: widget.isUrdu
@@ -195,7 +196,7 @@ class _Label extends StatelessWidget {
             isUrdu ? ur : en,
             style: isUrdu
                 ? AppTextStyles.urduLabel.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.hcTextPrimary,
                     fontWeight: FontWeight.w600,
                   )
                 : AppTextStyles.labelLarge,
@@ -502,10 +503,10 @@ class _SupportInfoCard extends StatelessWidget {
                   : 'Understanding your support network helps us personalize guardian reports and recommendations.',
               style: isUrdu
                   ? AppTextStyles.urduLabel.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.hcTextPrimary,
                     )
                   : AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.hcTextPrimary,
                     ),
               textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             ),

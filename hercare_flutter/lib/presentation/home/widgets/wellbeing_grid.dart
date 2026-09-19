@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 import '../../wellbeing/wellbeing_screen.dart';
@@ -144,7 +145,7 @@ class _WellbeingCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.hcSurface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(

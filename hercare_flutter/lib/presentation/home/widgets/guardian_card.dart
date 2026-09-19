@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 
@@ -25,7 +26,7 @@ class GuardianCard extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.hcSurface,
               borderRadius: BorderRadius.circular(18),
               border: Border(
                 left: BorderSide(color: AppColors.accent, width: 4),

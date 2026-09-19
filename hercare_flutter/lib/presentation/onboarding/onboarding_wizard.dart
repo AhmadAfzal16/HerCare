@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/onboarding_model.dart';
 import '../../data/services/local_storage_service.dart';
@@ -124,7 +125,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     final stepColor = AppColors.onboardingStepColors[_currentStep];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -256,7 +257,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
             title,
             style: isUrdu
                 ? AppTextStyles.urduHeadline.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.hcTextPrimary,
                     fontSize: 22,
                   )
                 : AppTextStyles.headlineSmall,

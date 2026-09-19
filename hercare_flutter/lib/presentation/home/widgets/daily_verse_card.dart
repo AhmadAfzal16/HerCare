@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 
@@ -167,7 +168,7 @@ class _DailyVerseCardState extends State<DailyVerseCard>
                           textAlign: TextAlign.center,
                           textDirection: TextDirection.rtl,
                           style: AppTextStyles.urduLabel.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.hcTextPrimary,
                             fontSize: 14,
                             height: 2.0,
                           ),

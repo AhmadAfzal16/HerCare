@@ -186,4 +186,129 @@ class AppTheme {
       ),
     );
   }
+
+  // ─── Dark Theme ─────────────────────────────────────────────────────────────
+  static ThemeData get darkTheme {
+    const darkBg        = Color(0xFF0F0A1E); // Deep dark violet
+    const darkSurface   = Color(0xFF1C1531); // Card background
+    const darkSurfaceVar= Color(0xFF251E3A); // Elevated surface
+    const darkText      = Color(0xFFF3EEFF); // Near-white text
+    const darkSubText   = Color(0xFF9E8FBD); // Muted text
+    const darkOutline   = Color(0xFF3A2F5A); // Subtle border
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme(
+        brightness: Brightness.dark,
+        primary: AppColors.primaryLight,
+        onPrimary: Colors.white,
+        primaryContainer: const Color(0xFF3B1D8A),
+        onPrimaryContainer: const Color(0xFFEDE9FE),
+        secondary: AppColors.secondaryLight,
+        onSecondary: Colors.white,
+        secondaryContainer: const Color(0xFF7B1049),
+        onSecondaryContainer: const Color(0xFFFCE7F3),
+        error: AppColors.error,
+        onError: Colors.white,
+        surface: darkSurface,
+        onSurface: darkText,
+        surfaceContainerHighest: darkSurfaceVar,
+        outline: darkOutline,
+      ),
+      scaffoldBackgroundColor: darkBg,
+      fontFamily: 'Poppins',
+      textTheme: AppTextStyles.textTheme.apply(
+        bodyColor: darkText,
+        displayColor: darkText,
+      ),
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: darkBg,
+        foregroundColor: darkText,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: AppTextStyles.titleMedium.copyWith(color: darkText),
+        iconTheme: IconThemeData(color: darkText),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryLight,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 54),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+          textStyle: AppTextStyles.labelLarge,
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryLight,
+          minimumSize: const Size(double.infinity, 54),
+          side: const BorderSide(color: AppColors.primaryLight, width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: AppTextStyles.labelLarge,
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurfaceVar,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: darkOutline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primaryLight, width: 1.8),
+        ),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(color: darkSubText),
+        labelStyle: AppTextStyles.bodyMedium.copyWith(color: darkSubText),
+      ),
+
+      cardTheme: CardThemeData(
+        color: darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: darkOutline),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected) ? AppColors.primaryLight : darkSubText),
+        trackColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected)
+                ? AppColors.primaryLight.withValues(alpha: 0.4)
+                : darkSurfaceVar),
+      ),
+
+      dividerTheme: DividerThemeData(color: darkOutline, thickness: 1, space: 1),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: darkSurface,
+        contentTextStyle: AppTextStyles.bodyMedium.copyWith(color: darkText),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+    );
+  }
 }
+

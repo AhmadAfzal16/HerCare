@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/onboarding_model.dart';
 
@@ -240,7 +241,7 @@ class _ConsentTile extends StatelessWidget {
                                   ? AppTextStyles.urduBody.copyWith(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                                      color: context.hcTextPrimary,
                                     )
                                   : AppTextStyles.titleSmall,
                               textDirection: isUrdu
@@ -355,15 +356,15 @@ class _PrivacyNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.hcSurfaceVariant,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 18, color: AppColors.textSecondary),
+          Icon(Icons.info_outline_rounded,
+              size: 18, color: context.hcTextSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -417,18 +418,18 @@ class _DataRightsCard extends StatelessWidget {
             textDirection:
                 isUrdu ? TextDirection.rtl : TextDirection.ltr,
             children: [
-              const Icon(Icons.verified_user_outlined,
+              Icon(Icons.verified_user_outlined,
                   size: 18, color: AppColors.success),
               const SizedBox(width: 8),
               Text(
                 isUrdu ? 'آپ کے ڈیٹا کے حقوق' : 'Your Data Rights',
                 style: isUrdu
                     ? AppTextStyles.urduLabel.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.hcTextPrimary,
                         fontWeight: FontWeight.w600,
                       )
                     : AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.hcTextPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                 textDirection:
@@ -444,7 +445,7 @@ class _DataRightsCard extends StatelessWidget {
                 textDirection:
                     isUrdu ? TextDirection.rtl : TextDirection.ltr,
                 children: [
-                  const Icon(Icons.check_circle_outline,
+                  Icon(Icons.check_circle_outline,
                       size: 14, color: AppColors.success),
                   const SizedBox(width: 8),
                   Text(
@@ -452,7 +453,7 @@ class _DataRightsCard extends StatelessWidget {
                     style: isUrdu
                         ? AppTextStyles.urduLabel
                         : AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.hcTextPrimary,
                           ),
                     textDirection:
                         isUrdu ? TextDirection.rtl : TextDirection.ltr,

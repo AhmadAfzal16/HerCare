@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 import '../../core/constants/app_constants.dart';
@@ -44,7 +45,7 @@ class EpdsResultScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -65,7 +66,7 @@ class EpdsResultScreen extends StatelessWidget {
                   height: 220,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.surface,
+                    color: context.hcSurface,
                     boxShadow: [
                       BoxShadow(
                         color: ringColor.withValues(alpha: 0.15),
@@ -100,7 +101,7 @@ class EpdsResultScreen extends StatelessWidget {
                                 style: AppTextStyles.headlineLarge.copyWith(
                                   fontSize: 48,
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.textPrimary,
+                                  color: context.hcTextPrimary,
                                 ),
                               ),
                               Padding(
@@ -108,7 +109,7 @@ class EpdsResultScreen extends StatelessWidget {
                                 child: Text(
                                   '/ 30',
                                   style: AppTextStyles.titleMedium.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: context.hcTextSecondary,
                                   ),
                                 ),
                               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 import 'widgets/home_header.dart';
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       body: IndexedStack(
         index: _navIndex,
         children: pages,
@@ -71,7 +72,7 @@ class _HomeDashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: const HomeHeader(),
       body: ListView(
         physics: const BouncingScrollPhysics(),
@@ -139,7 +140,7 @@ class _BottomNav extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.hcSurface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),

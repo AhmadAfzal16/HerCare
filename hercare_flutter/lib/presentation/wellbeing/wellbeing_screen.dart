@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../providers/language_provider.dart';
 
 /// Full Wellbeing screen � deeper view of EPDS, mood, sleep, and chat.
@@ -27,8 +28,8 @@ class WellbeingScreen extends StatelessWidget {
         leading: hideBackButton
             ? null
             : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.textPrimary, size: 20),
+                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: context.hcTextPrimary, size: 20),
                 onPressed: () => Navigator.of(context).pop(),
               ),
         title: Text(
@@ -78,10 +79,10 @@ class WellbeingScreen extends StatelessWidget {
 // Shared border-only card decoration.
 // BoxShadow with blurRadius is CPU-rendered on Android and causes scroll jank.
 // A simple 1px border achieves the same visual depth at zero GPU overhead.
-BoxDecoration _cardDecoration() => BoxDecoration(
-      color: AppColors.surface,
+BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
+      color: context.hcSurface,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFEEEEF2), width: 1),
+      border: Border.all(color: context.hcOutline, width: 1),
     );
 
 // --- EPDS Score Card ----------------------------------------------------------
@@ -98,7 +99,7 @@ class _EpdsScoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -232,7 +233,7 @@ class _MoodHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         children: [
           Row(
@@ -273,7 +274,7 @@ class _MoodHistoryCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.insights_rounded, color: AppColors.secondary, size: 18),
+                Icon(Icons.insights_rounded, color: AppColors.secondary, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -303,7 +304,7 @@ class _SleepStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         children: [
           Row(
@@ -324,7 +325,7 @@ class _SleepStatsCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.tips_and_updates_outlined, color: AppColors.accent, size: 18),
+                Icon(Icons.tips_and_updates_outlined, color: AppColors.accent, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -401,7 +402,7 @@ class _HumRaazCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
+            child: Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(
