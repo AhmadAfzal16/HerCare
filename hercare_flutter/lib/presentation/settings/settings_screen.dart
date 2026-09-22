@@ -164,6 +164,7 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: context.hcSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(isUrdu ? 'ہر کیئر کے بارے میں' : 'About HerCare',
             style: AppTextStyles.titleMedium),
@@ -194,6 +195,7 @@ class SettingsScreen extends StatelessWidget {
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: context.hcSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title, style: AppTextStyles.titleMedium),
         content: Text(message, style: AppTextStyles.bodyMedium),
@@ -301,7 +303,7 @@ class _SettingsTile extends StatelessWidget {
                       Text(
                         title,
                         style: AppTextStyles.titleSmall.copyWith(
-                          color: titleColor ?? AppColors.textPrimary,
+                          color: titleColor ?? context.hcTextPrimary,
                           fontSize: 14,
                         ),
                       ),
@@ -424,7 +426,7 @@ class _LangPill extends StatelessWidget {
         child: Text(
           label,
           style: AppTextStyles.labelMedium.copyWith(
-            color: active ? Colors.white : AppColors.textSecondary,
+            color: active ? Colors.white : context.hcTextSecondary,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
           ),
         ),

@@ -18,9 +18,9 @@ class WellbeingScreen extends StatelessWidget {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.hcSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -161,7 +161,7 @@ class _EpdsScoreCard extends StatelessWidget {
                     Text('${_history[i]}',
                         style: AppTextStyles.labelSmall.copyWith(
                           fontSize: 10,
-                          color: isLast ? AppColors.primary : AppColors.textSecondary,
+                          color: isLast ? AppColors.primary : context.hcTextSecondary,
                           fontWeight: isLast ? FontWeight.w700 : FontWeight.w400,
                         )),
                     const SizedBox(height: 3),
@@ -182,13 +182,13 @@ class _EpdsScoreCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              _RiskChip(label: isUrdu ? '???' : 'Normal', color: AppColors.success,  range: '0�8'),
-              const SizedBox(width: 8),
-              _RiskChip(label: isUrdu ? '??'  : 'Mild',   color: AppColors.warning,  range: '9�12'),
-              const SizedBox(width: 8),
-              _RiskChip(label: isUrdu ? '?????' : 'High', color: AppColors.error,    range: '13+'),
+              _RiskChip(label: isUrdu ? 'تھوڑا' : 'Normal', color: AppColors.success,  range: '0–8'),
+              _RiskChip(label: isUrdu ? 'اعتدال'  : 'Mild',   color: AppColors.warning,  range: '9–12'),
+              _RiskChip(label: isUrdu ? 'زیادہ' : 'High', color: AppColors.error,    range: '13+'),
             ],
           ),
         ],
@@ -248,7 +248,7 @@ class _MoodHistoryCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isToday
                           ? AppColors.secondaryContainer
-                          : AppColors.surfaceVariant,
+                          : context.hcSurfaceVariant,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(_moods[i],
@@ -258,7 +258,7 @@ class _MoodHistoryCard extends StatelessWidget {
                   Text(isUrdu ? _daysUr[i] : _days[i],
                       style: AppTextStyles.labelSmall.copyWith(
                         fontSize: 9,
-                        color: isToday ? AppColors.secondary : AppColors.textSecondary,
+                        color: isToday ? AppColors.secondary : context.hcTextSecondary,
                         fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
                       )),
                 ],
@@ -320,7 +320,7 @@ class _SleepStatsCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0F7FA),
+              color: context.isDark ? const Color(0xFF0A3340) : const Color(0xFFE0F7FA),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
