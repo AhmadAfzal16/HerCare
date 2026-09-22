@@ -33,7 +33,7 @@ class WellbeingScreen extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
         title: Text(
-          isUrdu ? '?? ?? ???' : 'Your Wellbeing',
+          isUrdu ? 'آپ کی صحت' : 'Your Wellbeing',
           style: AppTextStyles.titleMedium,
         ),
         centerTitle: true,
@@ -44,29 +44,29 @@ class WellbeingScreen extends StatelessWidget {
         cacheExtent: 600,
         children: [
           _SectionHeader(
-            title: isUrdu ? 'EPDS ?????' : 'EPDS Score',
-            subtitle: isUrdu ? '??????? ????????' : 'Edinburgh Screening',
+            title: isUrdu ? 'EPDS اسکور' : 'EPDS Score',
+            subtitle: isUrdu ? 'ایڈنبرا اسکریننگ' : 'Edinburgh Screening',
           ),
           const SizedBox(height: 12),
           RepaintBoundary(child: _EpdsScoreCard(isUrdu: isUrdu)),
           const SizedBox(height: 24),
           _SectionHeader(
-            title: isUrdu ? '??? ?? ?????' : 'Mood History',
-            subtitle: isUrdu ? '????? 7 ??' : 'Last 7 days',
+            title: isUrdu ? 'موڈ کی تاریخ' : 'Mood History',
+            subtitle: isUrdu ? 'پچھلے 7 دن' : 'Last 7 days',
           ),
           const SizedBox(height: 12),
           RepaintBoundary(child: _MoodHistoryCard(isUrdu: isUrdu)),
           const SizedBox(height: 24),
           _SectionHeader(
-            title: isUrdu ? '???? ?? ????? ? ????' : 'Sleep Stats',
-            subtitle: isUrdu ? '????? ????' : 'This week',
+            title: isUrdu ? 'نیند کے اعداد و شمار' : 'Sleep Stats',
+            subtitle: isUrdu ? 'اس ہفتہ' : 'This week',
           ),
           const SizedBox(height: 12),
           RepaintBoundary(child: _SleepStatsCard(isUrdu: isUrdu)),
           const SizedBox(height: 24),
           _SectionHeader(
-            title: isUrdu ? '?? ??? ??? ???' : 'Hum-Raaz AI',
-            subtitle: isUrdu ? '24/7 ???? ??? ?? ?????' : '24/7 mental health companion',
+            title: isUrdu ? 'ہم راز AI' : 'Hum-Raaz AI',
+            subtitle: isUrdu ? '24/7 ذہنی صحت کا ساتھی' : '24/7 mental health companion',
           ),
           const SizedBox(height: 12),
           RepaintBoundary(child: _HumRaazCard(isUrdu: isUrdu)),
@@ -93,7 +93,7 @@ class _EpdsScoreCard extends StatelessWidget {
 
   static const _history = [6, 8, 7, 9, 8, 7, 8];
   static const _days    = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  static const _daysUr  = ['???','????','???','??????','????','????','?????'];
+  static const _daysUr  = ['پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ','اتوار'];
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +108,7 @@ class _EpdsScoreCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(isUrdu ? '?????? ?????' : 'Current Score',
+                  Text(isUrdu ? 'موجودہ اسکور' : 'Current Score',
                       style: AppTextStyles.bodySmall),
                   const SizedBox(height: 4),
                   Row(
@@ -133,18 +133,18 @@ class _EpdsScoreCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  isUrdu ? '? ?? ????' : '? Mild Risk',
+                  isUrdu ? '😐 معتدل خطرہ' : '😐 Mild Risk',
                   style: AppTextStyles.labelMedium.copyWith(
                       color: AppColors.success, fontWeight: FontWeight.w700),
                 ),
               ),
               const Spacer(),
-              Text(isUrdu ? '2 ?? ????' : '2 days ago',
+              Text(isUrdu ? '2 دن پہلے' : '2 days ago',
                   style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
             ],
           ),
           const SizedBox(height: 20),
-          Text(isUrdu ? '????? 7 ??????' : 'Last 7 screenings',
+          Text(isUrdu ? 'پچھلی 7 اسکریننگز' : 'Last 7 screenings',
               style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
           const SizedBox(height: 10),
           SizedBox(
@@ -186,9 +186,9 @@ class _EpdsScoreCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _RiskChip(label: isUrdu ? 'تھوڑا' : 'Normal', color: AppColors.success,  range: '0–8'),
-              _RiskChip(label: isUrdu ? 'اعتدال'  : 'Mild',   color: AppColors.warning,  range: '9–12'),
-              _RiskChip(label: isUrdu ? 'زیادہ' : 'High', color: AppColors.error,    range: '13+'),
+              _RiskChip(label: isUrdu ? 'معمول' : 'Normal', color: AppColors.success,  range: '0–8'),
+              _RiskChip(label: isUrdu ? 'معتدل' : 'Mild',   color: AppColors.warning,  range: '9–12'),
+              _RiskChip(label: isUrdu ? 'زیادہ' : 'High',   color: AppColors.error,    range: '13+'),
             ],
           ),
         ],
@@ -225,9 +225,9 @@ class _MoodHistoryCard extends StatelessWidget {
   final bool isUrdu;
   const _MoodHistoryCard({required this.isUrdu});
 
-  static const _moods  = ['??','??','??','??','??','??','??'];
+  static const _moods  = ['😔','😐','🙂','😊','😔','🙂','😊'];
   static const _days   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  static const _daysUr = ['???','????','???','??????','????','????','?????'];
+  static const _daysUr = ['پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ','اتوار'];
 
   @override
   Widget build(BuildContext context) {
@@ -279,8 +279,8 @@ class _MoodHistoryCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     isUrdu
-                        ? '?? ???? ?? ?? ?????? ??? ???? ??? ??? ??'
-                        : 'Your overall mood this week has been positive. ??',
+                        ? 'اس ہفتے آپ کا موڈ مجموعی طور پر اچھا رہا ہے 😊'
+                        : 'Your overall mood this week has been positive. 😊',
                     style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.secondary, fontWeight: FontWeight.w500),
                   ),
@@ -309,11 +309,11 @@ class _SleepStatsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _SleepStat(icon: Icons.bedtime_rounded,   color: AppColors.accent,     label: isUrdu ? '???? ????'    : 'Avg Sleep', value: '6h 20m',  sub: isUrdu ? '???? ?? ??' : 'Below avg',   subColor: AppColors.warning)),
+              Expanded(child: _SleepStat(icon: Icons.bedtime_rounded,   color: AppColors.accent,     label: isUrdu ? 'اوسط نیند'    : 'Avg Sleep', value: '6h 20m',  sub: isUrdu ? 'اوسط سے کم' : 'Below avg',   subColor: AppColors.warning)),
               const SizedBox(width: 12),
-              Expanded(child: _SleepStat(icon: Icons.nightlight_round,  color: AppColors.primary,    label: isUrdu ? '???? ?? ???'  : 'Bedtime',   value: '11:30 PM', sub: isUrdu ? '???'        : 'Late',          subColor: AppColors.warning)),
+              Expanded(child: _SleepStat(icon: Icons.nightlight_round,  color: AppColors.primary,    label: isUrdu ? 'سونے کا وقت'  : 'Bedtime',   value: '11:30 PM', sub: isUrdu ? 'دیر'        : 'Late',          subColor: AppColors.warning)),
               const SizedBox(width: 12),
-              Expanded(child: _SleepStat(icon: Icons.wb_sunny_rounded,  color: AppColors.secondary,  label: isUrdu ? '????? ?? ???' : 'Wake time',  value: '5:50 AM',  sub: isUrdu ? '???????'    : 'Consistent',   subColor: AppColors.success)),
+              Expanded(child: _SleepStat(icon: Icons.wb_sunny_rounded,  color: AppColors.secondary,  label: isUrdu ? 'جاگنے کا وقت' : 'Wake time',  value: '5:50 AM',  sub: isUrdu ? 'مستقل'    : 'Consistent',   subColor: AppColors.success)),
             ],
           ),
           const SizedBox(height: 14),
@@ -330,8 +330,8 @@ class _SleepStatsCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     isUrdu
-                        ? '??? 10 ??? ???? ?? ???? ???? � ???? PPD ?? ???? ?? ?? ???? ???'
-                        : 'Try sleeping by 10 PM � better sleep reduces PPD risk.',
+                        ? 'رات 10 بجے تک سونے کی کوشش کریں — بہتر نیند PPD کا خطرہ کم کرتی ہے۔'
+                        : 'Try sleeping by 10 PM — better sleep reduces PPD risk.',
                     style: AppTextStyles.bodySmall
                         .copyWith(color: AppColors.accent, fontWeight: FontWeight.w500),
                   ),
@@ -386,7 +386,7 @@ class _HumRaazCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Solid color only � no LinearGradient + BoxShadow combo (expensive)
+    // Solid color only  no LinearGradient + BoxShadow combo (expensive)
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -409,11 +409,11 @@ class _HumRaazCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(isUrdu ? '?? ???' : 'Hum-Raaz',
+                Text(isUrdu ? 'ہم راز' : 'Hum-Raaz',
                     style: AppTextStyles.titleMedium.copyWith(color: Colors.white)),
                 const SizedBox(height: 3),
                 Text(
-                  isUrdu ? '24/7 ???? ??? ?? AI ?????' : '24/7 AI mental health companion',
+                  isUrdu ? '24/7 ذہنی صحت کا AI ساتھی' : '24/7 AI mental health companion',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: Colors.white.withValues(alpha: 0.85)),
                 ),
@@ -428,7 +428,7 @@ class _HumRaazCard extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            child: Text(isUrdu ? '???' : 'Chat',
+            child: Text(isUrdu ? 'چیٹ' : 'Chat',
                 style: AppTextStyles.labelLarge.copyWith(color: const Color(0xFF0EA5E9))),
           ),
         ],
