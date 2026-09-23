@@ -1,6 +1,6 @@
 # HerCare - AI Agent Handoff Document
 
-**Date:** 2026-09-23
+**Date:** 2026-09-24
 **Project:** HerCare (Postpartum Depression Screening & Support App)
 **Stack:** Flutter (Frontend), Node.js/Express (Backend), PostgreSQL (Database)
 
@@ -44,6 +44,17 @@ This document is intended for the next AI Agent taking over development. It cont
 - **Urdu/RTL Support:** Full RTL layout handling for Urdu text. Fixed 1.3 pixel overflow issues in `MoodHeroCard` and `WellbeingGrid` caused by the `Nastaliq` font by adjusting `Wrap` and `childAspectRatio` properties.
 - **Dark Mode:** System-wide dynamic dark mode implemented successfully. 
 
+### **Module 5: Mood Detection & Journaling**
+- **Status:** **IMPLEMENTED PRODUCTION FOUNDATION** (cloud credentials are required to activate voice transcription)
+- Added responsive daily 1-5 mood, energy, sleep-quality, and social-support check-ins with a transparent weighted composite score.
+- Added persisted mood history, weekly summaries, live home/wellbeing integration, and automatic daily/weekly/monthly Guardian report aggregation.
+- Added private Urdu/English text journals with AES-256-GCM application-layer encryption. Search uses keyed blind indexes, so searchable words are not stored in plaintext.
+- Added encrypted offline queues for mood check-ins and private text journals with stable idempotency keys and retry-on-reconnect behavior.
+- Added 60-second mono 16 kHz WAV voice recording. Audio uploads directly through a five-minute signed S3-compatible URL with server-side encryption and is transcribed through Google Cloud Speech-to-Text. The API server does not persist local audio files.
+- Added deterministic English, Urdu, and Roman Urdu danger-language detection plus transparent sentiment/distress metadata. Crisis events and aggregate Guardian alerts are idempotent and never include journal content or transcripts.
+- Added private journal history, blind-index search, deletion, microphone permissions, a focused immediate-support screen, rate limits, strict payload limits, and mother-only API authorization.
+- Migration `003_mood_journaling.sql` was applied successfully to the local database.
+
 ---
 
 ## 2. What Is Remaining (According to Scope)
@@ -56,8 +67,6 @@ The following modules from the `hercare_scope_extracted.txt` document have NOT b
 - **Module 4: ML-Powered Risk Prediction & Notification Monitoring**
   - Connect to the PERI_DEP trained prediction model.
   - Implement Android-specific telemetry (`NotificationListenerService`, `UsageStatsManager`).
-- **Module 5: Multi-Modal Mood Detection & Journaling**
-  - Daily mood emoji scale, text/voice journals.
 - **Module 6: AI Emotional Support Chatbot (Hum-Raaz — 24/7)**
   - Gemini API integration with CBT prompt engineering and self-harm detection.
 - **Module 7: Secure In-App Chat with Sentiment Analysis**
@@ -101,5 +110,7 @@ git push -u origin feature/module2-guardian-link
 - **Production API URL:** Build with `--dart-define=API_BASE_URL=https://your-api.example.com/api/v1`. Release builds reject non-HTTPS API URLs.
 - **Token Storage:** The frontend uses `flutter_secure_storage` to store JWT tokens. Always use `LocalStorageService().getSecureString(AppConstants.accessTokenKey)` when building new API services. Do not use raw `SharedPreferences` for tokens.
 - **Database deployment:** Run `npm run migrate` from `hercare_backend` before starting a new release. Applied migration files must never be edited after deployment because checksum validation will stop the release.
-- **Verification:** `npm test` covers invite-code entropy, risk mapping, canonical period calculation, and onboarding validation. ESLint and all 10 backend tests pass. Dart analysis has no compile errors; existing project-wide warning/informational deprecation/style findings remain.
+- **Verification:** `npm test` covers invite-code entropy, risk mapping, canonical period calculation, onboarding validation, journal encryption/search, safety-language detection, composite scoring, and summary periods. ESLint and all 16 backend tests pass. Dart analysis has no compile errors; existing project-wide warning/informational deprecation/style findings remain.
+- **M5 verification:** ESLint and all 16 backend tests pass, the production npm audit reports zero vulnerabilities, whole-project Dart analysis has no compile errors, and the Android debug APK builds successfully. Both M5 tabs were visually inspected on the connected phone without overflow.
+- **Voice deployment configuration:** Set `JOURNAL_ENCRYPTION_KEY`, `AWS_REGION`, `JOURNAL_AUDIO_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`, and Google application credentials. Configure the bucket CORS policy to allow signed `PUT` requests from supported clients. Voice returns an explicit 503 until these dependencies are configured; there is intentionally no insecure filesystem fallback.
 - **Local runtime status:** PostgreSQL was temporarily unavailable during early debugging, which caused the app's generic connection message. At the final 2026-09-23 verification both `/health` and `/health/ready` succeeded, and the updated API was running on port 5000. Authentication and Guardian requests still require PostgreSQL to remain running.

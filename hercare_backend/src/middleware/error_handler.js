@@ -8,6 +8,11 @@ const SENSITIVE_FIELDS = new Set([
   'refresh_token',
   'access_token',
   'invite_code',
+  'content',
+  'journal_text',
+  'transcript',
+  'search',
+  'query',
 ]);
 
 function redactSensitive(value) {

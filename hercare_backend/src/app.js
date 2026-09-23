@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes     = require('./modules/auth/auth.routes');
 const guardianRoutes = require('./modules/guardian/guardian.routes');
 const onboardingRoutes = require('./modules/onboarding/onboarding.routes');
+const moodRoutes = require('./modules/mood/mood.routes');
 const { errorHandler } = require('./middleware/error_handler');
 const { query } = require('./config/database');
 const logger = require('./utils/logger');
@@ -46,8 +47,8 @@ app.use(cors({
 }));
 
 // ─── Body Parsing ──────────────────────────────────────────────────────────
-app.use(express.json({ limit: '10kb' })); // prevent oversized payloads
-app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+app.use(express.json({ limit: '32kb' })); // supports bounded Urdu journal payloads
+app.use(express.urlencoded({ extended: false, limit: '32kb' }));
 
 // ─── HTTP Logging ──────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
@@ -87,9 +88,9 @@ const API_PREFIX = '/api/v1';
 app.use(`${API_PREFIX}/auth`,     authRoutes);
 app.use(`${API_PREFIX}/guardian`, guardianRoutes);
 app.use(`${API_PREFIX}/onboarding`, onboardingRoutes);
+app.use(`${API_PREFIX}/mood`, moodRoutes);
 // Future modules mount here:
 // app.use(`${API_PREFIX}/screening`, screeningRoutes); // Phase 1
-// app.use(`${API_PREFIX}/mood`,      moodRoutes);     // Phase 2
 // app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
 
 // ─── 404 ───────────────────────────────────────────────────────────────────

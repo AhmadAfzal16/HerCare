@@ -21,6 +21,8 @@ import '../../presentation/guardian/guardian_dashboard_screen.dart';
 import '../../presentation/guardian/report_screen.dart';
 import '../../presentation/guardian/guardian_home_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../../presentation/mood/mood_journal_screen.dart';
+import '../../presentation/crisis/crisis_support_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -46,6 +48,8 @@ abstract final class AppRoutes {
   static const String guardianLink = '/guardian-link';
   static const String guardianDashboard = '/guardian-dashboard';
   static const String reports = '/reports';
+  static const String mood = '/mood';
+  static const String journal = '/journal';
   static const String chatbot = '/chatbot'; // Phase 2
   static const String crisis = '/crisis'; // Phase 3
 }
@@ -219,6 +223,33 @@ abstract final class AppRouter {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const ReportScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.mood,
+        name: 'mood',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: MoodJournalScreen(initialMood: state.extra as int?),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.journal,
+        name: 'journal',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const MoodJournalScreen(initialTab: 1),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.crisis,
+        name: 'crisis',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const CrisisSupportScreen(),
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 
@@ -21,6 +22,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'سانس لیں',
         bg: AppColors.primaryContainer,
         iconColor: AppColors.primary,
+        onTap: () {},
       ),
       _QuickAction(
         icon: '📓',
@@ -28,6 +30,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'جریدہ',
         bg: AppColors.secondaryContainer,
         iconColor: AppColors.secondary,
+        onTap: () => context.push(AppRoutes.journal),
       ),
       _QuickAction(
         icon: '💬',
@@ -35,6 +38,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'ہم راز',
         bg: const Color(0xFFCFFAFE),
         iconColor: AppColors.accent,
+        onTap: () {},
       ),
       _QuickAction(
         icon: '🆘',
@@ -42,6 +46,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'فوری مدد',
         bg: const Color(0xFFFEE2E2),
         iconColor: AppColors.crisis,
+        onTap: () => context.push(AppRoutes.crisis),
       ),
     ];
 
@@ -75,6 +80,7 @@ class _QuickAction {
   final String labelUr;
   final Color bg;
   final Color iconColor;
+  final VoidCallback onTap;
 
   const _QuickAction({
     required this.icon,
@@ -82,6 +88,7 @@ class _QuickAction {
     required this.labelUr,
     required this.bg,
     required this.iconColor,
+    required this.onTap,
   });
 }
 
@@ -94,7 +101,7 @@ class _ActionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: action.onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
+import '../../../providers/mood_provider.dart';
+import '../../../core/routing/app_router.dart';
 import 'package:provider/provider.dart';
 
 /// Gradient hero card — mood check-in + postpartum day badge.
@@ -15,8 +17,6 @@ class MoodHeroCard extends StatefulWidget {
 }
 
 class _MoodHeroCardState extends State<MoodHeroCard> {
-  int? _selectedMood; // 0–4
-
   static const _moods = ['😔', '😐', '🙂', '😊', '😍'];
   static const _moodLabelsEn = ['Very low', 'Low', 'Okay', 'Good', 'Great'];
   static const _moodLabelsUr = ['بہت کم', 'کم', 'ٹھیک ہے', 'اچھا', 'بہترین'];
@@ -25,8 +25,19 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
   static const int _dayPostpartum = 47;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<MoodProvider>();
+      if (provider.today == null && !provider.isLoading) provider.load();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
+    final today = context.watch<MoodProvider>().today;
+    final selectedMood = today == null ? null : today.moodRating - 1;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -68,16 +79,16 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
           // Main content
           Padding(
-            padding: EdgeInsets.fromLTRB(20, isUrdu ? 12 : 18, 20, isUrdu ? 12 : 18),
+            padding:
+                EdgeInsets.fromLTRB(20, isUrdu ? 12 : 18, 20, isUrdu ? 12 : 18),
             child: Column(
-              crossAxisAlignment: isUrdu
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 // Day badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.22),
                     borderRadius: BorderRadius.circular(20),
@@ -96,7 +107,9 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
                 // Title
                 Text(
-                  isUrdu ? 'آج آپ کیسا محسوس کر رہی ہیں؟' : 'How are you feeling today?',
+                  isUrdu
+                      ? 'آج آپ کیسا محسوس کر رہی ہیں؟'
+                      : 'How are you feeling today?',
                   style: AppTextStyles.titleLarge.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -106,11 +119,13 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                 ),
                 SizedBox(height: isUrdu ? 2 : 4),
                 Text(
-                  _selectedMood == null
-                      ? (isUrdu ? 'موڈ لاگ کرنے کے لیے ٹیپ کریں' : 'Tap to log your mood')
+                  selectedMood == null
+                      ? (isUrdu
+                          ? 'موڈ لاگ کرنے کے لیے ٹیپ کریں'
+                          : 'Tap to log your mood')
                       : (isUrdu
-                          ? _moodLabelsUr[_selectedMood!]
-                          : _moodLabelsEn[_selectedMood!]),
+                          ? _moodLabelsUr[selectedMood]
+                          : _moodLabelsEn[selectedMood]),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: Colors.white.withOpacity(0.80),
                     fontSize: 13,
@@ -122,14 +137,12 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                 // Emoji mood row — use Wrap to avoid RTL overflow
                 Wrap(
                   direction: Axis.horizontal,
-                  alignment: isUrdu
-                      ? WrapAlignment.end
-                      : WrapAlignment.start,
+                  alignment: isUrdu ? WrapAlignment.end : WrapAlignment.start,
                   spacing: 8,
                   children: List.generate(_moods.length, (i) {
-                    final selected = _selectedMood == i;
+                    final selected = selectedMood == i;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedMood = i),
+                      onTap: () => context.push(AppRoutes.mood, extra: i + 1),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: selected ? 52 : 46,
