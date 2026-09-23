@@ -1,5 +1,4 @@
 const authService = require('./auth.service');
-const logger = require('../../utils/logger');
 
 /**
  * POST /api/v1/auth/register

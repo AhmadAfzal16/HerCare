@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/constants/app_constants.dart';
@@ -19,13 +20,26 @@ class ApiService {
   late final Dio _dio;
 
   void _init() {
-    // Prefer runtime dotenv value, fallback to hardcoded constant (10.0.2.2)
+    // Prefer a build-time value for deployments, then local dotenv for development.
     String baseUrl = AppConstants.apiBaseUrl;
     try {
       final envUrl = dotenv.maybeGet('API_BASE_URL');
-      if (envUrl != null && envUrl.isNotEmpty) baseUrl = envUrl;
+      if (baseUrl.isEmpty && envUrl != null && envUrl.isNotEmpty) {
+        baseUrl = envUrl;
+      }
     } catch (_) {
-      // dotenv not loaded — use constant
+      // dotenv is optional when API_BASE_URL is supplied with --dart-define.
+    }
+    if (baseUrl.isEmpty && !kReleaseMode) {
+      baseUrl = 'http://localhost:5000/api/v1';
+    }
+
+    final uri = Uri.tryParse(baseUrl);
+    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+      throw StateError('API_BASE_URL must be an absolute URL.');
+    }
+    if (kReleaseMode && uri.scheme != 'https') {
+      throw StateError('API_BASE_URL must use HTTPS in release builds.');
     }
 
     _dio = Dio(BaseOptions(
@@ -35,7 +49,7 @@ class ApiService {
       sendTimeout: AppConstants.apiTimeout,
       headers: {
         'Content-Type': 'application/json',
-        'Accept':        'application/json',
+        'Accept': 'application/json',
         'Bypass-Tunnel-Reminder': 'true', // Bypasses localtunnel warning page
       },
     ));
@@ -59,7 +73,7 @@ class ApiService {
   Dio get client => _dio;
 
   Future<Response<T>> get<T>(String path,
-      {Map<String, dynamic>? queryParameters}) =>
+          {Map<String, dynamic>? queryParameters}) =>
       _dio.get<T>(path, queryParameters: queryParameters);
 
   Future<Response<T>> post<T>(String path, {dynamic data}) =>
@@ -76,7 +90,7 @@ class ApiService {
 ///   2. On 401 TOKEN_EXPIRED, refreshes and retries once
 class _AuthInterceptor extends Interceptor {
   final Dio _dio;
-  bool _isRefreshing = false;
+  Future<String>? _refreshFuture;
 
   _AuthInterceptor(this._dio);
 
@@ -96,29 +110,10 @@ class _AuthInterceptor extends Interceptor {
     final response = err.response;
     final code = response?.data?['code'];
 
-    if (response?.statusCode == 401 &&
-        code == 'TOKEN_EXPIRED' &&
-        !_isRefreshing) {
-      _isRefreshing = true;
+    if (response?.statusCode == 401 && code == 'TOKEN_EXPIRED') {
+      final refresh = _refreshFuture ??= _refreshAccessToken();
       try {
-        final storage = LocalStorageService();
-        final refreshToken =
-            await storage.getSecureString(AppConstants.refreshTokenKey);
-        if (refreshToken == null) throw Exception('No refresh token');
-
-        // Bypass interceptor for refresh call
-        final refreshDio = Dio(BaseOptions(baseUrl: _dio.options.baseUrl));
-        final res = await refreshDio.post('/auth/refresh', data: {
-          'refresh_token': refreshToken,
-        });
-
-        final newAccess  = res.data['data']['accessToken'] as String;
-        final newRefresh = res.data['data']['refreshToken'] as String;
-
-        await storage.setSecureString(AppConstants.accessTokenKey, newAccess);
-        await storage.setSecureString(AppConstants.refreshTokenKey, newRefresh);
-
-        // Retry original request
+        final newAccess = await refresh;
         err.requestOptions.headers['Authorization'] = 'Bearer $newAccess';
         final retryResponse = await _dio.fetch(err.requestOptions);
         handler.resolve(retryResponse);
@@ -128,10 +123,33 @@ class _AuthInterceptor extends Interceptor {
         await storage.clearUserSession();
         handler.next(err);
       } finally {
-        _isRefreshing = false;
+        if (identical(_refreshFuture, refresh)) _refreshFuture = null;
       }
     } else {
       handler.next(err);
     }
+  }
+
+  Future<String> _refreshAccessToken() async {
+    final storage = LocalStorageService();
+    final refreshToken =
+        await storage.getSecureString(AppConstants.refreshTokenKey);
+    if (refreshToken == null) throw Exception('No refresh token');
+
+    final refreshDio = Dio(BaseOptions(
+      baseUrl: _dio.options.baseUrl,
+      connectTimeout: AppConstants.apiTimeout,
+      receiveTimeout: AppConstants.apiTimeout,
+      sendTimeout: AppConstants.apiTimeout,
+    ));
+    final response = await refreshDio.post('/auth/refresh', data: {
+      'refresh_token': refreshToken,
+    });
+    final data = response.data['data'] as Map<String, dynamic>;
+    final newAccess = data['accessToken'] as String;
+    final newRefresh = data['refreshToken'] as String;
+    await storage.setSecureString(AppConstants.accessTokenKey, newAccess);
+    await storage.setSecureString(AppConstants.refreshTokenKey, newRefresh);
+    return newAccess;
   }
 }

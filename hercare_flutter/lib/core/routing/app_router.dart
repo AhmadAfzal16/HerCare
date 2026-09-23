@@ -13,6 +13,9 @@ import '../../presentation/notifications/notifications_screen.dart';
 import '../../presentation/privacy/privacy_screen.dart';
 import '../../presentation/settings/settings_screen.dart';
 import '../../presentation/profile/profile_screen.dart';
+import '../../presentation/guardian/guardian_link_screen.dart';
+import '../../presentation/guardian/guardian_dashboard_screen.dart';
+import '../../presentation/guardian/report_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -33,7 +36,9 @@ abstract final class AppRoutes {
   static const String settings = '/settings';
   static const String helpSupport = '/help-support';
   static const String profile = '/profile';
-  static const String guardian = '/guardian';   // Phase 2
+  static const String guardianLink = '/guardian-link';
+  static const String guardianDashboard = '/guardian-dashboard';
+  static const String reports = '/reports';
   static const String chatbot = '/chatbot';     // Phase 2
   static const String crisis = '/crisis';       // Phase 3
 }
@@ -158,6 +163,33 @@ abstract final class AppRouter {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const _HelpSupportScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.guardianLink,
+        name: 'guardian-link',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const GuardianLinkScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.guardianDashboard,
+        name: 'guardian-dashboard',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const GuardianDashboardScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        name: 'reports',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ReportScreen(),
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),

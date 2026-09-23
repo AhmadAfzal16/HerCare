@@ -6,7 +6,10 @@ abstract final class AppConstants {
   // ─── API ──────────────────────────────────────────────────────────────────
   /// Uses localhost via `adb reverse tcp:5000 tcp:5000` tunnel.
   /// Run: adb reverse tcp:5000 tcp:5000  before flutter run.
-  static const String apiBaseUrl = 'http://localhost:5000/api/v1';
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
   static const Duration apiTimeout = Duration(seconds: 30);
   static const int maxRetryAttempts = 3;
 

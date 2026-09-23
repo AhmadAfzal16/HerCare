@@ -54,6 +54,15 @@ const register = async ({ phone, password, role = 'mother', language = 'en' }) =
       [user.id, refreshHash],
     );
 
+    // 6. Create default onboarding_data row so consent checks never fail
+    //    (consent_tier1 and consent_tier2 default to TRUE per schema)
+    await client.query(
+      `INSERT INTO onboarding_data (user_id, consent_tier1, consent_tier2, consent_tier3)
+       VALUES ($1, TRUE, TRUE, FALSE)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [user.id],
+    );
+
     logger.info(`New user registered: ${user.id} [${role}]`);
 
     return {

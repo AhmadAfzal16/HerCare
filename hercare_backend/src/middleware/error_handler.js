@@ -1,5 +1,24 @@
 const logger = require('../utils/logger');
 
+const SENSITIVE_FIELDS = new Set([
+  'password',
+  'confirm_password',
+  'current_password',
+  'new_password',
+  'refresh_token',
+  'access_token',
+  'invite_code',
+]);
+
+function redactSensitive(value) {
+  if (Array.isArray(value)) return value.map(redactSensitive);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+    key,
+    SENSITIVE_FIELDS.has(key) ? '[REDACTED]' : redactSensitive(item),
+  ]));
+}
+
 /**
  * Centralized error handler middleware.
  * Catches all errors thrown or passed to next(err).
@@ -10,7 +29,7 @@ const errorHandler = (err, req, res, _next) => {
   // Log the full error internally
   logger.error(`[${req.method} ${req.url}] ${err.message}`, {
     stack: err.stack,
-    body: req.body,
+    body: redactSensitive(req.body),
   });
 
   // Determine status code

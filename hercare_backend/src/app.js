@@ -4,11 +4,21 @@ const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
-const authRoutes = require('./modules/auth/auth.routes');
+const authRoutes     = require('./modules/auth/auth.routes');
+const guardianRoutes = require('./modules/guardian/guardian.routes');
 const { errorHandler } = require('./middleware/error_handler');
+const { query } = require('./config/database');
 const logger = require('./utils/logger');
 
 const app = express();
+
+if (process.env.TRUST_PROXY) {
+  const configuredProxy = process.env.TRUST_PROXY;
+  const trustProxy = /^\d+$/.test(configuredProxy)
+    ? Number(configuredProxy)
+    : configuredProxy === 'true' ? true : configuredProxy;
+  app.set('trust proxy', trustProxy);
+}
 
 // ─── Security Headers ──────────────────────────────────────────────────────
 app.use(helmet());
@@ -22,7 +32,8 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl)
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) ||
+        (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0)) {
       callback(null, true);
     } else {
       callback(new Error('CORS: origin not allowed'));
@@ -59,14 +70,23 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/health/ready', async (_req, res) => {
+  try {
+    await query('SELECT 1');
+    res.json({ status: 'ready', timestamp: new Date().toISOString() });
+  } catch (error) {
+    logger.error(`Readiness check failed: ${error.message}`);
+    res.status(503).json({ status: 'not_ready' });
+  }
+});
+
 // ─── API Routes ────────────────────────────────────────────────────────────
 const API_PREFIX = '/api/v1';
 
-app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/auth`,     authRoutes);
+app.use(`${API_PREFIX}/guardian`, guardianRoutes);
 // Future modules mount here:
-// app.use(`${API_PREFIX}/users`,     userRoutes);    // Phase 1
 // app.use(`${API_PREFIX}/screening`, screeningRoutes); // Phase 1
-// app.use(`${API_PREFIX}/guardian`,  guardianRoutes); // Phase 1
 // app.use(`${API_PREFIX}/mood`,      moodRoutes);     // Phase 2
 // app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
 
