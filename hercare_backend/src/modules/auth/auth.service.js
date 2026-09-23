@@ -17,7 +17,7 @@ const BCRYPT_ROUNDS = 12; // Recommended: 10–14
  * @param {object} data - { phone, password, role, language }
  * @returns {{ user, accessToken, refreshToken }}
  */
-const register = async ({ phone, password, role = 'mother', language = 'en' }) => {
+const register = async ({ phone, password, role, language = 'en' }) => {
   return withTransaction(async (client) => {
     // 1. Check phone uniqueness
     const existing = await client.query(
@@ -34,10 +34,12 @@ const register = async ({ phone, password, role = 'mother', language = 'en' }) =
     // 3. Insert user
     const userId = uuidv4();
     const { rows } = await client.query(
-      `INSERT INTO users (id, phone, password_hash, role, language, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-       RETURNING id, phone, role, language, created_at`,
-      [userId, phone, passwordHash, role, language],
+      `INSERT INTO users
+         (id, phone, password_hash, role, language, onboarding_complete,
+          created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+       RETURNING id, phone, role, language, onboarding_complete, created_at`,
+      [userId, phone, passwordHash, role, language, role === 'guardian'],
     );
     const user = rows[0];
 
@@ -54,14 +56,17 @@ const register = async ({ phone, password, role = 'mother', language = 'en' }) =
       [user.id, refreshHash],
     );
 
-    // 6. Create default onboarding_data row so consent checks never fail
-    //    (consent_tier1 and consent_tier2 default to TRUE per schema)
-    await client.query(
-      `INSERT INTO onboarding_data (user_id, consent_tier1, consent_tier2, consent_tier3)
-       VALUES ($1, TRUE, TRUE, FALSE)
-       ON CONFLICT (user_id) DO NOTHING`,
-      [user.id],
-    );
+    // Mothers grant consent during onboarding. Never pre-authorize guardian
+    // sharing before the mother has reviewed the consent screen.
+    if (role === 'mother') {
+      await client.query(
+        `INSERT INTO onboarding_data
+           (user_id, consent_tier1, consent_tier2, consent_tier3)
+         VALUES ($1, FALSE, FALSE, FALSE)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [user.id],
+      );
+    }
 
     logger.info(`New user registered: ${user.id} [${role}]`);
 
@@ -71,7 +76,8 @@ const register = async ({ phone, password, role = 'mother', language = 'en' }) =
         phone:     user.phone,
         role:      user.role,
         language:  user.language,
-        createdAt: user.created_at,
+        onboarding_complete: user.onboarding_complete,
+        created_at: user.created_at,
       },
       accessToken,
       refreshToken,
@@ -88,7 +94,9 @@ const register = async ({ phone, password, role = 'mother', language = 'en' }) =
 const login = async ({ phone, password }) => {
   // 1. Fetch user by phone
   const { rows } = await query(
-    'SELECT id, phone, password_hash, role, language, is_active FROM users WHERE phone = $1',
+    `SELECT id, phone, password_hash, role, language, is_active,
+            onboarding_complete, created_at
+     FROM users WHERE phone = $1`,
     [phone],
   );
 
@@ -136,6 +144,8 @@ const login = async ({ phone, password }) => {
       phone:    user.phone,
       role:     user.role,
       language: user.language,
+      onboarding_complete: user.onboarding_complete,
+      created_at: user.created_at,
     },
     accessToken,
     refreshToken,

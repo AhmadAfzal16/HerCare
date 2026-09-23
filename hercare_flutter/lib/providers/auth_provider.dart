@@ -17,8 +17,7 @@ class AuthProvider extends ChangeNotifier {
   UserModel? _user;
   String? _errorMessage;
 
-  AuthProvider({AuthRepository? repo})
-      : _repo = repo ?? AuthRepository();
+  AuthProvider({AuthRepository? repo}) : _repo = repo ?? AuthRepository();
 
   // ─── Getters ──────────────────────────────────────────────────────────────
   AuthStatus get status => _status;
@@ -31,7 +30,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register({
     required String phone,
     required String password,
-    String role = 'mother',
+    required String role,
     String language = 'en',
   }) async {
     _setLoading();
@@ -85,13 +84,25 @@ class AuthProvider extends ChangeNotifier {
     _setLoading();
     try {
       _user = await _repo.getMe();
-      _status = _user != null
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated;
+      _status =
+          _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
     } catch (_) {
       _status = AuthStatus.unauthenticated;
     }
     notifyListeners();
+  }
+
+  Future<UserModel?> refreshCurrentUser() async {
+    try {
+      _user = await _repo.getMe();
+      _status =
+          _user == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+      notifyListeners();
+      return _user;
+    } catch (error) {
+      _setError(error.toString());
+      return null;
+    }
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────────

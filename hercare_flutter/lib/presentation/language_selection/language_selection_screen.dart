@@ -6,7 +6,6 @@ import '../../core/constants/app_constants.dart';
 
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/local_storage_service.dart';
 import '../../providers/language_provider.dart';
@@ -78,8 +77,7 @@ class LanguageSelectionScreen extends StatelessWidget {
 
               // ── Footer note ───────────────────────────────────────────
               Padding(
-                padding:
-                    const EdgeInsets.only(bottom: 32, left: 24, right: 24),
+                padding: const EdgeInsets.only(bottom: 32, left: 24, right: 24),
                 child: Text(
                   'You can change this anytime in Settings.\n'
                   'آپ اسے کسی بھی وقت ترتیبات میں تبدیل کر سکتی ہیں۔',
@@ -152,7 +150,7 @@ class LanguageSelectionScreen extends StatelessWidget {
     langProvider.setLocale(Locale(code));
 
     if (context.mounted) {
-      context.go(AppRoutes.onboarding);
+      context.go(AppRoutes.register);
     }
   }
 }
@@ -246,9 +244,8 @@ class _LanguageCardState extends State<_LanguageCard>
                             )
                           : AppTextStyles.titleMedium
                               .copyWith(color: Colors.white),
-                      textDirection: widget.isUrdu
-                          ? TextDirection.rtl
-                          : TextDirection.ltr,
+                      textDirection:
+                          widget.isUrdu ? TextDirection.rtl : TextDirection.ltr,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -260,9 +257,8 @@ class _LanguageCardState extends State<_LanguageCard>
                           : AppTextStyles.bodySmall.copyWith(
                               color: Colors.white.withOpacity(0.75),
                             ),
-                      textDirection: widget.isUrdu
-                          ? TextDirection.rtl
-                          : TextDirection.ltr,
+                      textDirection:
+                          widget.isUrdu ? TextDirection.rtl : TextDirection.ltr,
                     ),
                   ],
                 ),

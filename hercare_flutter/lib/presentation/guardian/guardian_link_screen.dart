@@ -208,28 +208,36 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
                 )
               else if (provider.inviteCode != null) ...[
                 Container(
+                  width: double.infinity,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withOpacity(0.4)),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        provider.inviteCode!,
-                        style: AppTextStyles.headlineMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 4,
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: Text(
+                            provider.inviteCode!,
+                            maxLines: 1,
+                            style: AppTextStyles.headlineMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2.5,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        onTap: () => _copyCode(provider.inviteCode!),
-                        child: AnimatedSwitcher(
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: isUrdu ? 'کوڈ کاپی کریں' : 'Copy code',
+                        onPressed: () => _copyCode(provider.inviteCode!),
+                        icon: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
                           child: Icon(
                             _codeCopied

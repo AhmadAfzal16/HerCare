@@ -69,7 +69,9 @@ class OnboardingData {
       // Family
       'household_type': householdType?.name,
       'income_range': incomeRange,
-      'primary_support': primarySupport?.name,
+      'primary_support': primarySupport == SupportSource.motherInLaw
+          ? 'mother_in_law'
+          : primarySupport?.name,
 
       // Consent
       'consent_tier1': consentTier1,
@@ -95,9 +97,8 @@ class OnboardingData {
     data.parity = (json['parity'] as int?) ?? 0;
 
     final bg = json['baby_gender'] as String?;
-    data.babyGender = bg != null
-        ? BabyGender.values.firstWhere((e) => e.name == bg)
-        : null;
+    data.babyGender =
+        bg != null ? BabyGender.values.firstWhere((e) => e.name == bg) : null;
 
     data.hasPreeclampsia = (json['has_preeclampsia'] as bool?) ?? false;
     data.hasPostpartumHemorrhage =
@@ -113,7 +114,9 @@ class OnboardingData {
 
     data.incomeRange = json['income_range'] as String?;
 
-    final ps = json['primary_support'] as String?;
+    final ps = json['primary_support'] == 'mother_in_law'
+        ? 'motherInLaw'
+        : json['primary_support'] as String?;
     data.primarySupport = ps != null
         ? SupportSource.values.firstWhere((e) => e.name == ps)
         : null;

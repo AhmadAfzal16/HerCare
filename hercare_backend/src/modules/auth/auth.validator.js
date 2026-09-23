@@ -14,7 +14,7 @@ const passwordValidation = body('password')
   .matches(/[^A-Za-z0-9]/).withMessage('Password must contain at least one special character');
 
 const roleValidation = body('role')
-  .optional()
+  .notEmpty().withMessage('Account type is required')
   .isIn(['mother', 'guardian']).withMessage('Role must be mother or guardian');
 
 // ─── Validation rule sets ─────────────────────────────────────────────────────

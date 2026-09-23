@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/local_storage_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// Splash Screen
 /// Displays brand logo + animated tagline for [AppConstants.splashDuration],
 /// then redirects based on:
 ///   1. Language not set → Language Selection
-///   2. Onboarding not complete → Onboarding Wizard
-///   3. Not logged in → Login
-///   4. Logged in → Home
+///   2. Not logged in → Login
+///   3. Guardian → Guardian workspace
+///   4. Mother with incomplete onboarding → Onboarding Wizard
+///   5. Mother with complete onboarding → Mother home
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -88,21 +90,29 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigate() async {
     final storage = LocalStorageService();
     final language = await storage.getString(AppConstants.languageKey);
-    final onboardingDone =
-        await storage.getBool(AppConstants.onboardingCompleteKey) ?? false;
-    final token =
-        await storage.getSecureString(AppConstants.accessTokenKey);
+    final token = await storage.getSecureString(AppConstants.accessTokenKey);
 
     if (!mounted) return;
 
     if (language == null) {
       context.go(AppRoutes.languageSelection);
-    } else if (!onboardingDone) {
-      context.go(AppRoutes.onboarding);
     } else if (token == null) {
       context.go(AppRoutes.login);
     } else {
-      context.go(AppRoutes.home);
+      final auth = context.read<AuthProvider>();
+      await auth.tryRestoreSession();
+      if (!mounted) return;
+
+      final user = auth.user;
+      if (user == null) {
+        context.go(AppRoutes.login);
+      } else if (user.isGuardian) {
+        context.go(AppRoutes.guardianHome);
+      } else if (!user.onboardingComplete) {
+        context.go(AppRoutes.onboarding);
+      } else {
+        context.go(AppRoutes.home);
+      }
     }
   }
 

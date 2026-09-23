@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 /// Navigation buttons for the onboarding wizard.
@@ -43,11 +41,12 @@ class OnboardingNavButtons extends StatelessWidget {
       child: Row(
         textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          // Back button (always visible)
+          // The first step follows account creation, so going backwards would
+          // expose stale registration credentials and is intentionally disabled.
           SizedBox(
             height: 54,
             child: OutlinedButton(
-              onPressed: onBack,
+              onPressed: _isFirstStep || isSubmitting ? null : onBack,
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(54, 54),
                 maximumSize: const Size(54, 54),
@@ -55,8 +54,7 @@ class OnboardingNavButtons extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                side:
-                    BorderSide(color: stepColor.withOpacity(0.5), width: 1.5),
+                side: BorderSide(color: stepColor.withOpacity(0.5), width: 1.5),
               ),
               child: Icon(
                 isUrdu

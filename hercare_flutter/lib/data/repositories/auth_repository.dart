@@ -22,16 +22,16 @@ class AuthRepository {
   Future<UserModel> register({
     required String phone,
     required String password,
-    String role = 'mother',
+    required String role,
     String language = 'en',
   }) async {
     try {
       final response = await _api.post('/auth/register', data: {
-        'phone':            phone,
-        'password':         password,
+        'phone': phone,
+        'password': password,
         'confirm_password': password,
-        'role':             role,
-        'language':         language,
+        'role': role,
+        'language': language,
       });
 
       final data = response.data['data'] as Map<String, dynamic>;
@@ -49,7 +49,7 @@ class AuthRepository {
   }) async {
     try {
       final response = await _api.post('/auth/login', data: {
-        'phone':    phone,
+        'phone': phone,
         'password': password,
       });
 
@@ -65,8 +65,7 @@ class AuthRepository {
   Future<UserModel?> getMe() async {
     try {
       final response = await _api.get('/auth/me');
-      return UserModel.fromJson(
-          response.data['data'] as Map<String, dynamic>);
+      return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
@@ -85,14 +84,15 @@ class AuthRepository {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   Future<void> _persistTokens(Map<String, dynamic> data) async {
-    final accessToken  = data['accessToken']  as String?;
+    final accessToken = data['accessToken'] as String?;
     final refreshToken = data['refreshToken'] as String?;
 
     if (accessToken != null) {
       await _storage.setSecureString(AppConstants.accessTokenKey, accessToken);
     }
     if (refreshToken != null) {
-      await _storage.setSecureString(AppConstants.refreshTokenKey, refreshToken);
+      await _storage.setSecureString(
+          AppConstants.refreshTokenKey, refreshToken);
     }
   }
 
