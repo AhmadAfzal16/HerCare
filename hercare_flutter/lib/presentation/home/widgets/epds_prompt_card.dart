@@ -6,20 +6,25 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
+import '../../../providers/screening_provider.dart';
 
 /// Card prompting the user to complete their weekly EPDS screening.
 /// Shows a progress bar of last score against the 30-point maximum.
 class EpdsPromptCard extends StatelessWidget {
   const EpdsPromptCard({super.key});
 
-  // Placeholder values — will come from backend in Phase 2
-  static const int _lastScore = 8;
-  static const int _maxScore  = 30;
-
   @override
   Widget build(BuildContext context) {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
-    final progress = _lastScore / _maxScore;
+    final screening = context.watch<ScreeningProvider>();
+    if (!screening.overviewLoaded) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => context.read<ScreeningProvider>().loadOverview(),
+      );
+    }
+    final lastScore = screening.latest?.totalScore;
+    final progress = (lastScore ?? 0) / 30;
+    final isDue = screening.reminder?.due ?? true;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -37,13 +42,16 @@ class EpdsPromptCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.12),
+                  color: (isDue ? AppColors.error : AppColors.success)
+                      .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isUrdu ? 'واجب' : 'DUE',
+                  isDue
+                      ? (isUrdu ? 'واجب' : 'DUE')
+                      : (isUrdu ? 'مکمل' : 'UP TO DATE'),
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.error,
+                    color: isDue ? AppColors.error : AppColors.success,
                     fontWeight: FontWeight.w700,
                     fontSize: 10,
                     letterSpacing: 0.8,
@@ -59,7 +67,7 @@ class EpdsPromptCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.hcSurface,
               borderRadius: BorderRadius.circular(20),
-              border: Border(
+              border: const Border(
                 left: BorderSide(
                   color: AppColors.primary,
                   width: 4,
@@ -67,7 +75,7 @@ class EpdsPromptCard extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -108,7 +116,8 @@ class EpdsPromptCard extends StatelessWidget {
                               isUrdu
                                   ? 'ایڈنبرا پوسٹ نیٹل ڈپریشن اسکیل — 10 سوالات، ~3 منٹ'
                                   : 'Edinburgh Postnatal Depression Scale — 10 questions, ~3 mins',
-                              style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(fontSize: 11),
                               textDirection: isUrdu
                                   ? TextDirection.rtl
                                   : TextDirection.ltr,
@@ -127,15 +136,20 @@ class EpdsPromptCard extends StatelessWidget {
                       value: progress,
                       minHeight: 8,
                       backgroundColor: AppColors.primaryContainer,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    isUrdu
-                        ? 'آخری اسکور: $_lastScore / $_maxScore'
-                        : 'Last score: $_lastScore / $_maxScore',
+                    lastScore == null
+                        ? (isUrdu
+                            ? 'ابھی تک کوئی مکمل اسکریننگ نہیں'
+                            : 'No completed screening yet')
+                        : (isUrdu
+                            ? 'آخری اسکور: $lastScore / 30'
+                            : 'Last score: $lastScore / 30'),
                     style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
                   ),
                   const SizedBox(height: 16),
@@ -150,7 +164,7 @@ class EpdsPromptCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.30),
+                            color: AppColors.primary.withValues(alpha: 0.30),
                             blurRadius: 12,
                             offset: const Offset(0, 5),
                           ),
@@ -169,9 +183,15 @@ class EpdsPromptCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          isUrdu ? 'اسکریننگ شروع کریں ←' : 'Start Screening →',
-                          style: AppTextStyles.labelLarge.copyWith(
-                              color: Colors.white),
+                          isUrdu
+                              ? (lastScore == null
+                                  ? 'اسکریننگ شروع کریں ←'
+                                  : 'اسکریننگ دوبارہ کریں ←')
+                              : (lastScore == null
+                                  ? 'Start Screening →'
+                                  : 'Take Screening Again →'),
+                          style: AppTextStyles.labelLarge
+                              .copyWith(color: Colors.white),
                         ),
                       ),
                     ),
