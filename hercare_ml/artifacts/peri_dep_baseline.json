@@ -1,0 +1,54 @@
+{
+  "dataset_citation": "PERI_DEP Dataset, Zenodo record 11403247, CC BY 4.0",
+  "dataset_sha256": "3d2efa3aaea9e4ba3a404c6dbbd4a82a4c832c7cd578de10ff2ae28967062c42",
+  "feature_names": [
+    "age",
+    "parity",
+    "education_level",
+    "household_type",
+    "financial_strain",
+    "support_quality"
+  ],
+  "horizon_days": null,
+  "limitations": "Cross-sectional association only; must not be described as a future trajectory.",
+  "metrics": {
+    "average_precision": 0.7418635106406645,
+    "balanced_accuracy": 0.5269913145267221,
+    "brier_score": 0.225726360930242,
+    "classification_report": {
+      "0": {
+        "f1-score": 0.11808809746954077,
+        "precision": 0.7777777777777778,
+        "recall": 0.06389452332657201,
+        "support": 986.0
+      },
+      "1": {
+        "f1-score": 0.7925942252589817,
+        "precision": 0.6607864755604557,
+        "recall": 0.9900881057268722,
+        "support": 1816.0
+      },
+      "accuracy": 0.6641684511063526,
+      "macro avg": {
+        "f1-score": 0.4553411613642612,
+        "precision": 0.7192821266691167,
+        "recall": 0.5269913145267221,
+        "support": 2802.0
+      },
+      "weighted avg": {
+        "f1-score": 0.5552412480996709,
+        "precision": 0.7019547210944598,
+        "recall": 0.6641684511063526,
+        "support": 2802.0
+      }
+    },
+    "f1": 0.7925942252589817,
+    "roc_auc": 0.6231296521342853,
+    "test_rows": 2802
+  },
+  "model_scope": "cross_sectional_baseline",
+  "model_version": "m4-ensemble-v1",
+  "positive_rate": 0.6480582524271845,
+  "trained_at": "2026-09-23T22:56:23.718987+00:00",
+  "training_rows": 11206
+}

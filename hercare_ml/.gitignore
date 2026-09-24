@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+artifacts/*.joblib
+artifacts/*.json
+!artifacts/peri_dep_baseline.joblib
+!artifacts/peri_dep_baseline.json
+data/raw/*
+!data/raw/.gitkeep
