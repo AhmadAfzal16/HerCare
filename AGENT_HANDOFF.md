@@ -55,21 +55,23 @@ This document is intended for the next AI Agent taking over development. It cont
 - Added private journal history, blind-index search, deletion, microphone permissions, a focused immediate-support screen, rate limits, strict payload limits, and mother-only API authorization.
 - Migration `003_mood_journaling.sql` was applied successfully to the local database.
 
+### **Module 7: Secure In-App Chat with Sentiment Analysis**
+- **Status:** **IMPLEMENTED PRODUCTION FOUNDATION**
+- Added a dedicated mother/guardian one-to-one chat bound to the active Guardian Link and Tier 2 consent. Revoking the link or consent immediately removes chat access.
+- Message bodies are protected with AES-256-GCM at rest, excluded from reports and application logs, and exposed only to the two linked participants.
+- Added bounded/paginated history, idempotent sends, read receipts, request validation, message rate limiting, and a four-second lifecycle-aware refresh with durable REST fallback behavior.
+- Added versioned English, Urdu, and Roman Urdu sentiment/distress analysis. Self-harm language from a mother creates an idempotent crisis event and privacy-safe Guardian alert without copying the message body.
+- Added responsive Urdu/English Flutter chat UI for both roles, compact-screen protection, empty/unlinked/error states, privacy messaging, safety escalation sheet, and mother/guardian navigation entry points.
+- Migration `006_secure_chat.sql` was applied successfully. Backend tests, focused Flutter tests, a 320x480 overflow test, and a real authenticated mother-to-guardian encrypted chat/revocation flow pass.
+
 ---
 
 ## 2. What Is Remaining (According to Scope)
 
 The following modules from the `hercare_scope_extracted.txt` document have NOT been started and must be implemented next:
 
-- **Module 3: EPDS Screening & Assessment Engine**
-  - Interactive 10-question assessment (Urdu/English).
-  - Auto-scoring (0-30) and categorization.
-- **Module 4: ML-Powered Risk Prediction & Notification Monitoring**
-  - Connect to the PERI_DEP trained prediction model.
-  - Implement Android-specific telemetry (`NotificationListenerService`, `UsageStatsManager`).
 - **Module 6: AI Emotional Support Chatbot (Hum-Raaz — 24/7)**
   - Gemini API integration with CBT prompt engineering and self-harm detection.
-- **Module 7: Secure In-App Chat with Sentiment Analysis**
 - **Module 8: Sleep Tracker & Digital Wellbeing Monitor**
 - **Module 9: Guided Breathing, Meditation, CBT Exercises & Therapeutic Games**
 - **Module 10: Emergency & Crisis Intervention System**

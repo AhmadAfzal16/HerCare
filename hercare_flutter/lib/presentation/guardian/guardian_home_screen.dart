@@ -114,7 +114,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
                 unreadAlerts: provider.unreadAlertCount,
                 onDashboard: () => context.push(AppRoutes.guardianDashboard),
                 onReports: () => context.push(AppRoutes.reports),
-                onConnection: () => context.push(AppRoutes.guardianLink),
+                onChat: () => context.push(AppRoutes.secureChat),
               ),
               const SizedBox(height: 22),
               _Recommendations(
@@ -377,14 +377,14 @@ class _QuickActions extends StatelessWidget {
     required this.unreadAlerts,
     required this.onDashboard,
     required this.onReports,
-    required this.onConnection,
+    required this.onChat,
   });
 
   final bool isUrdu;
   final int unreadAlerts;
   final VoidCallback onDashboard;
   final VoidCallback onReports;
-  final VoidCallback onConnection;
+  final VoidCallback onChat;
 
   @override
   Widget build(BuildContext context) {
@@ -405,11 +405,11 @@ class _QuickActions extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         _ActionTile(
-          icon: Icons.link_rounded,
-          label: isUrdu ? 'ربط' : 'Connection',
-          color: AppColors.accent,
+          icon: Icons.forum_outlined,
+          label: isUrdu ? 'چیٹ' : 'Chat',
+          color: AppColors.success,
           badge: unreadAlerts,
-          onTap: onConnection,
+          onTap: onChat,
         ),
       ],
     );

@@ -41,6 +41,22 @@ class QuickActionsRow extends StatelessWidget {
         onTap: () {},
       ),
       _QuickAction(
+        icon: '🤝',
+        labelEn: 'Support Chat',
+        labelUr: 'سپورٹ چیٹ',
+        bg: AppColors.successContainer,
+        iconColor: AppColors.success,
+        onTap: () => context.push(AppRoutes.secureChat),
+      ),
+      _QuickAction(
+        icon: '📈',
+        labelEn: 'Risk Insights',
+        labelUr: 'خطرے کی بصیرت',
+        bg: const Color(0xFFEDE9FE),
+        iconColor: AppColors.primary,
+        onTap: () => context.push(AppRoutes.riskInsights),
+      ),
+      _QuickAction(
         icon: '🆘',
         labelEn: 'Crisis Help',
         labelUr: 'فوری مدد',
@@ -110,7 +126,7 @@ class _ActionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: action.iconColor.withOpacity(0.12),
+              color: action.iconColor.withValues(alpha: 0.12),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

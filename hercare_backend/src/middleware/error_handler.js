@@ -13,6 +13,11 @@ const SENSITIVE_FIELDS = new Set([
   'transcript',
   'search',
   'query',
+  'answers',
+  'notification_text',
+  'message',
+  'preview',
+  'package_name',
 ]);
 
 function redactSensitive(value) {

@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/risk_provider.dart';
 import 'widgets/home_header.dart';
 import 'widgets/mood_hero_card.dart';
 import 'widgets/wellbeing_grid.dart';
@@ -38,6 +39,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _navIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => context.read<RiskProvider>().syncIfDue(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +119,7 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    const items = [
       _NavItem(
         icon: Icons.home_rounded,
         labelEn: 'Home',
@@ -190,9 +199,8 @@ class _BottomNav extends StatelessWidget {
                           color: selected
                               ? AppColors.primary
                               : AppColors.textSecondary,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w400,
                           fontSize: 10,
                         ),
                         maxLines: 1,

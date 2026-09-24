@@ -11,6 +11,9 @@ import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/guardian_provider.dart';
 import 'providers/mood_provider.dart';
+import 'providers/screening_provider.dart';
+import 'providers/risk_provider.dart';
+import 'providers/chat_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +49,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => GuardianProvider()),
         ChangeNotifierProvider(create: (_) => MoodProvider()),
+        ChangeNotifierProvider(create: (_) => ScreeningProvider()),
+        ChangeNotifierProvider(create: (_) => RiskProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: const HerCareApp(),
     ),

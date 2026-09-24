@@ -8,6 +8,9 @@ const authRoutes     = require('./modules/auth/auth.routes');
 const guardianRoutes = require('./modules/guardian/guardian.routes');
 const onboardingRoutes = require('./modules/onboarding/onboarding.routes');
 const moodRoutes = require('./modules/mood/mood.routes');
+const screeningRoutes = require('./modules/screening/screening.routes');
+const riskRoutes = require('./modules/risk/risk.routes');
+const chatRoutes = require('./modules/chat/chat.routes');
 const { errorHandler } = require('./middleware/error_handler');
 const { query } = require('./config/database');
 const logger = require('./utils/logger');
@@ -89,8 +92,10 @@ app.use(`${API_PREFIX}/auth`,     authRoutes);
 app.use(`${API_PREFIX}/guardian`, guardianRoutes);
 app.use(`${API_PREFIX}/onboarding`, onboardingRoutes);
 app.use(`${API_PREFIX}/mood`, moodRoutes);
+app.use(`${API_PREFIX}/screening`, screeningRoutes);
+app.use(`${API_PREFIX}/risk`, riskRoutes);
+app.use(`${API_PREFIX}/chat`, chatRoutes);
 // Future modules mount here:
-// app.use(`${API_PREFIX}/screening`, screeningRoutes); // Phase 1
 // app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
 
 // ─── 404 ───────────────────────────────────────────────────────────────────

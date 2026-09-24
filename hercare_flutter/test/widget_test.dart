@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:hercare/main.dart';
+import 'package:hercare/providers/auth_provider.dart';
+import 'package:hercare/providers/chat_provider.dart';
+import 'package:hercare/providers/guardian_provider.dart';
+import 'package:hercare/providers/language_provider.dart';
+import 'package:hercare/providers/mood_provider.dart';
+import 'package:hercare/providers/risk_provider.dart';
+import 'package:hercare/providers/screening_provider.dart';
+import 'package:hercare/providers/theme_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const HerCareApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('HerCare app shell starts with all feature providers',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(const {'app_language': 'en'});
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => LanguageProvider()),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => GuardianProvider()),
+          ChangeNotifierProvider(create: (_) => MoodProvider()),
+          ChangeNotifierProvider(create: (_) => ScreeningProvider()),
+          ChangeNotifierProvider(create: (_) => RiskProvider()),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ],
+        child: const HerCareApp(),
+      ),
+    );
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }
