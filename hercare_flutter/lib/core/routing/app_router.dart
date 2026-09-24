@@ -12,6 +12,9 @@ import '../../presentation/auth/account_type_screen.dart';
 import '../../presentation/home/home_screen.dart';
 import '../../presentation/epds/epds_screen.dart';
 import '../../presentation/epds/epds_result_screen.dart';
+import '../../presentation/epds/screening_history_screen.dart';
+import '../../presentation/risk/risk_insights_screen.dart';
+import '../../data/models/screening_models.dart';
 import '../../presentation/notifications/notifications_screen.dart';
 import '../../presentation/privacy/privacy_screen.dart';
 import '../../presentation/settings/settings_screen.dart';
@@ -23,6 +26,7 @@ import '../../presentation/guardian/guardian_home_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../presentation/mood/mood_journal_screen.dart';
 import '../../presentation/crisis/crisis_support_screen.dart';
+import '../../presentation/chat/secure_chat_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -39,7 +43,10 @@ abstract final class AppRoutes {
   static const String home = '/home'; // Phase 2
   static const String guardianHome = '/guardian-home';
   static const String epds = '/epds'; // Phase 1
+  static const String phq9 = '/phq9';
   static const String epdsResult = '/epds-result'; // Phase 1
+  static const String screeningHistory = '/screening-history';
+  static const String riskInsights = '/risk-insights';
   static const String notifications = '/notifications';
   static const String privacy = '/privacy';
   static const String settings = '/settings';
@@ -52,6 +59,7 @@ abstract final class AppRoutes {
   static const String journal = '/journal';
   static const String chatbot = '/chatbot'; // Phase 2
   static const String crisis = '/crisis'; // Phase 3
+  static const String secureChat = '/secure-chat';
 }
 
 abstract final class AppRouter {
@@ -143,16 +151,44 @@ abstract final class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.phq9,
+        name: 'phq9',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const EpdsScreen(instrumentType: 'phq9'),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.epdsResult,
         name: 'epds-result',
-        pageBuilder: (_, state) {
-          final score = state.extra as int? ?? 0;
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: EpdsResultScreen(score: score),
-            transitionsBuilder: _fadeSlideTransition,
-          );
-        },
+        redirect: (_, state) =>
+            state.extra is ScreeningAssessment ? null : AppRoutes.epds,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: EpdsResultScreen(
+            assessment: state.extra! as ScreeningAssessment,
+          ),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.screeningHistory,
+        name: 'screening-history',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ScreeningHistoryScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.riskInsights,
+        name: 'risk-insights',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const RiskInsightsScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
       ),
       GoRoute(
         path: AppRoutes.notifications,
@@ -250,6 +286,15 @@ abstract final class AppRouter {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const CrisisSupportScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.secureChat,
+        name: 'secure-chat',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SecureChatScreen(),
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),
