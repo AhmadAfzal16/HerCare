@@ -64,6 +64,25 @@ This document is intended for the next AI Agent taking over development. It cont
 - Added responsive Urdu/English Flutter chat UI for both roles, compact-screen protection, empty/unlinked/error states, privacy messaging, safety escalation sheet, and mother/guardian navigation entry points.
 - Migration `006_secure_chat.sql` was applied successfully. Backend tests, focused Flutter tests, a 320x480 overflow test, and a real authenticated mother-to-guardian encrypted chat/revocation flow pass.
 
+### **Module 9: Guided Breathing, Meditation, CBT & Therapeutic Games**
+- **Status:** **IMPLEMENTED PRODUCTION FOUNDATION**
+- Added three animated breathing guides (4-7-8, box, diaphragmatic) and adjustable 3/5/10/15-minute body scan, progressive muscle relaxation, and mindfulness sessions.
+- Added four private CBT tools: thought challenging, behavior planning, worry time, and 5-4-3-2-1 grounding. Worksheet text is deliberately never persisted or uploaded.
+- Added three pure-Flutter mini-games (four-pair memory match, breathing bubbles, and color calm). They use no game engine, remote download, or large media assets.
+- Added personalized suggestions using the latest available mood, sleep-quality, Android telemetry, screening safety state, and recent activity. Safety state always routes to crisis support rather than ordinary engagement content.
+- Added aggregate session history, before/after mood benefit tracking, strict activity allow-listing, idempotent completion requests, and an offline queue capped at 100 aggregate records.
+- Migration `007_therapeutic_activities.sql` was applied locally. The migration runner now treats LF/CRLF as equivalent while still rejecting substantive edits to applied SQL.
+
+### **Firebase Guardian Push Notifications**
+- **Status:** **IMPLEMENTED AND ACTIVE FOR LOCAL ANDROID TESTING**
+- Android Firebase app `hercare16` is now connected using package `com.hercare.app`; the official Google Services Gradle plugin processes `android/app/google-services.json`, and a configured debug APK builds successfully.
+- Added Firebase Cloud Messaging to Flutter with permission handling, token refresh, sign-in registration, logout revocation, foreground notices, background/terminated delivery, and notification-tap routing.
+- Replaced the hard-coded Notifications screen with live Guardian alerts and compact responsive cards.
+- Added encrypted multi-device token storage and a PostgreSQL transactional outbox. All Guardian alert sources automatically queue delivery; temporary Firebase failures retry with backoff and invalid device tokens are disabled.
+- Push payloads are privacy-safe and never contain raw journal entries, transcripts, or chat messages. Active link and Tier 2 consent are rechecked immediately before delivery.
+- Migration `008_push_notifications.sql` was applied locally. Backend lint, all 34 backend tests, all 18 Flutter tests, and the Android debug APK build pass.
+- Complete deployment instructions are in `FIREBASE_PUSH_SETUP.md`. The local ignored `.env` points to the Admin key outside the repository, `FIREBASE_PUSH_ENABLED=true`, and Google credential exchange was verified successfully. Production must inject the Admin credential through its secret/environment system rather than copying the local Downloads path.
+
 ---
 
 ## 2. What Is Remaining (According to Scope)
@@ -73,7 +92,6 @@ The following modules from the `hercare_scope_extracted.txt` document have NOT b
 - **Module 6: AI Emotional Support Chatbot (Hum-Raaz — 24/7)**
   - Gemini API integration with CBT prompt engineering and self-harm detection.
 - **Module 8: Sleep Tracker & Digital Wellbeing Monitor**
-- **Module 9: Guided Breathing, Meditation, CBT Exercises & Therapeutic Games**
 - **Module 10: Emergency & Crisis Intervention System**
 - **Module 11: Islamic & Cultural Content Recommendation & Psychoeducation Engine**
 - **Module 12: Anonymous Peer Support Community**

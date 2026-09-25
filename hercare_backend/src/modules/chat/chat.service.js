@@ -3,6 +3,7 @@ const { query, withTransaction } = require('../../config/database');
 const { AppError } = require('../../middleware/error_handler');
 const { encryptMessage, decryptMessage } = require('./chat_crypto');
 const { analyzeMessage } = require('./chat_analysis');
+const pushNotifications = require('../notifications/notification.service');
 
 async function resolveConversation(db, userId, role, create = true) {
   if (!['mother', 'guardian'].includes(role)) throw new AppError('Chat is not available for this account.', 403);
@@ -93,7 +94,7 @@ async function listMessages(userId, role, { before, after, limit = 30 }) {
 async function sendMessage(userId, role, data) {
   const content = data.content.trim();
   const analysis = analyzeMessage(content);
-  return withTransaction(async (client) => {
+  const message = await withTransaction(async (client) => {
     const conversation = await resolveConversation(client, userId, role);
     const id = uuidv4();
     const inserted = await client.query(
@@ -140,6 +141,10 @@ async function sendMessage(userId, role, data) {
     }
     return publicMessage(row, userId);
   });
+  if (role === 'mother' && analysis.containsDanger) {
+    await pushNotifications.processPendingSafely();
+  }
+  return message;
 }
 
 async function markRead(userId, role) {

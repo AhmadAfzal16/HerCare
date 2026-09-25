@@ -8,6 +8,7 @@ const {
 } = require('./journal_crypto');
 const { analyzeJournal } = require('./journal_analysis');
 const voiceService = require('./voice.service');
+const pushNotifications = require('../notifications/notification.service');
 
 function compositeScore(data) {
   return Number((
@@ -241,6 +242,9 @@ async function createTextJournal(motherId, data) {
     }
     return inserted.rows[0];
   });
+  if (analysis.containsDanger) {
+    await pushNotifications.processPendingSafely();
+  }
   return publicJournal(row);
 }
 
@@ -378,6 +382,9 @@ async function completeVoiceJournal(motherId, journalId) {
       }
       return result.rows[0];
     });
+    if (analysis.containsDanger) {
+      await pushNotifications.processPendingSafely();
+    }
     return publicJournal(updated);
   } catch (error) {
     await query(

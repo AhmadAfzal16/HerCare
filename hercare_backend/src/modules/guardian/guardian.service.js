@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { query, withTransaction } = require('../../config/database');
 const { AppError } = require('../../middleware/error_handler');
 const logger = require('../../utils/logger');
+const pushNotifications = require('../notifications/notification.service');
 
 const INVITE_TTL_HOURS = 24;
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -400,6 +401,7 @@ async function notifyGuardian(motherId, riskLevel, reportId = null) {
      VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
     [motherId, links[0].guardian_id, reportId, alertType, message],
   );
+  await pushNotifications.processPendingSafely();
   logger.warn(`Guardian risk alert created for guardian ${links[0].guardian_id}`);
 }
 

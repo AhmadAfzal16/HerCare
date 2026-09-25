@@ -11,6 +11,8 @@ const moodRoutes = require('./modules/mood/mood.routes');
 const screeningRoutes = require('./modules/screening/screening.routes');
 const riskRoutes = require('./modules/risk/risk.routes');
 const chatRoutes = require('./modules/chat/chat.routes');
+const therapyRoutes = require('./modules/therapy/therapy.routes');
+const notificationRoutes = require('./modules/notifications/notification.routes');
 const { errorHandler } = require('./middleware/error_handler');
 const { query } = require('./config/database');
 const logger = require('./utils/logger');
@@ -95,6 +97,8 @@ app.use(`${API_PREFIX}/mood`, moodRoutes);
 app.use(`${API_PREFIX}/screening`, screeningRoutes);
 app.use(`${API_PREFIX}/risk`, riskRoutes);
 app.use(`${API_PREFIX}/chat`, chatRoutes);
+app.use(`${API_PREFIX}/therapy`, therapyRoutes);
+app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 // Future modules mount here:
 // app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
 
