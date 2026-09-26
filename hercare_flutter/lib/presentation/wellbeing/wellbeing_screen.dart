@@ -382,7 +382,7 @@ class _MoodHistoryCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.insights_rounded,
+                const Icon(Icons.insights_rounded,
                     color: AppColors.secondary, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
@@ -468,7 +468,7 @@ class _SleepStatsCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.tips_and_updates_outlined,
+                const Icon(Icons.tips_and_updates_outlined,
                     color: AppColors.accent, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
@@ -560,7 +560,7 @@ class _HumRaazCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child:
-                Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
+                const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(

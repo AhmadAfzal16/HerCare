@@ -39,12 +39,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _navIndex = 0;
+  final Set<int> _visitedTabs = {0};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<RiskProvider>().syncIfDue(),
+      (_) {
+        if (mounted) context.read<RiskProvider>().syncIfDue();
+      },
     );
   }
 
@@ -64,12 +67,18 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: context.hcBg,
       body: IndexedStack(
         index: _navIndex,
-        children: pages,
+        children: [
+          for (var i = 0; i < pages.length; i++)
+            _visitedTabs.contains(i) ? pages[i] : const SizedBox.shrink(),
+        ],
       ),
       bottomNavigationBar: _BottomNav(
         currentIndex: _navIndex,
         isUrdu: isUrdu,
-        onTap: (i) => setState(() => _navIndex = i),
+        onTap: (i) => setState(() {
+          _visitedTabs.add(i);
+          _navIndex = i;
+        }),
       ),
     );
   }

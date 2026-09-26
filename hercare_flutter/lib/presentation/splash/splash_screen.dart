@@ -176,7 +176,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'You are not alone.',
                         style: AppTextStyles.bodyLarge.copyWith(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -184,7 +184,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'آپ اکیلی نہیں ہیں۔',
                         style: AppTextStyles.urduBody.copyWith(
-                          color: Colors.white.withOpacity(0.75),
+                          color: Colors.white.withValues(alpha: 0.75),
                           fontSize: 16,
                         ),
                         textDirection: TextDirection.rtl,
@@ -201,7 +201,7 @@ class _SplashScreenState extends State<SplashScreen>
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -222,15 +222,15 @@ class _LogoWidget extends StatelessWidget {
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.white.withOpacity(0.35),
+          color: Colors.white.withValues(alpha: 0.35),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),

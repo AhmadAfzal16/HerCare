@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 /// Animated step progress indicator for the onboarding wizard.
@@ -35,7 +34,7 @@ class OnboardingStepIndicator extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? activeColor
-                      : AppColors.outline.withOpacity(0.3),
+                      : AppColors.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -60,13 +59,13 @@ class OnboardingStepIndicator extends StatelessWidget {
                 border: Border.all(
                   color: isCompleted || isCurrent
                       ? activeColor
-                      : AppColors.outline.withOpacity(0.4),
+                      : AppColors.outline.withValues(alpha: 0.4),
                   width: 2,
                 ),
                 boxShadow: isCurrent
                     ? [
                         BoxShadow(
-                          color: activeColor.withOpacity(0.3),
+                          color: activeColor.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),

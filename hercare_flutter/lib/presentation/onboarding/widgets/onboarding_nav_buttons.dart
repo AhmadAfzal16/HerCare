@@ -54,7 +54,7 @@ class OnboardingNavButtons extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                side: BorderSide(color: stepColor.withOpacity(0.5), width: 1.5),
+                side: BorderSide(color: stepColor.withValues(alpha: 0.5), width: 1.5),
               ),
               child: Icon(
                 isUrdu
@@ -74,14 +74,14 @@ class OnboardingNavButtons extends StatelessWidget {
               height: 54,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [stepColor, stepColor.withOpacity(0.75)],
+                  colors: [stepColor, stepColor.withValues(alpha: 0.75)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: stepColor.withOpacity(0.35),
+                    color: stepColor.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),

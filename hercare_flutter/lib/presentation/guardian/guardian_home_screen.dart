@@ -176,7 +176,7 @@ class _ConnectionHero extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: (isLinked ? AppColors.accent : AppColors.primary)
-                .withOpacity(0.22),
+                .withValues(alpha: 0.22),
             blurRadius: 22,
             offset: const Offset(0, 9),
           ),
@@ -190,7 +190,7 @@ class _ConnectionHero extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
+                  color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
@@ -203,7 +203,7 @@ class _ConnectionHero extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
+                  color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -236,7 +236,7 @@ class _ConnectionHero extends StatelessWidget {
                     ? 'ماں کی طرف سے بھیجا گیا 12 حروف کا دعوتی کوڈ درج کریں۔'
                     : 'Enter the private 12-character invitation code shared by the mother.'),
             style: AppTextStyles.bodySmall.copyWith(
-              color: Colors.white.withOpacity(0.86),
+              color: Colors.white.withValues(alpha: 0.86),
             ),
           ),
           if (!isLinked) ...[
@@ -351,7 +351,7 @@ class _Metric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -500,7 +500,7 @@ class _Recommendations extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primaryContainer.withOpacity(0.45),
+            color: AppColors.primaryContainer.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
@@ -564,7 +564,7 @@ class _RecentAlerts extends StatelessWidget {
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               color: unread
-                  ? AppColors.warningContainer.withOpacity(0.55)
+                  ? AppColors.warningContainer.withValues(alpha: 0.55)
                   : context.hcSurface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: context.hcOutline),
@@ -678,7 +678,7 @@ class _PrivacyNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.successContainer.withOpacity(0.55),
+        color: AppColors.successContainer.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

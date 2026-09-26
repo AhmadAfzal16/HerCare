@@ -12,6 +12,7 @@ class ChatProvider extends ChangeNotifier {
   bool _loading = false;
   bool _sending = false;
   bool _loadingOlder = false;
+  bool _refreshing = false;
   bool _hasMore = true;
   String? _error;
 
@@ -24,6 +25,7 @@ class ChatProvider extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> initialize() async {
+    if (_loading) return;
     _loading = true;
     _error = null;
     notifyListeners();
@@ -64,19 +66,26 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> refreshNew() async {
-    if (_status?.available != true || _loading || _sending) return;
+    if (_status?.available != true || _loading || _sending || _refreshing) {
+      return;
+    }
+    _refreshing = true;
     try {
       // Refresh the recent window, not only newer timestamps. This also
       // updates delivery/read receipts and cannot miss same-timestamp rows.
       final incoming = await _service.getMessages(limit: 30);
       if (incoming.isNotEmpty) {
         _merge(incoming);
-        await _service.markRead();
+        if (incoming.any((message) => !message.isMine && !message.isRead)) {
+          await _service.markRead();
+        }
         notifyListeners();
       }
     } catch (error) {
       // Background refresh is deliberately quiet; manual retry remains visible.
-      debugPrint('[HerCare chat] refresh failed: $error');
+      debugPrint('[HerCare chat] refresh failed');
+    } finally {
+      _refreshing = false;
     }
   }
 
@@ -85,7 +94,8 @@ class ChatProvider extends ChangeNotifier {
     _loadingOlder = true;
     notifyListeners();
     try {
-      final older = await _service.getMessages(before: _messages.first.createdAt);
+      final older =
+          await _service.getMessages(before: _messages.first.createdAt);
       _hasMore = older.length == 30;
       _merge(older);
     } catch (error) {
@@ -98,13 +108,20 @@ class ChatProvider extends ChangeNotifier {
 
   void _merge(Iterable<ChatMessage> values) {
     final byId = {for (final message in _messages) message.id: message};
-    for (final message in values) { byId[message.id] = message; }
+    for (final message in values) {
+      byId[message.id] = message;
+    }
     _messages
       ..clear()
       ..addAll(byId.values)
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
-  void clearError() { _error = null; notifyListeners(); }
-  String _clean(Object error) => error.toString().replaceFirst('Exception: ', '');
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+
+  String _clean(Object error) =>
+      error.toString().replaceFirst('Exception: ', '');
 }

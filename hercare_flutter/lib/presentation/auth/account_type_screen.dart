@@ -241,7 +241,7 @@ class _AccountTypeCard extends StatelessWidget {
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: color.withOpacity(0.14),
+                      color: color.withValues(alpha: 0.14),
                       blurRadius: 18,
                       offset: const Offset(0, 7),
                     ),
@@ -254,7 +254,7 @@ class _AccountTypeCard extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: color, size: 28),

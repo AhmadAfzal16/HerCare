@@ -7,14 +7,15 @@ class MoodProvider extends ChangeNotifier {
   MoodProvider({MoodService? service}) : _service = service ?? MoodService();
 
   final MoodService _service;
-  bool _isLoading = false;
+  int _activeRequests = 0;
+  int _searchGeneration = 0;
   String? _error;
   MoodCheckin? _today;
   MoodSummary? _summary;
   List<MoodCheckin> _history = const [];
   List<JournalEntry> _journals = const [];
 
-  bool get isLoading => _isLoading;
+  bool get isLoading => _activeRequests > 0;
   String? get error => _error;
   MoodCheckin? get today => _today;
   MoodSummary? get summary => _summary;
@@ -65,7 +66,14 @@ class MoodProvider extends ChangeNotifier {
               MoodService.dateKey(DateTime.now()),
         ),
       ];
-      if (_today!.isSynced) _summary = await _service.getSummary();
+      if (_today!.isSynced) {
+        try {
+          _summary = await _service.getSummary();
+        } catch (_) {
+          // The check-in is already saved; a summary failure is not a save failure.
+          _summary = null;
+        }
+      }
       return true;
     } catch (error) {
       _error = _message(error);
@@ -112,13 +120,15 @@ class MoodProvider extends ChangeNotifier {
   }
 
   Future<void> searchJournals(String query) async {
+    final generation = ++_searchGeneration;
     _start();
     try {
-      _journals = query.trim().isEmpty
+      final journals = query.trim().isEmpty
           ? await _service.getJournals()
           : await _service.searchJournals(query.trim());
+      if (generation == _searchGeneration) _journals = journals;
     } catch (error) {
-      _error = _message(error);
+      if (generation == _searchGeneration) _error = _message(error);
     } finally {
       _finish();
     }
@@ -144,13 +154,13 @@ class MoodProvider extends ChangeNotifier {
   }
 
   void _start() {
-    _isLoading = true;
+    _activeRequests++;
     _error = null;
     notifyListeners();
   }
 
   void _finish() {
-    _isLoading = false;
+    _activeRequests--;
     notifyListeners();
   }
 

@@ -65,9 +65,9 @@ class LanguageSelectionScreen extends StatelessWidget {
                   'پہلے سے اکاؤنٹ ہے؟ لاگ ان کریں',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     decoration: TextDecoration.underline,
-                    decorationColor: Colors.white.withOpacity(0.5),
+                    decorationColor: Colors.white.withValues(alpha: 0.5),
                     height: 1.8,
                   ),
                 ),
@@ -83,7 +83,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                   'آپ اسے کسی بھی وقت ترتیبات میں تبدیل کر سکتی ہیں۔',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.65),
+                    color: Colors.white.withValues(alpha: 0.65),
                     height: 1.8,
                   ),
                 ),
@@ -103,7 +103,7 @@ class LanguageSelectionScreen extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: const Icon(
@@ -125,7 +125,7 @@ class LanguageSelectionScreen extends StatelessWidget {
         Text(
           'Select Your Language',
           style: AppTextStyles.titleMedium.copyWith(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -133,7 +133,7 @@ class LanguageSelectionScreen extends StatelessWidget {
         Text(
           'زبان منتخب کریں',
           style: AppTextStyles.urduBody.copyWith(
-            color: Colors.white.withOpacity(0.65),
+            color: Colors.white.withValues(alpha: 0.65),
             fontSize: 16,
           ),
           textDirection: TextDirection.rtl,
@@ -216,10 +216,10 @@ class _LanguageCardState extends State<_LanguageCard>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
+            color: Colors.white.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withOpacity(0.35),
+              color: Colors.white.withValues(alpha: 0.35),
               width: 1.5,
             ),
           ),
@@ -252,10 +252,10 @@ class _LanguageCardState extends State<_LanguageCard>
                       widget.subtitle,
                       style: widget.isUrdu
                           ? AppTextStyles.urduLabel.copyWith(
-                              color: Colors.white.withOpacity(0.75),
+                              color: Colors.white.withValues(alpha: 0.75),
                             )
                           : AppTextStyles.bodySmall.copyWith(
-                              color: Colors.white.withOpacity(0.75),
+                              color: Colors.white.withValues(alpha: 0.75),
                             ),
                       textDirection:
                           widget.isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -268,7 +268,7 @@ class _LanguageCardState extends State<_LanguageCard>
                 widget.isUrdu
                     ? Icons.arrow_back_ios_rounded
                     : Icons.arrow_forward_ios_rounded,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 size: 18,
               ),
             ],

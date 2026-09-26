@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -123,8 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (v) {
                     final val = v?.trim() ?? '';
-                    if (val.isEmpty)
+                    if (val.isEmpty) {
                       return isUrdu ? 'فون نمبر ضروری ہے' : 'Required';
+                    }
                     if (!RegExp(r'^[0-9]{10}$').hasMatch(val)) {
                       return isUrdu ? '10 ہندسے' : '10 digits';
                     }
@@ -197,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                            color: AppColors.primary.withOpacity(0.35),
+                            color: AppColors.primary.withValues(alpha: 0.35),
                             blurRadius: 16,
                             offset: const Offset(0, 6)),
                       ],

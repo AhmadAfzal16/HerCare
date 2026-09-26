@@ -296,7 +296,7 @@ class _InfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          Icon(Icons.lock_outline_rounded,
+          const Icon(Icons.lock_outline_rounded,
               size: 18, color: AppColors.primary),
           const SizedBox(width: 10),
           Expanded(

@@ -11,7 +11,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme(
+      colorScheme: const ColorScheme(
         brightness: Brightness.light,
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
@@ -95,7 +95,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.outline.withOpacity(0.4)),
+          borderSide: BorderSide(color: AppColors.outline.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -132,7 +132,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: AppColors.outline.withOpacity(0.15),
+            color: AppColors.outline.withValues(alpha: 0.15),
           ),
         ),
         margin: EdgeInsets.zero,
@@ -163,7 +163,7 @@ class AppTheme {
 
       // ─── Divider ──────────────────────────────────────────────────────────
       dividerTheme: DividerThemeData(
-        color: AppColors.outline.withOpacity(0.2),
+        color: AppColors.outline.withValues(alpha: 0.2),
         thickness: 1,
         space: 1,
       ),
@@ -199,16 +199,16 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme(
+      colorScheme: const ColorScheme(
         brightness: Brightness.dark,
         primary: AppColors.primaryLight,
         onPrimary: Colors.white,
-        primaryContainer: const Color(0xFF3B1D8A),
-        onPrimaryContainer: const Color(0xFFEDE9FE),
+        primaryContainer: Color(0xFF3B1D8A),
+        onPrimaryContainer: Color(0xFFEDE9FE),
         secondary: AppColors.secondaryLight,
         onSecondary: Colors.white,
-        secondaryContainer: const Color(0xFF7B1049),
-        onSecondaryContainer: const Color(0xFFFCE7F3),
+        secondaryContainer: Color(0xFF7B1049),
+        onSecondaryContainer: Color(0xFFFCE7F3),
         error: AppColors.error,
         onError: Colors.white,
         surface: darkSurface,
@@ -230,7 +230,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: AppTextStyles.titleMedium.copyWith(color: darkText),
-        iconTheme: IconThemeData(color: darkText),
+        iconTheme: const IconThemeData(color: darkText),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -264,7 +264,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: darkOutline),
+          borderSide: const BorderSide(color: darkOutline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -279,7 +279,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: darkOutline),
+          side: const BorderSide(color: darkOutline),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -293,7 +293,7 @@ class AppTheme {
                 : darkSurfaceVar),
       ),
 
-      dividerTheme: DividerThemeData(color: darkOutline, thickness: 1, space: 1),
+      dividerTheme: const DividerThemeData(color: darkOutline, thickness: 1, space: 1),
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: darkSurface,

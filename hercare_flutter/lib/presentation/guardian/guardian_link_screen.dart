@@ -36,6 +36,7 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final role = context.read<AuthProvider>().user?.role;
       final guardian = context.read<GuardianProvider>();
       guardian.loadLink();
@@ -52,6 +53,7 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
 
   Future<void> _copyCode(String code) async {
     await Clipboard.setData(ClipboardData(text: code));
+    if (!mounted) return;
     setState(() => _codeCopied = true);
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) setState(() => _codeCopied = false);
@@ -78,8 +80,8 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
     if (mounted) {
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('✅ Successfully linked!'),
+          const SnackBar(
+            content: Text('✅ Successfully linked!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -111,7 +113,7 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Revoke',
+            child: const Text('Revoke',
                 style: TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
@@ -181,14 +183,14 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.link_rounded,
-                  color: Colors.white.withOpacity(0.8), size: 32),
+                  color: Colors.white.withValues(alpha: 0.8), size: 32),
               const SizedBox(height: 12),
               Text(
                 isUrdu
                     ? 'یہ کوڈ اپنے سرپرست کے ساتھ شیئر کریں'
                     : 'Share this code with your guardian',
                 style: AppTextStyles.bodySmall
-                    .copyWith(color: Colors.white.withOpacity(0.85)),
+                    .copyWith(color: Colors.white.withValues(alpha: 0.85)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -212,9 +214,9 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.4)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -258,7 +260,7 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
                       ? 'یہ کوڈ 24 گھنٹے یا استعمال تک درست ہے'
                       : 'Valid for 24 hours or until used',
                   style: AppTextStyles.labelSmall
-                      .copyWith(color: Colors.white.withOpacity(0.7)),
+                      .copyWith(color: Colors.white.withValues(alpha: 0.7)),
                 ),
               ],
               const SizedBox(height: 20),
@@ -459,7 +461,7 @@ class _GuardianLinkScreenState extends State<GuardianLinkScreen> {
 
               // Relationship dropdown
               DropdownButtonFormField<String>(
-                value: _relationship,
+                initialValue: _relationship,
                 dropdownColor: context.hcSurface,
                 decoration: InputDecoration(
                   labelText: isUrdu ? 'رشتہ' : 'Relationship',
@@ -535,7 +537,7 @@ class _ActiveLinkCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -543,7 +545,7 @@ class _ActiveLinkCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
+              color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.shield_rounded, color: AppColors.primary),
@@ -571,7 +573,7 @@ class _ActiveLinkCard extends StatelessWidget {
             onPressed: onRevoke,
             child: Text(
               isUrdu ? 'منسوخ' : 'Revoke',
-              style: TextStyle(color: AppColors.error, fontSize: 12),
+              style: const TextStyle(color: AppColors.error, fontSize: 12),
             ),
           ),
         ],

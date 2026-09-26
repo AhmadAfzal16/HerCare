@@ -46,7 +46,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
+            color: AppColors.primary.withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -63,7 +63,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
               height: 110,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -72,7 +72,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
             top: 16,
             child: Icon(
               Icons.favorite_rounded,
-              color: Colors.white.withOpacity(0.20),
+              color: Colors.white.withValues(alpha: 0.20),
               size: 52,
             ),
           ),
@@ -90,7 +90,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.22),
+                    color: Colors.white.withValues(alpha: 0.22),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -127,7 +127,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                           ? _moodLabelsUr[selectedMood]
                           : _moodLabelsEn[selectedMood]),
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.80),
+                    color: Colors.white.withValues(alpha: 0.80),
                     fontSize: 13,
                   ),
                   textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -149,18 +149,18 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                         height: selected ? 52 : 46,
                         decoration: BoxDecoration(
                           color: selected
-                              ? Colors.white.withOpacity(0.30)
-                              : Colors.white.withOpacity(0.15),
+                              ? Colors.white.withValues(alpha: 0.30)
+                              : Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: selected
                               ? Border.all(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   width: 2)
                               : null,
                           boxShadow: selected
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
+                                    color: Colors.black.withValues(alpha: 0.15),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   )
