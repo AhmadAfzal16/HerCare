@@ -1,11 +1,14 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 
 import '../../presentation/splash/splash_screen.dart';
 import '../../presentation/language_selection/language_selection_screen.dart';
 import '../../presentation/onboarding/onboarding_wizard.dart';
 import '../../presentation/auth/register_screen.dart';
 import '../../presentation/auth/login_screen.dart';
+import '../../presentation/auth/account_type_screen.dart';
 import '../../presentation/home/home_screen.dart';
 import '../../presentation/epds/epds_screen.dart';
 import '../../presentation/epds/epds_result_screen.dart';
@@ -16,6 +19,8 @@ import '../../presentation/profile/profile_screen.dart';
 import '../../presentation/guardian/guardian_link_screen.dart';
 import '../../presentation/guardian/guardian_dashboard_screen.dart';
 import '../../presentation/guardian/report_screen.dart';
+import '../../presentation/guardian/guardian_home_screen.dart';
+import '../../providers/auth_provider.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -27,9 +32,11 @@ abstract final class AppRoutes {
   static const String languageSelection = '/language';
   static const String onboarding = '/onboarding';
   static const String register = '/register';
+  static const String accountType = '/account-type';
   static const String login = '/login';
-  static const String home = '/home';           // Phase 2
-  static const String epds = '/epds';           // Phase 1
+  static const String home = '/home'; // Phase 2
+  static const String guardianHome = '/guardian-home';
+  static const String epds = '/epds'; // Phase 1
   static const String epdsResult = '/epds-result'; // Phase 1
   static const String notifications = '/notifications';
   static const String privacy = '/privacy';
@@ -39,8 +46,8 @@ abstract final class AppRoutes {
   static const String guardianLink = '/guardian-link';
   static const String guardianDashboard = '/guardian-dashboard';
   static const String reports = '/reports';
-  static const String chatbot = '/chatbot';     // Phase 2
-  static const String crisis = '/crisis';       // Phase 3
+  static const String chatbot = '/chatbot'; // Phase 2
+  static const String crisis = '/crisis'; // Phase 3
 }
 
 abstract final class AppRouter {
@@ -48,7 +55,7 @@ abstract final class AppRouter {
 
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
-    debugLogDiagnostics: true, // disable in release
+    debugLogDiagnostics: kDebugMode,
     routes: [
       GoRoute(
         path: AppRoutes.splash,
@@ -83,6 +90,19 @@ abstract final class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.accountType,
+        name: 'account-type',
+        redirect: (_, state) =>
+            state.extra is PendingRegistration ? null : AppRoutes.register,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: AccountTypeScreen(
+            registration: state.extra! as PendingRegistration,
+          ),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.login,
         name: 'login',
         pageBuilder: (_, state) => CustomTransitionPage(
@@ -96,7 +116,16 @@ abstract final class AppRouter {
         name: 'home',
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const HomeScreen(),
+          child: const _RoleAwareHome(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.guardianHome,
+        name: 'guardian-home',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const _RoleAwareHome(),
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),
@@ -220,6 +249,23 @@ abstract final class AppRouter {
       )),
       child: FadeTransition(opacity: animation, child: child),
     );
+  }
+}
+
+/// Keeps role-specific home interfaces separated even when an old bookmark or
+/// deep link points at the other role's route.
+class _RoleAwareHome extends StatelessWidget {
+  const _RoleAwareHome();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    if (user?.isGuardian == true) return const GuardianHomeScreen();
+    if (user?.isMother == true) return const HomeScreen();
+
+    // Splash restores the server session before normal navigation. This
+    // fallback avoids exposing either role interface during a direct deep link.
+    return const SplashScreen();
   }
 }
 
