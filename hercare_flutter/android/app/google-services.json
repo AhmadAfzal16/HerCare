@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692082827246",
+    "project_id": "hercare16",
+    "storage_bucket": "hercare16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692082827246:android:baf78b559ee0d7a0ba38ff",
+        "android_client_info": {
+          "package_name": "com.hercare.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZ2tf63hwTsH5YYq9Vx-MVndvwSB9JPGo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,8 @@
-package com.example.hercare
+package com.hercare.app
 
 import android.app.AppOpsManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.ComponentName
@@ -19,6 +21,24 @@ import kotlin.math.max
 
 class MainActivity : FlutterActivity() {
     private val channelName = "com.hercare/telemetry"
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    "hercare_urgent_alerts",
+                    "Urgent wellbeing alerts",
+                    NotificationManager.IMPORTANCE_HIGH,
+                ).apply {
+                    description = "Time-sensitive HerCare support notifications"
+                    enableVibration(true)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
+                },
+            )
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

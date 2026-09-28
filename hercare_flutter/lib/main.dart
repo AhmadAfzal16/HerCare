@@ -14,6 +14,8 @@ import 'providers/mood_provider.dart';
 import 'providers/screening_provider.dart';
 import 'providers/risk_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/therapy_provider.dart';
+import 'services/push_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +28,8 @@ Future<void> main() async {
     // ignore: avoid_print
     print('[HerCare] WARNING: .env not loaded: $e');
   }
+
+  await PushNotificationService.instance.initialize();
 
   // Lock to portrait mode
   await SystemChrome.setPreferredOrientations([
@@ -52,6 +56,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ScreeningProvider()),
         ChangeNotifierProvider(create: (_) => RiskProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => TherapyProvider()),
+        ChangeNotifierProvider.value(value: PushNotificationService.instance),
       ],
       child: const HerCareApp(),
     ),
@@ -67,6 +73,7 @@ class HerCareApp extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp.router(
+      scaffoldMessengerKey: PushNotificationService.messengerKey,
       title: 'HerCare',
       debugShowCheckedModeBanner: false,
 

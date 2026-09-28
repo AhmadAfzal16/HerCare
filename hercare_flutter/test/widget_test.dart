@@ -9,6 +9,7 @@ import 'package:hercare/providers/mood_provider.dart';
 import 'package:hercare/providers/risk_provider.dart';
 import 'package:hercare/providers/screening_provider.dart';
 import 'package:hercare/providers/theme_provider.dart';
+import 'package:hercare/providers/therapy_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,6 +31,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => ScreeningProvider()),
           ChangeNotifierProvider(create: (_) => RiskProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => TherapyProvider()),
         ],
         child: const HerCareApp(),
       ),

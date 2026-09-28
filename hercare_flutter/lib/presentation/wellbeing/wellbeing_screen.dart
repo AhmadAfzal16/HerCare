@@ -67,6 +67,15 @@ class WellbeingScreen extends StatelessWidget {
           RepaintBoundary(child: _SleepStatsCard(isUrdu: isUrdu)),
           const SizedBox(height: 24),
           _SectionHeader(
+            title: isUrdu ? 'سکون اور مشقیں' : 'Calm & Activities',
+            subtitle: isUrdu
+                ? 'سانس، مراقبہ، سی بی ٹی اور ہلکے کھیل'
+                : 'Breathing, meditation, CBT, and light games',
+          ),
+          const SizedBox(height: 12),
+          RepaintBoundary(child: _TherapyCard(isUrdu: isUrdu)),
+          const SizedBox(height: 24),
+          _SectionHeader(
             title: isUrdu ? 'ہم راز AI' : 'Hum-Raaz AI',
             subtitle: isUrdu
                 ? '24/7 ذہنی صحت کا ساتھی'
@@ -78,6 +87,58 @@ class WellbeingScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TherapyCard extends StatelessWidget {
+  const _TherapyCard({required this.isUrdu});
+  final bool isUrdu;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: context.hcSurface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: () => context.push(AppRoutes.therapy),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: _cardDecoration(context),
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.spa_rounded,
+                    color: AppColors.primary, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isUrdu
+                          ? 'مختصر آف لائن سرگرمیاں'
+                          : 'Short offline activities',
+                      style: AppTextStyles.titleSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isUrdu
+                          ? 'اپنے موڈ کے مطابق نرم مشق چنیں'
+                          : 'Choose a gentle activity for how you feel',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+            ]),
+          ),
+        ),
+      );
 }
 
 // Shared border-only card decoration.

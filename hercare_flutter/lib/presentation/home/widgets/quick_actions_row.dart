@@ -22,7 +22,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'سانس لیں',
         bg: AppColors.primaryContainer,
         iconColor: AppColors.primary,
-        onTap: () {},
+        onTap: () => context.push('${AppRoutes.breathing}?id=box_breathing'),
       ),
       _QuickAction(
         icon: '📓',
@@ -39,6 +39,14 @@ class QuickActionsRow extends StatelessWidget {
         bg: const Color(0xFFCFFAFE),
         iconColor: AppColors.accent,
         onTap: () {},
+      ),
+      _QuickAction(
+        icon: '🌿',
+        labelEn: 'Calm Tools',
+        labelUr: 'سکون کی مشقیں',
+        bg: AppColors.primaryContainer,
+        iconColor: AppColors.primary,
+        onTap: () => context.push(AppRoutes.therapy),
       ),
       _QuickAction(
         icon: '🤝',
