@@ -68,7 +68,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            padding: EdgeInsets.fromLTRB(20, isUrdu ? 12 : 18, 20, isUrdu ? 12 : 18),
             child: Column(
               crossAxisAlignment: isUrdu
                   ? CrossAxisAlignment.end
@@ -92,7 +92,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isUrdu ? 8 : 12),
 
                 // Title
                 Text(
@@ -100,11 +100,11 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                   style: AppTextStyles.titleLarge.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
-                    fontSize: 20,
+                    fontSize: isUrdu ? 16 : 20,
                   ),
                   textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isUrdu ? 2 : 4),
                 Text(
                   _selectedMood == null
                       ? (isUrdu ? 'موڈ لاگ کرنے کے لیے ٹیپ کریں' : 'Tap to log your mood')
@@ -117,7 +117,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                   ),
                   textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isUrdu ? 10 : 16),
 
                 // Emoji mood row — use Wrap to avoid RTL overflow
                 Wrap(
