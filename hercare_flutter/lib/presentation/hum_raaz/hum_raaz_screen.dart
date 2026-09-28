@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 
@@ -13,7 +14,7 @@ class HumRaazScreen extends StatelessWidget {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -43,7 +44,7 @@ class HumRaazScreen extends StatelessWidget {
                   ? 'یہ فیچر فیز 3 کا حصہ ہے۔'
                   : 'This feature is part of Phase 3.',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: context.hcTextSecondary,
               ),
             ),
           ],
