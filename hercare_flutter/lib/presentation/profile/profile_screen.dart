@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -19,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
     final user = authProvider.user;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -62,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
               Text(
                 (user.role).toUpperCase(),
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyMedium.copyWith(color: context.hcTextSecondary),
               ),
             ],
             const SizedBox(height: 32),
@@ -75,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
               title: isUrdu ? 'زبان کی ترجیحات' : 'Language Preferences',
               trailing: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: context.hcSurfaceVariant,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -160,7 +161,7 @@ class ProfileScreen extends StatelessWidget {
                   context.go(AppRoutes.login);
                 }
               },
-              icon: const Icon(Icons.logout_rounded),
+              icon: Icon(Icons.logout_rounded),
               label: Text(isUrdu ? 'لاگ آؤٹ' : 'Log Out'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
@@ -195,7 +196,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.hcSurface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -223,7 +224,7 @@ class _SettingsTile extends StatelessWidget {
                   ),
                 ),
                 if (trailing != null) trailing!
-                else const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                else Icon(Icons.chevron_right_rounded, color: context.hcTextSecondary),
               ],
             ),
           ),
