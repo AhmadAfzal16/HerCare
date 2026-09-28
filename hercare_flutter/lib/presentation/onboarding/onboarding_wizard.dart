@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-
 import '../../core/constants/app_constants.dart';
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
@@ -11,6 +10,8 @@ import '../../core/theme/app_text_styles.dart';
 import '../../data/models/onboarding_model.dart';
 import '../../data/services/local_storage_service.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/onboarding_service.dart';
 import 'steps/personal_info_step.dart';
 import 'steps/obstetric_info_step.dart';
 import 'steps/family_support_step.dart';
@@ -29,7 +30,7 @@ import 'widgets/onboarding_nav_buttons.dart';
 /// Architecture:
 ///   - [OnboardingData] model accumulates data across steps.
 ///   - Each step validates its own form before allowing Next.
-///   - On final step, data is persisted and user is routed to /register.
+///   - On final step, data is persisted to the authenticated mother account.
 class OnboardingWizard extends StatefulWidget {
   const OnboardingWizard({super.key});
 
@@ -81,7 +82,6 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   void _previousStep() {
     if (_currentStep == 0) {
-      context.go(AppRoutes.languageSelection);
       return;
     }
     setState(() => _currentStep--);
@@ -97,21 +97,33 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     if (!_data.consentTier1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Basic monitoring consent is required to use HerCare.'),
+          content: Text('Basic monitoring consent is required to use HerCare.'),
         ),
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
+    final auth = context.read<AuthProvider>();
     try {
-      final storage = LocalStorageService();
-      await storage.setBool(AppConstants.onboardingCompleteKey, true);
-      // Persist onboarding data for use in registration flow
-      await storage.setObject('onboarding_data', _data.toJson());
+      await OnboardingService().complete(_data);
+      await auth.refreshCurrentUser();
+      await LocalStorageService()
+          .setBool(AppConstants.onboardingCompleteKey, true);
 
-      if (mounted) context.go(AppRoutes.register);
+      if (!mounted) return;
+      context.go(AppRoutes.home);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error.toString().replaceFirst('Exception: ', ''),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -146,7 +158,8 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // programmatic only
+                physics:
+                    const NeverScrollableScrollPhysics(), // programmatic only
                 children: [
                   PersonalInfoStep(
                     formKey: _formKeys[0],
@@ -199,15 +212,26 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       ['Privacy & Consent', 'رازداری اور رضامندی'],
     ];
     const stepSubtitles = [
-      ['Help us personalize your experience.', 'آپ کے تجربے کو ذاتی بنانے میں ہماری مدد کریں۔'],
-      ['Clinical data improves risk accuracy.', 'طبی معلومات آپ کا خطرہ درست طریقے سے جانچنے میں مدد کرتی ہیں۔'],
-      ['Connect your loved ones.', 'ہم آپ کے پیاروں کو آپ کی بہتر مدد کے لیے جوڑیں گے۔'],
-      ['Choose what you\'re comfortable with.', 'غور سے پڑھیں اور اپنی پسند کا انتخاب کریں۔'],
+      [
+        'Help us personalize your experience.',
+        'آپ کے تجربے کو ذاتی بنانے میں ہماری مدد کریں۔'
+      ],
+      [
+        'Clinical data improves risk accuracy.',
+        'طبی معلومات آپ کا خطرہ درست طریقے سے جانچنے میں مدد کرتی ہیں۔'
+      ],
+      [
+        'Connect your loved ones.',
+        'ہم آپ کے پیاروں کو آپ کی بہتر مدد کے لیے جوڑیں گے۔'
+      ],
+      [
+        'Choose what you\'re comfortable with.',
+        'غور سے پڑھیں اور اپنی پسند کا انتخاب کریں۔'
+      ],
     ];
 
-    final title = isUrdu
-        ? stepTitles[_currentStep][1]
-        : stepTitles[_currentStep][0];
+    final title =
+        isUrdu ? stepTitles[_currentStep][1] : stepTitles[_currentStep][0];
     final subtitle = isUrdu
         ? stepSubtitles[_currentStep][1]
         : stepSubtitles[_currentStep][0];
@@ -226,14 +250,12 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: isUrdu
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isUrdu
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
+            mainAxisAlignment:
+                isUrdu ? MainAxisAlignment.end : MainAxisAlignment.start,
             children: [
               Container(
                 padding:
@@ -261,17 +283,13 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                     fontSize: 22,
                   )
                 : AppTextStyles.headlineSmall,
-            textDirection:
-                isUrdu ? TextDirection.rtl : TextDirection.ltr,
+            textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: isUrdu
-                ? AppTextStyles.urduLabel
-                : AppTextStyles.bodyMedium,
-            textDirection:
-                isUrdu ? TextDirection.rtl : TextDirection.ltr,
+            style: isUrdu ? AppTextStyles.urduLabel : AppTextStyles.bodyMedium,
+            textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           ),
         ],
       ),

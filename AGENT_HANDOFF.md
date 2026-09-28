@@ -1,6 +1,6 @@
 # HerCare - AI Agent Handoff Document
 
-**Date:** 2026-09-22
+**Date:** 2026-09-23
 **Project:** HerCare (Postpartum Depression Screening & Support App)
 **Stack:** Flutter (Frontend), Node.js/Express (Backend), PostgreSQL (Database)
 
@@ -14,6 +14,9 @@ This document is intended for the next AI Agent taking over development. It cont
 - **Status:** **COMPLETED**
 - **Backend:** `users`, `refresh_tokens`, and `onboarding_data` tables exist (`001_initial_schema.sql`).
 - **Frontend:** Language selection (Urdu/English), Splash Screen, Auth screens, Onboarding Wizard collecting demographic and obstetric data matching the PERI_DEP ML dataset.
+- **Account flow:** Language -> registration details -> account type (mother or guardian) -> server account creation. Mothers then complete onboarding; guardians enter their separate support workspace immediately.
+- **Server-authoritative onboarding:** `PUT /api/v1/onboarding` validates and stores the mother's complete profile and consent choices transactionally, then marks onboarding complete. Splash and login use the server's role and onboarding state instead of trusting a device-only flag.
+- Guardian accounts are created with onboarding complete because the clinical mother onboarding form does not apply to them. Mother accounts start incomplete and no guardian-sharing consent is pre-granted.
 
 ### **Module 2: Guardian/Spouse Link & Reports System**
 - **Status:** **PRODUCTION-HARDENED FOUNDATION** (real clinical aggregation depends on Modules 3, 5, and 8)
@@ -34,6 +37,8 @@ This document is intended for the next AI Agent taking over development. It cont
   - Guardian networking now uses the shared Dio client, including token refresh, timeouts, deployment URL configuration, and HTTPS enforcement in release builds.
   - Wired navigation from `HomeScreen` ("Your Support" card) and `SettingsScreen` ("Guardian & Family" menu item).
   - Addressed syntax errors (missing `GestureDetector` closing parenthesis) and implemented error-handling UI in the Share Code tab to display backend errors if they occur.
+  - Added a dedicated `GuardianHomeScreen`, distinct from the mother's home, with secure connection status, aggregate health snapshot, reports, real-time alert state, recommendations, and an explicit privacy boundary for journals and conversations.
+  - Registration, login, splash/session restoration, and role-aware home routing now consistently send guardians to the guardian workspace and mothers to onboarding/home as appropriate.
 
 ### **Global UI/UX & Localization**
 - **Urdu/RTL Support:** Full RTL layout handling for Urdu text. Fixed 1.3 pixel overflow issues in `MoodHeroCard` and `WellbeingGrid` caused by the `Nastaliq` font by adjusting `Wrap` and `childAspectRatio` properties.
@@ -92,8 +97,9 @@ git push -u origin feature/module2-guardian-link
 
 ## 4. Environment & Testing Notes for the Next Agent
 - **JWT Secrets / Backend:** The backend MUST be started with the `.env` file (e.g., `node --env-file=.env src/app.js`), otherwise `jwt.js` will throw an error and the backend will crash, causing silent frontend failures if errors aren't caught.
-- **API Base URL:** The frontend `ApiService` uses `http://localhost:5000/api/v1` or `http://10.0.2.2:5000` depending on the emulator. Ensure `adb reverse tcp:5000 tcp:5000` is run if testing locally on Android.
+- **API Base URL:** In debug builds the frontend falls back to `http://localhost:5000/api/v1`. On a physical Android device, run `adb reverse tcp:5000 tcp:5000`; on an Android emulator use `http://10.0.2.2:5000/api/v1` via `API_BASE_URL`. A deployed app must point to the deployed HTTPS API, never localhost.
 - **Production API URL:** Build with `--dart-define=API_BASE_URL=https://your-api.example.com/api/v1`. Release builds reject non-HTTPS API URLs.
 - **Token Storage:** The frontend uses `flutter_secure_storage` to store JWT tokens. Always use `LocalStorageService().getSecureString(AppConstants.accessTokenKey)` when building new API services. Do not use raw `SharedPreferences` for tokens.
 - **Database deployment:** Run `npm run migrate` from `hercare_backend` before starting a new release. Applied migration files must never be edited after deployment because checksum validation will stop the release.
-- **Verification:** `npm test` covers invite-code entropy, risk mapping, and canonical period calculation. `flutter analyze --no-pub` currently has no analyzer errors; existing project-wide informational deprecation/style findings remain.
+- **Verification:** `npm test` covers invite-code entropy, risk mapping, canonical period calculation, and onboarding validation. ESLint and all 10 backend tests pass. Dart analysis has no compile errors; existing project-wide warning/informational deprecation/style findings remain.
+- **Local runtime status:** PostgreSQL was temporarily unavailable during early debugging, which caused the app's generic connection message. At the final 2026-09-23 verification both `/health` and `/health/ready` succeeded, and the updated API was running on port 5000. Authentication and Guardian requests still require PostgreSQL to remain running.
