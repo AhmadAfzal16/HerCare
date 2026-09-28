@@ -18,6 +18,7 @@ import '../epds/epds_screen.dart';
 import '../hum_raaz/hum_raaz_screen.dart';
 import '../wellbeing/wellbeing_screen.dart';
 import '../profile/profile_screen.dart';
+import '../community/community_screen.dart';
 
 /// Home Dashboard — main hub after login.
 ///
@@ -105,6 +106,8 @@ class _HomeDashboardView extends StatelessWidget {
           QuickActionsRow(),
           SizedBox(height: 24),
           GuardianCard(),
+          SizedBox(height: 24),
+          CommunityEntryCard(),
           SizedBox(height: 24),
           DailyVerseCard(),
         ],

@@ -93,7 +93,7 @@ function chooseRecommendation(signals) {
 
 async function getRecommendation(userId, role) {
   await assertMother(userId, role);
-  const [moodResult, telemetryResult, screeningResult, recentResult] = await Promise.all([
+  const [moodResult, telemetryResult, screeningResult, recentResult, sleepResult] = await Promise.all([
     query(`SELECT mood_rating, sleep_quality FROM mood_checkins
            WHERE mother_id = $1 ORDER BY entry_date DESC LIMIT 1`, [userId]),
     query(`SELECT screen_time_minutes, late_night_minutes FROM device_telemetry_daily
@@ -102,12 +102,14 @@ async function getRecommendation(userId, role) {
            WHERE mother_id = $1 ORDER BY completed_at DESC LIMIT 1`, [userId]),
     query(`SELECT activity_id FROM therapeutic_sessions WHERE mother_id = $1
            ORDER BY completed_at DESC LIMIT 1`, [userId]),
+    query(`SELECT quality FROM sleep_records WHERE mother_id = $1
+           AND sleep_date >= CURRENT_DATE - 2 ORDER BY sleep_date DESC LIMIT 1`, [userId]),
   ]);
   const mood = moodResult.rows[0];
   const telemetry = telemetryResult.rows[0];
   const signals = {
     mood: mood?.mood_rating ?? null,
-    sleepQuality: mood?.sleep_quality ?? null,
+    sleepQuality: sleepResult.rows[0]?.quality ?? mood?.sleep_quality ?? null,
     screenMinutes: telemetry?.screen_time_minutes ?? 0,
     lateNightMinutes: telemetry?.late_night_minutes ?? 0,
     safetyPriority: screeningResult.rows[0]?.self_harm_positive === true,
@@ -144,4 +146,3 @@ module.exports = {
   recordSession, getHistory, getRecommendation, getSummary,
   _private: { chooseRecommendation, publicSession },
 };
-

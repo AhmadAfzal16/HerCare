@@ -99,6 +99,8 @@ app.use(`${API_PREFIX}/risk`, riskRoutes);
 app.use(`${API_PREFIX}/chat`, chatRoutes);
 app.use(`${API_PREFIX}/therapy`, therapyRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+app.use(`${API_PREFIX}/sleep`, require('./modules/sleep/sleep.routes'));
+app.use(`${API_PREFIX}/community`, require('./modules/community/community.routes'));
 // Future modules mount here:
 // app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
 

@@ -32,6 +32,8 @@ import '../../presentation/therapy/breathing_exercise_screen.dart';
 import '../../presentation/therapy/meditation_screen.dart';
 import '../../presentation/therapy/cbt_exercise_screen.dart';
 import '../../presentation/therapy/therapy_game_screen.dart';
+import '../../presentation/wellbeing/digital_wellbeing_screen.dart';
+import '../../presentation/community/community_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -66,6 +68,8 @@ abstract final class AppRoutes {
   static const String crisis = '/crisis'; // Phase 3
   static const String secureChat = '/secure-chat';
   static const String therapy = '/therapy';
+  static const String digitalWellbeing = '/digital-wellbeing';
+  static const String community = '/community';
   static const String breathing = '/therapy/breathing';
   static const String meditation = '/therapy/meditation';
   static const String cbtExercise = '/therapy/cbt';
@@ -79,6 +83,13 @@ abstract final class AppRouter {
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: kDebugMode,
     routes: [
+      GoRoute(
+          path: AppRoutes.community,
+          builder: (context, _) => CommunityScreen(
+              key: ValueKey(context.watch<AuthProvider>().user?.id))),
+      GoRoute(
+          path: AppRoutes.digitalWellbeing,
+          builder: (_, __) => const DigitalWellbeingScreen()),
       GoRoute(
         path: AppRoutes.splash,
         name: 'splash',
@@ -400,6 +411,7 @@ class _RoleAwareHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     if (user?.isGuardian == true) return const GuardianHomeScreen();
+    if (user?.role == 'admin') return CommunityScreen(key: ValueKey(user!.id));
     if (user?.isMother == true) return const HomeScreen();
 
     // Splash restores the server session before normal navigation. This

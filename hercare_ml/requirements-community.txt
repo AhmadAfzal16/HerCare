@@ -1,0 +1,5 @@
+# Optional server-only AI triage; install alongside requirements.txt.
+transformers>=4.48,<5
+torch>=2.6,<3
+sentencepiece>=0.2,<0.3
+safetensors>=0.5,<1

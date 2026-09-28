@@ -421,118 +421,30 @@ class _SleepStatsCard extends StatelessWidget {
   const _SleepStatsCard({required this.isUrdu});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(context),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: _SleepStat(
-                      icon: Icons.bedtime_rounded,
-                      color: AppColors.accent,
-                      label: isUrdu ? 'اوسط نیند' : 'Avg Sleep',
-                      value: '6h 20m',
-                      sub: isUrdu ? 'اوسط سے کم' : 'Below avg',
-                      subColor: AppColors.warning)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: _SleepStat(
-                      icon: Icons.nightlight_round,
-                      color: AppColors.primary,
-                      label: isUrdu ? 'سونے کا وقت' : 'Bedtime',
-                      value: '11:30 PM',
-                      sub: isUrdu ? 'دیر' : 'Late',
-                      subColor: AppColors.warning)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: _SleepStat(
-                      icon: Icons.wb_sunny_rounded,
-                      color: AppColors.secondary,
-                      label: isUrdu ? 'جاگنے کا وقت' : 'Wake time',
-                      value: '5:50 AM',
-                      sub: isUrdu ? 'مستقل' : 'Consistent',
-                      subColor: AppColors.success)),
-            ],
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: _cardDecoration(context),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(
+              isUrdu
+                  ? 'نیند اور فون کے استعمال کا ریکارڈ'
+                  : 'Your sleep and phone usage',
+              style: AppTextStyles.titleSmall),
+          const SizedBox(height: 8),
+          Text(isUrdu
+              ? 'حقیقی استعمال دیکھیں، رسائی دیں اور نیند کے اوقات محفوظ کریں۔'
+              : 'Connect Android usage access and record your actual bedtime, wake time and sleep quality.'),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => context.push(AppRoutes.digitalWellbeing),
+            icon: const Icon(Icons.bedtime_outlined),
+            label: Text(isUrdu
+                ? 'نیند اور استعمال کھولیں'
+                : 'Open sleep & phone usage'),
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: context.isDark
-                  ? const Color(0xFF0A3340)
-                  : const Color(0xFFE0F7FA),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.tips_and_updates_outlined,
-                    color: AppColors.accent, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isUrdu
-                        ? 'رات 10 بجے تک سونے کی کوشش کریں — بہتر نیند PPD کا خطرہ کم کرتی ہے۔'
-                        : 'Try sleeping by 10 PM — better sleep reduces PPD risk.',
-                    style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.accent, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SleepStat extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String value;
-  final String sub;
-  final Color subColor;
-  const _SleepStat(
-      {required this.icon,
-      required this.color,
-      required this.label,
-      required this.value,
-      required this.sub,
-      required this.subColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(label,
-              style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 3),
-          Text(value,
-              style:
-                  AppTextStyles.titleSmall.copyWith(fontSize: 13, color: color),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 3),
-          Text(sub,
-              style: AppTextStyles.labelSmall.copyWith(
-                  fontSize: 9, color: subColor, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center),
-        ],
-      ),
-    );
-  }
+        ]),
+      );
 }
 
 // --- Hum-Raaz Card ------------------------------------------------------------
@@ -559,8 +471,8 @@ class _HumRaazCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
             ),
-            child:
-                const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
+            child: const Icon(Icons.chat_bubble_rounded,
+                color: Colors.white, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(

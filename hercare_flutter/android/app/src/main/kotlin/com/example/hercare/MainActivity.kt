@@ -20,6 +20,7 @@ import java.util.Locale
 import kotlin.math.max
 
 class MainActivity : FlutterActivity() {
+    private val wellbeingExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val channelName = "com.hercare/telemetry"
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
@@ -45,6 +46,20 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
+                    "collectDigitalWellbeing" -> {
+                        if (!hasUsageAccess()) {
+                            result.error("PERMISSION_REQUIRED", "Enable usage access in Android Settings.", null)
+                        } else {
+                            wellbeingExecutor.execute {
+                                try {
+                                    val data = DigitalWellbeing.collect(applicationContext)
+                                    runOnUiThread { result.success(data) }
+                                } catch (_: Exception) {
+                                    runOnUiThread { result.error("USAGE_UNAVAILABLE", "Phone usage could not be read.", null) }
+                                }
+                            }
+                        }
+                    }
                     "platform" -> result.success("android")
                     "hasNotificationAccess" -> result.success(hasNotificationAccess())
                     "hasUsageAccess" -> result.success(hasUsageAccess())
@@ -82,12 +97,17 @@ class MainActivity : FlutterActivity() {
 
     private fun hasUsageAccess(): Boolean {
         val manager = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = manager.unsafeCheckOpNoThrow(
+        val mode = manager.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             Process.myUid(),
             packageName,
         )
         return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    override fun onDestroy() {
+        wellbeingExecutor.shutdown()
+        super.onDestroy()
     }
 
     private fun collectTelemetry(): Map<String, Any> {

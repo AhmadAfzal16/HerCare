@@ -91,10 +91,10 @@ The following modules from the `hercare_scope_extracted.txt` document have NOT b
 
 - **Module 6: AI Emotional Support Chatbot (Hum-Raaz — 24/7)**
   - Gemini API integration with CBT prompt engineering and self-harm detection.
-- **Module 8: Sleep Tracker & Digital Wellbeing Monitor**
+- **Module 8: Sleep Tracker & Digital Wellbeing Monitor** — Android usage connection and server-backed sleep recording implemented 2026-09-26; see `DIGITAL_WELLBEING_SETUP.md`. Remaining: longitudinal mood/sleep correlations, trend analysis, optional Health Connect import/background scheduling.
 - **Module 10: Emergency & Crisis Intervention System**
 - **Module 11: Islamic & Cultural Content Recommendation & Psychoeducation Engine**
-- **Module 12: Anonymous Peer Support Community**
+- **Module 12: Anonymous Peer Support Community** — implemented 2026-09-26 with Flutter screens, PostgreSQL-backed topics/posts/replies, pseudonyms, supportive reactions, reports/blocks, mandatory publication review, administrator moderation and scheduled text Q&A. Optional Python multilingual AI triage adapter exists but model weights are not configured or validated. See `PEER_COMMUNITY_SETUP.md` for deployment, moderator staffing and remaining operational requirements. Migration 010 applied locally. User explicitly requested not to launch the project after implementation; do not restart services or install/launch the app without a new request.
 
 ---
 

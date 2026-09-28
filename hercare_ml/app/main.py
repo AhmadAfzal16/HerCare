@@ -10,8 +10,15 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .model_runtime import ModelRuntime
+from .community_moderation import ModerationRequest, moderate
 
 app = FastAPI(title="HerCare M4 Risk Service", version="1.0.0", docs_url=None, redoc_url=None)
+
+
+@app.post("/v1/community/moderate")
+def moderate_community(request: ModerationRequest, authorization: str | None = Header(default=None)):
+    require_service_token(authorization)
+    return moderate(request)
 
 
 class FeatureVector(BaseModel):
