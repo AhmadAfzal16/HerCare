@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes     = require('./modules/auth/auth.routes');
 const guardianRoutes = require('./modules/guardian/guardian.routes');
+const onboardingRoutes = require('./modules/onboarding/onboarding.routes');
 const { errorHandler } = require('./middleware/error_handler');
 const { query } = require('./config/database');
 const logger = require('./utils/logger');
@@ -85,6 +86,7 @@ const API_PREFIX = '/api/v1';
 
 app.use(`${API_PREFIX}/auth`,     authRoutes);
 app.use(`${API_PREFIX}/guardian`, guardianRoutes);
+app.use(`${API_PREFIX}/onboarding`, onboardingRoutes);
 // Future modules mount here:
 // app.use(`${API_PREFIX}/screening`, screeningRoutes); // Phase 1
 // app.use(`${API_PREFIX}/mood`,      moodRoutes);     // Phase 2
