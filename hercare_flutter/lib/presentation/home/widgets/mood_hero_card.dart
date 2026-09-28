@@ -119,18 +119,19 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                 ),
                 const SizedBox(height: 16),
 
-                // Emoji mood row
-                Row(
-                  mainAxisAlignment: isUrdu
-                      ? MainAxisAlignment.end
-                      : MainAxisAlignment.start,
+                // Emoji mood row — use Wrap to avoid RTL overflow
+                Wrap(
+                  direction: Axis.horizontal,
+                  alignment: isUrdu
+                      ? WrapAlignment.end
+                      : WrapAlignment.start,
+                  spacing: 8,
                   children: List.generate(_moods.length, (i) {
                     final selected = _selectedMood == i;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedMood = i),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(right: 8),
                         width: selected ? 52 : 46,
                         height: selected ? 52 : 46,
                         decoration: BoxDecoration(
