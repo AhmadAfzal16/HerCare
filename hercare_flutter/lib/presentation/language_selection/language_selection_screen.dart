@@ -6,6 +6,7 @@ import '../../core/constants/app_constants.dart';
 
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/local_storage_service.dart';
 import '../../providers/language_provider.dart';

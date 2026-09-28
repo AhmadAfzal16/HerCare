@@ -11,6 +11,8 @@ import '../../presentation/epds/epds_screen.dart';
 import '../../presentation/epds/epds_result_screen.dart';
 import '../../presentation/notifications/notifications_screen.dart';
 import '../../presentation/privacy/privacy_screen.dart';
+import '../../presentation/settings/settings_screen.dart';
+import '../../presentation/profile/profile_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -28,6 +30,9 @@ abstract final class AppRoutes {
   static const String epdsResult = '/epds-result'; // Phase 1
   static const String notifications = '/notifications';
   static const String privacy = '/privacy';
+  static const String settings = '/settings';
+  static const String helpSupport = '/help-support';
+  static const String profile = '/profile';
   static const String guardian = '/guardian';   // Phase 2
   static const String chatbot = '/chatbot';     // Phase 2
   static const String crisis = '/crisis';       // Phase 3
@@ -129,6 +134,33 @@ abstract final class AppRouter {
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),
+      GoRoute(
+        path: AppRoutes.settings,
+        name: 'settings',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfileScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.helpSupport,
+        name: 'help-support',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const _HelpSupportScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
     ],
 
     // 404 fallback
@@ -155,6 +187,30 @@ abstract final class AppRouter {
         curve: Curves.easeOutCubic,
       )),
       child: FadeTransition(opacity: animation, child: child),
+    );
+  }
+}
+
+/// Placeholder Help & Support screen
+class _HelpSupportScreen extends StatelessWidget {
+  const _HelpSupportScreen();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDF4FF),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Help & Support'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: const Center(
+        child: Text('Help & Support — Coming Soon'),
+      ),
     );
   }
 }

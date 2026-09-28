@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/onboarding_model.dart';
 
@@ -181,7 +182,7 @@ class _SectionLabel extends StatelessWidget {
           label,
           style: isUrdu
               ? AppTextStyles.urduLabel.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.hcTextPrimary,
                   fontWeight: FontWeight.w600,
                 )
               : AppTextStyles.labelLarge,
@@ -194,7 +195,7 @@ class _SectionLabel extends StatelessWidget {
             style: isUrdu
                 ? AppTextStyles.urduLabel.copyWith(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: context.hcTextSecondary,
                   )
                 : AppTextStyles.bodySmall,
             textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -281,11 +282,11 @@ class _RadioGroup<T> extends FormField<T> {
                                   style: isUrdu
                                       ? AppTextStyles.urduBody.copyWith(
                                           fontSize: 15,
-                                          color: AppColors.textPrimary,
+                                          color: field.context.hcTextPrimary,
                                         )
                                       : AppTextStyles.bodyLarge.copyWith(
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
+                                          color: field.context.hcTextPrimary,
                                         ),
                                   textDirection: isUrdu
                                       ? TextDirection.rtl
@@ -521,10 +522,10 @@ class _ComplicationTile extends StatelessWidget {
                     style: isUrdu
                         ? AppTextStyles.urduBody.copyWith(
                             fontSize: 14,
-                            color: AppColors.textPrimary,
+                            color: context.hcTextPrimary,
                           )
                         : AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.hcTextPrimary,
                           ),
                     textDirection:
                         isUrdu ? TextDirection.rtl : TextDirection.ltr,

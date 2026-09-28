@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 
@@ -35,7 +36,7 @@ class NotificationsScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -45,7 +46,7 @@ class NotificationsScreen extends StatelessWidget {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: context.hcTextPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -138,7 +139,7 @@ class _NotificationTile extends StatelessWidget {
                     Text(
                       time,
                       style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.hcTextSecondary,
                       ),
                     ),
                   ],
@@ -147,7 +148,7 @@ class _NotificationTile extends StatelessWidget {
                 Text(
                   body,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.hcTextSecondary,
                   ),
                 ),
               ],
