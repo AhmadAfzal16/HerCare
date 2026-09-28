@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
+import '../../../providers/mood_provider.dart';
 import '../../wellbeing/wellbeing_screen.dart';
 
 /// 2×2 grid of wellbeing stat cards:
@@ -15,6 +18,8 @@ class WellbeingGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
+    final todayMood = context.watch<MoodProvider>().today?.moodRating;
+    const moodEmojis = ['😔', '😟', '😐', '🙂', '😊'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -79,11 +84,14 @@ class WellbeingGrid extends StatelessWidget {
                 iconBg: AppColors.secondaryContainer,
                 iconColor: AppColors.secondary,
                 title: isUrdu ? 'آج کا موڈ' : 'Mood Today',
-                value: '🙂',
+                value: todayMood == null ? '—' : moodEmojis[todayMood - 1],
                 valueIsEmoji: true,
-                chipLabel: isUrdu ? 'ٹھیک ہے' : 'Feeling okay',
+                chipLabel: todayMood == null
+                    ? (isUrdu ? 'اندراج کریں' : 'Check in')
+                    : (isUrdu ? 'آج محفوظ' : 'Saved today'),
                 chipColor: AppColors.secondary,
-                timestamp: isUrdu ? 'ابھی' : 'Just now',
+                timestamp: todayMood == null ? '' : (isUrdu ? 'آج' : 'Today'),
+                onTap: () => context.push(AppRoutes.mood),
               ),
               _WellbeingCard(
                 icon: Icons.bedtime_rounded,
@@ -125,6 +133,7 @@ class _WellbeingCard extends StatelessWidget {
   final String chipLabel;
   final Color chipColor;
   final String timestamp;
+  final VoidCallback? onTap;
 
   const _WellbeingCard({
     required this.icon,
@@ -137,91 +146,88 @@ class _WellbeingCard extends StatelessWidget {
     required this.chipLabel,
     required this.chipColor,
     required this.timestamp,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: context.hcSurface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, color: iconColor, size: 17),
-          ),
-          const SizedBox(height: 4),
-
-          // Title
-          Text(
-            title,
-            style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 1),
-
-          // Value
-          if (valueIsEmoji)
-            Text(value, style: const TextStyle(fontSize: 22))
-          else
-            Text(
-              value,
-              style: AppTextStyles.titleMedium.copyWith(
-                fontSize: valueIsText ? 13 : 16,
-                fontWeight: FontWeight.w700,
+    return Material(
+      color: context.hcSurface,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: iconColor, size: 17),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(height: 4),
 
-          const SizedBox(height: 4),
-
-          // Chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: chipColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              chipLabel,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: chipColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 9,
+              // Title
+              Text(
+                title,
+                style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(height: 1),
+
+              // Value
+              if (valueIsEmoji)
+                Text(value, style: const TextStyle(fontSize: 22))
+              else
+                Text(
+                  value,
+                  style: AppTextStyles.titleMedium.copyWith(
+                    fontSize: valueIsText ? 13 : 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+              const SizedBox(height: 4),
+
+              // Chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: chipColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  chipLabel,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: chipColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 9,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (timestamp.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  timestamp,
+                  style: AppTextStyles.bodySmall.copyWith(fontSize: 9),
+                ),
+              ],
+            ],
           ),
-          if (timestamp.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              timestamp,
-              style: AppTextStyles.bodySmall.copyWith(fontSize: 9),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
