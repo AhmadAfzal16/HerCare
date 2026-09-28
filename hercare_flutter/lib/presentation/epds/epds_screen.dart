@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 import '../../data/models/epds_question_model.dart';
@@ -54,7 +55,7 @@ class _EpdsScreenState extends State<EpdsScreen> {
     final progress = (_currentIndex + 1) / epdsQuestions.length;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -62,14 +63,14 @@ class _EpdsScreenState extends State<EpdsScreen> {
         leading: widget.hideBackButton 
             ? null 
             : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.textPrimary, size: 20),
+                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: context.hcTextPrimary, size: 20),
                 onPressed: _handleBack,
               ),
         title: Text(
           isUrdu ? 'صحت کی جانچ' : 'Maternal Wellness Check-in',
           style: AppTextStyles.titleSmall.copyWith(
-              color: AppColors.textPrimary, fontSize: 16),
+              color: context.hcTextPrimary, fontSize: 16),
         ),
         centerTitle: true,
       ),
@@ -97,7 +98,7 @@ class _EpdsScreenState extends State<EpdsScreen> {
                     : 'QUESTION ${_currentIndex + 1} OF ${epdsQuestions.length}',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.hcTextSecondary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -107,7 +108,7 @@ class _EpdsScreenState extends State<EpdsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.hcSurface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -187,7 +188,7 @@ class _AnswerCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.hcSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.primaryContainer, width: 2),
           boxShadow: [
@@ -210,7 +211,7 @@ class _AnswerCard extends StatelessWidget {
             Text(
               answer.textUr,
               style: AppTextStyles.urduLabel.copyWith(
-                color: AppColors.textSecondary,
+                color: context.hcTextSecondary,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
