@@ -62,7 +62,7 @@ class WellbeingGrid extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.05,
+            childAspectRatio: isUrdu ? 0.95 : 1.05,
             children: [
               _WellbeingCard(
                 icon: Icons.bar_chart_rounded,
@@ -169,7 +169,7 @@ class _WellbeingCard extends StatelessWidget {
             ),
             child: Icon(icon, color: iconColor, size: 17),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Title
           Text(
@@ -178,7 +178,7 @@ class _WellbeingCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
 
           // Value
           if (valueIsEmoji)
