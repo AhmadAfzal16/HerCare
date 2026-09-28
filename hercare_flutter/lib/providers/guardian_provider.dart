@@ -187,4 +187,15 @@ class GuardianProvider extends ChangeNotifier {
 
   int get unreadAlertCount =>
       _alerts.where((alert) => alert['is_read'] == false).length;
+
+  void reset() {
+    _activeRequests = 0;
+    _error = null;
+    _link = null;
+    _inviteData = null;
+    _dashboard = null;
+    _reportsByType.clear();
+    _alerts = [];
+    notifyListeners();
+  }
 }

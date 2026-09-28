@@ -6,8 +6,8 @@ import '../../core/routing/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import 'account_type_screen.dart';
 
 /// Registration Screen
 /// Phone + password registration with bilingual validation.
@@ -20,10 +20,10 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneCtr     = TextEditingController();
-  final _passwordCtr  = TextEditingController();
-  final _confirmCtr   = TextEditingController();
-  bool _obscurePass    = true;
+  final _phoneCtr = TextEditingController();
+  final _passwordCtr = TextEditingController();
+  final _confirmCtr = TextEditingController();
+  bool _obscurePass = true;
   bool _obscureConfirm = true;
 
   @override
@@ -34,27 +34,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final auth   = context.read<AuthProvider>();
     final isUrdu = context.read<LanguageProvider>().isUrdu;
-
-    final success = await auth.register(
-      phone:    '+92${_phoneCtr.text.trim()}',
-      password: _passwordCtr.text,
-      language: isUrdu ? 'ur' : 'en',
+    context.push(
+      AppRoutes.accountType,
+      extra: PendingRegistration(
+        phone: '+92${_phoneCtr.text.trim()}',
+        password: _passwordCtr.text,
+        language: isUrdu ? 'ur' : 'en',
+      ),
     );
-
-    if (success && mounted) {
-      context.go(AppRoutes.home);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isUrdu   = context.watch<LanguageProvider>().isUrdu;
-    final auth     = context.watch<AuthProvider>();
+    final isUrdu = context.watch<LanguageProvider>().isUrdu;
 
     return Scaffold(
       backgroundColor: context.hcBg,
@@ -64,9 +60,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: isUrdu
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 // ── Logo ──────────────────────────────────────────────────
                 Center(
@@ -95,17 +90,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Text(
                     isUrdu ? 'اکاؤنٹ بنائیں' : 'Create Account',
                     style: AppTextStyles.headlineSmall,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    isUrdu
-                        ? 'HerCare میں خوش آمدید'
-                        : 'Welcome to HerCare',
+                    isUrdu ? 'HerCare میں خوش آمدید' : 'Welcome to HerCare',
                     style: AppTextStyles.bodyMedium,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
                 const SizedBox(height: 36),
@@ -128,9 +123,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (v) {
                     final val = v?.trim() ?? '';
-                    if (val.isEmpty) return isUrdu ? 'فون نمبر ضروری ہے' : 'Phone required';
+                    if (val.isEmpty)
+                      return isUrdu ? 'فون نمبر ضروری ہے' : 'Phone required';
                     if (!RegExp(r'^[0-9]{10}$').hasMatch(val)) {
-                      return isUrdu ? '10 ہندسے درج کریں' : 'Enter 10 digits after +92';
+                      return isUrdu
+                          ? '10 ہندسے درج کریں'
+                          : 'Enter 10 digits after +92';
                     }
                     return null;
                   },
@@ -162,7 +160,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (v) {
                     final val = v ?? '';
                     if (val.length < 8) {
-                      return isUrdu ? 'کم از کم 8 حروف' : 'Minimum 8 characters';
+                      return isUrdu
+                          ? 'کم از کم 8 حروف'
+                          : 'Minimum 8 characters';
                     }
                     if (!RegExp(r'[A-Z]').hasMatch(val)) {
                       return isUrdu
@@ -170,7 +170,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           : 'Need at least one uppercase letter';
                     }
                     if (!RegExp(r'[0-9]').hasMatch(val)) {
-                      return isUrdu ? 'ایک نمبر ضروری ہے' : 'Need at least one number';
+                      return isUrdu
+                          ? 'ایک نمبر ضروری ہے'
+                          : 'Need at least one number';
                     }
                     if (!RegExp(r'[^A-Za-z0-9]').hasMatch(val)) {
                       return isUrdu
@@ -202,11 +204,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () =>
                           setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
-                    hintText: isUrdu ? 'پاس ورڈ دوبارہ درج کریں' : 'Re-enter password',
+                    hintText: isUrdu
+                        ? 'پاس ورڈ دوبارہ درج کریں'
+                        : 'Re-enter password',
                   ),
                   validator: (v) {
                     if (v != _passwordCtr.text) {
-                      return isUrdu ? 'پاس ورڈ مختلف ہیں' : 'Passwords do not match';
+                      return isUrdu
+                          ? 'پاس ورڈ مختلف ہیں'
+                          : 'Passwords do not match';
                     }
                     return null;
                   },
@@ -214,33 +220,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
 
                 const SizedBox(height: 12),
-
-                // ── Error message ─────────────────────────────────────────
-                if (auth.errorMessage != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.errorContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                      children: [
-                        const Icon(Icons.error_outline,
-                            color: AppColors.error, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            auth.errorMessage!,
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: AppColors.error),
-                            textDirection:
-                                isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
                 const SizedBox(height: 28),
 
@@ -261,7 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: auth.isLoading ? null : _submit,
+                      onPressed: _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -270,20 +249,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: auth.isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : Text(
-                              isUrdu ? 'اکاؤنٹ بنائیں' : 'Create Account',
-                              style: AppTextStyles.labelLarge
-                                  .copyWith(color: Colors.white),
-                            ),
+                      child: Text(
+                        isUrdu ? 'جاری رکھیں' : 'Continue',
+                        style: AppTextStyles.labelLarge
+                            .copyWith(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
