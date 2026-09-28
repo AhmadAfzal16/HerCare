@@ -18,10 +18,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey     = GlobalKey<FormState>();
-  final _phoneCtr    = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _phoneCtr = TextEditingController();
   final _passwordCtr = TextEditingController();
-  bool _obscure      = true;
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -35,16 +35,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final auth = context.read<AuthProvider>();
     final success = await auth.login(
-      phone:    '+92${_phoneCtr.text.trim()}',
+      phone: '+92${_phoneCtr.text.trim()}',
       password: _passwordCtr.text,
     );
-    if (success && mounted) context.go(AppRoutes.home);
+    if (!success || !mounted) return;
+
+    final user = auth.user;
+    if (user?.isGuardian == true) {
+      context.go(AppRoutes.guardianHome);
+    } else if (user?.onboardingComplete == false) {
+      context.go(AppRoutes.onboarding);
+    } else {
+      context.go(AppRoutes.home);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
-    final auth   = context.watch<AuthProvider>();
+    final auth = context.watch<AuthProvider>();
 
     return Scaffold(
       backgroundColor: context.hcBg,
@@ -54,20 +63,21 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: isUrdu
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Container(
-                    width: 72, height: 72,
+                    width: 72,
+                    height: 72,
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 20, offset: const Offset(0, 6),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -80,14 +90,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     isUrdu ? 'واپس خوش آمدید' : 'Welcome Back',
                     style: AppTextStyles.headlineSmall,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
                 Center(
                   child: Text(
-                    isUrdu ? 'اپنے اکاؤنٹ میں داخل ہوں' : 'Log in to your account',
+                    isUrdu
+                        ? 'اپنے اکاؤنٹ میں داخل ہوں'
+                        : 'Log in to your account',
                     style: AppTextStyles.bodyMedium,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -95,7 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Phone
                 Text(isUrdu ? 'فون نمبر' : 'Phone Number',
                     style: AppTextStyles.labelLarge,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr),
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _phoneCtr,
@@ -108,7 +123,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (v) {
                     final val = v?.trim() ?? '';
-                    if (val.isEmpty) return isUrdu ? 'فون نمبر ضروری ہے' : 'Required';
+                    if (val.isEmpty)
+                      return isUrdu ? 'فون نمبر ضروری ہے' : 'Required';
                     if (!RegExp(r'^[0-9]{10}$').hasMatch(val)) {
                       return isUrdu ? '10 ہندسے' : '10 digits';
                     }
@@ -121,7 +137,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password
                 Text(isUrdu ? 'پاس ورڈ' : 'Password',
                     style: AppTextStyles.labelLarge,
-                    textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr),
+                    textDirection:
+                        isUrdu ? TextDirection.rtl : TextDirection.ltr),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordCtr,
@@ -135,8 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
-                  validator: (v) =>
-                      (v?.isEmpty ?? true) ? (isUrdu ? 'پاس ورڈ ضروری ہے' : 'Required') : null,
+                  validator: (v) => (v?.isEmpty ?? true)
+                      ? (isUrdu ? 'پاس ورڈ ضروری ہے' : 'Required')
+                      : null,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
 
@@ -150,14 +168,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
-                      textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                      textDirection:
+                          isUrdu ? TextDirection.rtl : TextDirection.ltr,
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                        const Icon(Icons.error_outline,
+                            color: AppColors.error, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(auth.errorMessage!,
-                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr),
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: AppColors.error),
+                              textDirection: isUrdu
+                                  ? TextDirection.rtl
+                                  : TextDirection.ltr),
                         ),
                       ],
                     ),
@@ -166,14 +189,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 28),
 
                 SizedBox(
-                  width: double.infinity, height: 54,
+                  width: double.infinity,
+                  height: 54,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: AppColors.primary.withOpacity(0.35),
-                            blurRadius: 16, offset: const Offset(0, 6)),
+                        BoxShadow(
+                            color: AppColors.primary.withOpacity(0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6)),
                       ],
                     ),
                     child: ElevatedButton(
@@ -182,13 +208,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                       ),
                       child: auth.isLoading
-                          ? const SizedBox(width: 22, height: 22,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2.5))
                           : Text(isUrdu ? 'لاگ ان کریں' : 'Log In',
-                              style: AppTextStyles.labelLarge.copyWith(color: Colors.white)),
+                              style: AppTextStyles.labelLarge
+                                  .copyWith(color: Colors.white)),
                     ),
                   ),
                 ),
@@ -198,8 +229,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: () => context.go(AppRoutes.register),
                     child: Text(
-                      isUrdu ? 'اکاؤنٹ نہیں ہے؟ بنائیں' : 'Don\'t have an account? Register',
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary),
+                      isUrdu
+                          ? 'اکاؤنٹ نہیں ہے؟ بنائیں'
+                          : 'Don\'t have an account? Register',
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppColors.primary),
                     ),
                   ),
                 ),
