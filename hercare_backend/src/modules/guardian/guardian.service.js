@@ -306,12 +306,7 @@ async function getDashboard(guardianId, lang = 'en') {
     ? latestReport.report_data.mood_trend
     : [];
 
-  const { rows: alerts } = await query(
-    `SELECT id, alert_type, message, is_read, triggered_at
-     FROM guardian_alerts WHERE guardian_id = $1
-     ORDER BY triggered_at DESC LIMIT 5`,
-    [guardianId],
-  );
+  const alerts = await getAlerts(guardianId, 5);
   return {
     mother_id: link.mother_id,
     link_status: 'active',
@@ -407,9 +402,16 @@ async function notifyGuardian(motherId, riskLevel, reportId = null) {
 
 async function getAlerts(guardianId, limit = 20) {
   const { rows } = await query(
-    `SELECT id, alert_type, message, is_read, triggered_at
-     FROM guardian_alerts WHERE guardian_id = $1
-     ORDER BY triggered_at DESC LIMIT $2`,
+    `SELECT ga.id, ga.alert_type, ga.message, ga.is_read, ga.triggered_at
+     FROM guardian_alerts ga
+     WHERE ga.guardian_id = $1 AND EXISTS (
+       SELECT 1 FROM guardian_links gl
+       JOIN onboarding_data od ON od.user_id = gl.mother_id
+       JOIN users u ON u.id = gl.mother_id AND u.is_active = TRUE
+       WHERE gl.guardian_id = ga.guardian_id AND gl.mother_id = ga.mother_id
+         AND gl.status = 'active' AND od.consent_tier2 = TRUE
+     )
+     ORDER BY ga.triggered_at DESC LIMIT $2`,
     [guardianId, limit],
   );
   return rows;

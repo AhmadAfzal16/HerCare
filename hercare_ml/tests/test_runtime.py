@@ -2,7 +2,17 @@ import pytest
 from pydantic import ValidationError
 
 from app.main import PredictionRequest
-from app.model_runtime import risk_level
+from app.model_runtime import ModelRuntime, risk_level
+
+
+def test_missing_support_is_not_reported_as_a_risk_factor() -> None:
+    assert ModelRuntime._contributors({}) == []
+
+
+def test_zero_support_is_preserved() -> None:
+    assert ModelRuntime._contributors({"support_quality": 0}) == [
+        {"factor": "limited_support", "strength": 1.0}
+    ]
 
 
 def test_probability_bands_are_stable() -> None:

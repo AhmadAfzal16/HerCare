@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/constants/app_constants.dart';
 import '../services/local_storage_service.dart';
@@ -9,7 +8,7 @@ import '../services/local_storage_service.dart';
 ///
 /// - Automatically attaches Bearer token to all requests
 /// - Handles 401 TOKEN_EXPIRED by refreshing the token once
-/// - Logs requests in debug mode
+/// - Never logs private request or response payloads
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -54,17 +53,7 @@ class ApiService {
       },
     ));
 
-    // Debug logger (disabled in release)
-    assert(() {
-      _dio.interceptors.add(PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        compact: true,
-      ));
-      return true;
-    }());
+    // Never log credentials, journals, messages, or response bodies.
 
     // Auth + refresh interceptor
     _dio.interceptors.add(_AuthInterceptor(_dio));
@@ -108,19 +97,21 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final response = err.response;
-    final code = response?.data?['code'];
+    final body = response?.data;
+    final code = body is Map ? body['code'] : null;
 
-    if (response?.statusCode == 401 && code == 'TOKEN_EXPIRED') {
+    if (response?.statusCode == 401 &&
+        code == 'TOKEN_EXPIRED' &&
+        err.requestOptions.extra['authRetried'] != true) {
       final refresh = _refreshFuture ??= _refreshAccessToken();
       try {
         final newAccess = await refresh;
+        err.requestOptions.extra['authRetried'] = true;
         err.requestOptions.headers['Authorization'] = 'Bearer $newAccess';
         final retryResponse = await _dio.fetch(err.requestOptions);
         handler.resolve(retryResponse);
       } catch (_) {
-        // Refresh failed — force logout
-        final storage = LocalStorageService();
-        await storage.clearUserSession();
+        // Transient failures must not erase the user's session/offline work.
         handler.next(err);
       } finally {
         if (identical(_refreshFuture, refresh)) _refreshFuture = null;
@@ -142,14 +133,24 @@ class _AuthInterceptor extends Interceptor {
       receiveTimeout: AppConstants.apiTimeout,
       sendTimeout: AppConstants.apiTimeout,
     ));
-    final response = await refreshDio.post('/auth/refresh', data: {
-      'refresh_token': refreshToken,
-    });
-    final data = response.data['data'] as Map<String, dynamic>;
-    final newAccess = data['accessToken'] as String;
-    final newRefresh = data['refreshToken'] as String;
-    await storage.setSecureString(AppConstants.accessTokenKey, newAccess);
-    await storage.setSecureString(AppConstants.refreshTokenKey, newRefresh);
-    return newAccess;
+    try {
+      final response = await refreshDio.post('/auth/refresh', data: {
+        'refresh_token': refreshToken,
+      });
+      final data = response.data['data'] as Map<String, dynamic>;
+      final newAccess = data['accessToken'] as String;
+      final newRefresh = data['refreshToken'] as String;
+      await storage.setSecureString(AppConstants.accessTokenKey, newAccess);
+      await storage.setSecureString(AppConstants.refreshTokenKey, newRefresh);
+      return newAccess;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 403) {
+        await storage.clearUserSession();
+      }
+      rethrow;
+    } finally {
+      refreshDio.close();
+    }
   }
 }

@@ -35,9 +35,8 @@ class ConsentStep extends StatelessWidget {
       child: Form(
         key: formKey,
         child: Column(
-          crossAxisAlignment: isUrdu
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             // ── Intro ────────────────────────────────────────────────────
             Text(
@@ -63,8 +62,7 @@ class ConsentStep extends StatelessWidget {
               descEn:
                   'EPDS screening scores, daily mood logs, sleep data, and app usage — '
                   'used to personalize your experience and generate clinical reports.',
-              descUr:
-                  'EPDS اسکریننگ سکورز، روزانہ کا موڈ، نیند کا ڈیٹا — '
+              descUr: 'EPDS اسکریننگ سکورز، روزانہ کا موڈ، نیند کا ڈیٹا — '
                   'آپ کے تجربے کو ذاتی بنانے اور طبی رپورٹس بنانے کے لیے۔',
               isChecked: data.consentTier1,
               isDisabled: true, // Tier 1 cannot be unchecked
@@ -108,8 +106,7 @@ class ConsentStep extends StatelessWidget {
               descEn:
                   'Passively analyzes message notification previews (~100 chars) '
                   'and screen time to detect early distress signals. Android only.',
-              descUr:
-                  'اطلاع کے پیش نظارے (~100 حروف) اور اسکرین ٹائم تجزیہ '
+              descUr: 'اطلاع کے پیش نظارے (~100 حروف) اور اسکرین ٹائم تجزیہ '
                   'تناؤ کی ابتدائی علامات کا پتہ لگانے کے لیے۔ صرف اینڈرائیڈ۔',
               isChecked: data.consentTier3,
               isDisabled: false,
@@ -176,19 +173,19 @@ class _ConsentTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: isChecked
-            ? AppColors.primaryContainer.withOpacity(0.5)
+            ? AppColors.primaryContainer.withValues(alpha: 0.5)
             : AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isChecked
-              ? AppColors.primary.withOpacity(0.4)
-              : AppColors.outline.withOpacity(0.3),
+              ? AppColors.primary.withValues(alpha: 0.4)
+              : AppColors.outline.withValues(alpha: 0.3),
           width: isChecked ? 1.5 : 1,
         ),
         boxShadow: isChecked
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -201,8 +198,7 @@ class _ConsentTile extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
             child: Row(
-              textDirection:
-                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Container(
                   width: 40,
@@ -211,14 +207,13 @@ class _ConsentTile extends StatelessWidget {
                     color: (isChecked
                             ? AppColors.primary
                             : AppColors.textSecondary)
-                        .withOpacity(0.1),
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    color: isChecked
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                    color:
+                        isChecked ? AppColors.primary : AppColors.textSecondary,
                     size: 20,
                   ),
                 ),
@@ -229,27 +224,22 @@ class _ConsentTile extends StatelessWidget {
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        textDirection: isUrdu
-                            ? TextDirection.rtl
-                            : TextDirection.ltr,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              isUrdu ? labelUr : labelEn,
-                              style: isUrdu
-                                  ? AppTextStyles.urduBody.copyWith(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hcTextPrimary,
-                                    )
-                                  : AppTextStyles.titleSmall,
-                              textDirection: isUrdu
-                                  ? TextDirection.rtl
-                                  : TextDirection.ltr,
-                            ),
+                          Text(
+                            isUrdu ? labelUr : labelEn,
+                            style: isUrdu
+                                ? AppTextStyles.urduBody.copyWith(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.hcTextPrimary,
+                                  )
+                                : AppTextStyles.titleSmall,
+                            textDirection:
+                                isUrdu ? TextDirection.rtl : TextDirection.ltr,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(height: 8),
                           _Badge(
                             label: isUrdu ? badgeUr : badgeEn,
                             color: badgeColor,
@@ -263,13 +253,13 @@ class _ConsentTile extends StatelessWidget {
                 Switch(
                   value: isChecked,
                   onChanged: isDisabled ? null : (v) => onChanged(v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   thumbColor: WidgetStateProperty.all(Colors.white),
                   trackColor: WidgetStateProperty.resolveWith((s) {
                     if (s.contains(WidgetState.selected)) {
                       return AppColors.primary;
                     }
-                    return AppColors.outline.withOpacity(0.4);
+                    return AppColors.outline.withValues(alpha: 0.4);
                   }),
                 ),
               ],
@@ -284,18 +274,16 @@ class _ConsentTile extends StatelessWidget {
               style: isUrdu
                   ? AppTextStyles.urduLabel.copyWith(height: 1.8)
                   : AppTextStyles.bodySmall.copyWith(height: 1.6),
-              textDirection:
-                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             ),
           ),
 
           if (isDisabled)
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.06),
+                color: AppColors.error.withValues(alpha: 0.06),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(18),
                   bottomRight: Radius.circular(18),
@@ -309,8 +297,7 @@ class _ConsentTile extends StatelessWidget {
                   color: AppColors.error,
                 ),
                 textAlign: isUrdu ? TextAlign.right : TextAlign.left,
-                textDirection:
-                    isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
               ),
             ),
         ],
@@ -330,7 +317,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -371,11 +358,8 @@ class _PrivacyNote extends StatelessWidget {
               isUrdu
                   ? 'آپ کسی بھی اجازت کو کسی بھی وقت ترتیبات → رازداری سے واپس لے سکتی ہیں۔'
                   : 'You may withdraw any permission at any time from Settings → Privacy.',
-              style: isUrdu
-                  ? AppTextStyles.urduLabel
-                  : AppTextStyles.bodySmall,
-              textDirection:
-                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              style: isUrdu ? AppTextStyles.urduLabel : AppTextStyles.bodySmall,
+              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             ),
           ),
         ],
@@ -410,18 +394,17 @@ class _DataRightsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        crossAxisAlignment: isUrdu
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Row(
-            textDirection:
-                isUrdu ? TextDirection.rtl : TextDirection.ltr,
+            textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             children: [
-              Icon(Icons.verified_user_outlined,
+              const Icon(Icons.verified_user_outlined,
                   size: 18, color: AppColors.success),
               const SizedBox(width: 8),
-              Text(
+              Expanded(
+                  child: Text(
                 isUrdu ? 'آپ کے ڈیٹا کے حقوق' : 'Your Data Rights',
                 style: isUrdu
                     ? AppTextStyles.urduLabel.copyWith(
@@ -432,9 +415,8 @@ class _DataRightsCard extends StatelessWidget {
                         color: context.hcTextPrimary,
                         fontWeight: FontWeight.w700,
                       ),
-                textDirection:
-                    isUrdu ? TextDirection.rtl : TextDirection.ltr,
-              ),
+                textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              )),
             ],
           ),
           const SizedBox(height: 10),
@@ -442,13 +424,13 @@ class _DataRightsCard extends StatelessWidget {
             (r) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
-                textDirection:
-                    isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
                 children: [
-                  Icon(Icons.check_circle_outline,
+                  const Icon(Icons.check_circle_outline,
                       size: 14, color: AppColors.success),
                   const SizedBox(width: 8),
-                  Text(
+                  Expanded(
+                      child: Text(
                     r,
                     style: isUrdu
                         ? AppTextStyles.urduLabel
@@ -457,7 +439,7 @@ class _DataRightsCard extends StatelessWidget {
                           ),
                     textDirection:
                         isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                  ),
+                  )),
                 ],
               ),
             ),

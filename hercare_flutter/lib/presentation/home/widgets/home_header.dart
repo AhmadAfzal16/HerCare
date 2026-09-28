@@ -57,13 +57,13 @@ class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.30),
+                  color: AppColors.primary.withValues(alpha: 0.30),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(Icons.favorite_rounded,
+            child: const Icon(Icons.favorite_rounded,
                 color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),

@@ -199,7 +199,7 @@ class _GuardianDashboardScreenState extends State<GuardianDashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+          const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
           const SizedBox(height: 12),
           Text(provider.error ?? 'Something went wrong',
               style: AppTextStyles.bodyMedium),
@@ -239,7 +239,7 @@ class _RiskBanner extends StatelessWidget {
       case 'severe':
         return AppColors.error;
       case 'high':
-        return AppColors.error.withOpacity(0.8);
+        return AppColors.error.withValues(alpha: 0.8);
       case 'moderate':
         return AppColors.warning;
       case 'low':
@@ -284,9 +284,9 @@ class _RiskBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.12),
+        color: _color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: _color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Row(
         children: [
@@ -307,7 +307,7 @@ class _RiskBanner extends StatelessWidget {
                   Text(
                     'EPDS: $epdsScore / 30',
                     style: AppTextStyles.bodySmall
-                        .copyWith(color: _color.withOpacity(0.8)),
+                        .copyWith(color: _color.withValues(alpha: 0.8)),
                   ),
               ],
             ),
@@ -407,9 +407,9 @@ class _HowToHelpCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer.withOpacity(0.3),
+        color: AppColors.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,7 +457,7 @@ class _AlertTile extends StatelessWidget {
       case 'risk_severe':
         return AppColors.error;
       case 'risk_high':
-        return AppColors.error.withOpacity(0.7);
+        return AppColors.error.withValues(alpha: 0.7);
       case 'crisis':
         return AppColors.error;
       default:
@@ -471,9 +471,9 @@ class _AlertTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.07),
+        color: _color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _color.withOpacity(0.2)),
+        border: Border.all(color: _color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [

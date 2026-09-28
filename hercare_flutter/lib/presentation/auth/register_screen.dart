@@ -73,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -116,15 +116,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _phoneCtr,
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.phone_outlined),
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.phone_outlined),
                     prefixText: '+92 ',
                     hintText: '3XX XXXXXXX',
                   ),
                   validator: (v) {
                     final val = v?.trim() ?? '';
-                    if (val.isEmpty)
+                    if (val.isEmpty) {
                       return isUrdu ? 'فون نمبر ضروری ہے' : 'Phone required';
+                    }
                     if (!RegExp(r'^[0-9]{10}$').hasMatch(val)) {
                       return isUrdu
                           ? '10 ہندسے درج کریں'
@@ -233,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.35),
+                          color: AppColors.primary.withValues(alpha: 0.35),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),

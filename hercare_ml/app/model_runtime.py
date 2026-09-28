@@ -68,7 +68,8 @@ class ModelRuntime:
             ("low_mood", max(0.0, (3 - float(features.get("average_mood") or 3)) / 2)),
             ("distress_signals", float(features.get("distress_notification_ratio") or 0)),
             ("late_night_use", min(1.0, float(features.get("average_late_night_minutes") or 0) / 180)),
-            ("limited_support", max(0.0, 1 - float(features.get("support_quality") or 0.5))),
+            ("limited_support", max(0.0, 1 - float(features["support_quality"]))
+             if features.get("support_quality") is not None else 0.0),
         ]
         return [
             {"factor": name, "strength": round(strength, 3)}

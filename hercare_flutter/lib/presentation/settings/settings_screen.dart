@@ -185,7 +185,7 @@ class SettingsScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(isUrdu ? 'بند کریں' : 'Close',
-                style: TextStyle(color: AppColors.primary)),
+                style: const TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -263,9 +263,8 @@ class _SettingsTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.titleColor,
-    this.trailing,
     this.onTap,
-  });
+  }) : trailing = null;
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +367,7 @@ class _LanguageTile extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.language_rounded,
+              child: const Icon(Icons.language_rounded,
                   color: AppColors.primary, size: 22),
             ),
             const SizedBox(width: 14),
@@ -502,7 +501,7 @@ class _ThemeModeTile extends StatelessWidget {
             Switch(
               value: isDark,
               onChanged: (val) => themeProvider.setDark(val),
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
           ],
         ),

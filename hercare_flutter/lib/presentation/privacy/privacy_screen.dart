@@ -146,7 +146,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),

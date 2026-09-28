@@ -54,9 +54,8 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
       child: Form(
         key: widget.formKey,
         child: Column(
-          crossAxisAlignment: widget.isUrdu
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              widget.isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             // ── Household Type ──────────────────────────────────────────
             _Label(
@@ -70,7 +69,7 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
             _TileSelector<HouseholdType>(
               isUrdu: widget.isUrdu,
               value: widget.data.householdType,
-              options: [
+              options: const [
                 _TileOption(
                   value: HouseholdType.nuclear,
                   labelEn: 'Nuclear Family',
@@ -116,9 +115,8 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
                       .copyWith(color: context.hcTextPrimary),
               hint: Text(
                 widget.isUrdu ? 'آمدنی کی حد منتخب کریں' : 'Select range',
-                textDirection: widget.isUrdu
-                    ? TextDirection.rtl
-                    : TextDirection.ltr,
+                textDirection:
+                    widget.isUrdu ? TextDirection.rtl : TextDirection.ltr,
               ),
               items: (widget.isUrdu ? _incomeOptionsUr : _incomeOptionsEn)
                   .map((e) => DropdownMenuItem(
@@ -134,9 +132,7 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
               onChanged: (v) => setState(() => widget.data.incomeRange = v),
               onSaved: (v) => widget.data.incomeRange = v,
               validator: (v) => v == null
-                  ? (widget.isUrdu
-                      ? 'آمدنی منتخب کریں'
-                      : 'Select income range')
+                  ? (widget.isUrdu ? 'آمدنی منتخب کریں' : 'Select income range')
                   : null,
               autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
@@ -268,7 +264,7 @@ class _TileSelector<T> extends FormField<T> {
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.outline.withOpacity(0.3),
+                                  : AppColors.outline.withValues(alpha: 0.3),
                               width: isSelected ? 1.8 : 1,
                             ),
                           ),
@@ -326,9 +322,8 @@ class _TileSelector<T> extends FormField<T> {
                 ),
                 if (field.hasError)
                   Align(
-                    alignment: isUrdu
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
+                    alignment:
+                        isUrdu ? Alignment.centerRight : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
@@ -358,25 +353,25 @@ class _SupportSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final supports = [
-      _SupportOpt(
+      const _SupportOpt(
         value: SupportSource.husband,
         en: 'Husband / Partner',
         ur: 'شوہر',
         icon: Icons.favorite_border_rounded,
       ),
-      _SupportOpt(
+      const _SupportOpt(
         value: SupportSource.motherInLaw,
         en: 'Mother / In-law',
         ur: 'والدہ / ساس',
         icon: Icons.elderly_woman_rounded,
       ),
-      _SupportOpt(
+      const _SupportOpt(
         value: SupportSource.siblings,
         en: 'Siblings',
         ur: 'بہن بھائی',
         icon: Icons.people_outline_rounded,
       ),
-      _SupportOpt(
+      const _SupportOpt(
         value: SupportSource.none,
         en: 'No Support',
         ur: 'کوئی نہیں',
@@ -397,8 +392,7 @@ class _SupportSelector extends StatelessWidget {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
                   ? (s.isCritical
@@ -408,29 +402,25 @@ class _SupportSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? (s.isCritical
-                        ? AppColors.error
-                        : AppColors.secondary)
-                    : AppColors.outline.withOpacity(0.3),
+                    ? (s.isCritical ? AppColors.error : AppColors.secondary)
+                    : AppColors.outline.withValues(alpha: 0.3),
                 width: isSelected ? 1.8 : 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              textDirection:
-                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Icon(
                   s.icon,
                   size: 18,
                   color: isSelected
-                      ? (s.isCritical
-                          ? AppColors.error
-                          : AppColors.secondary)
+                      ? (s.isCritical ? AppColors.error : AppColors.secondary)
                       : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 6),
-                Text(
+                Flexible(
+                    child: Text(
                   isUrdu ? s.ur : s.en,
                   style: isUrdu
                       ? AppTextStyles.urduLabel.copyWith(
@@ -448,9 +438,8 @@ class _SupportSelector extends StatelessWidget {
                               : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
-                  textDirection:
-                      isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                ),
+                  textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                )),
               ],
             ),
           ),
@@ -493,8 +482,7 @@ class _SupportInfoCard extends StatelessWidget {
         textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.hub_outlined,
-              size: 18, color: AppColors.success),
+          const Icon(Icons.hub_outlined, size: 18, color: AppColors.success),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

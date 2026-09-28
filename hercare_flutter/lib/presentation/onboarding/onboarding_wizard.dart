@@ -241,10 +241,10 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       curve: Curves.easeInOut,
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
       decoration: BoxDecoration(
-        color: stepColor.withOpacity(0.08),
+        color: stepColor.withValues(alpha: 0.08),
         border: Border(
           bottom: BorderSide(
-            color: stepColor.withOpacity(0.15),
+            color: stepColor.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
@@ -261,7 +261,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: stepColor.withOpacity(0.15),
+                  color: stepColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

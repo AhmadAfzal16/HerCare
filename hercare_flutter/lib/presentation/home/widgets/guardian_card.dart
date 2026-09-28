@@ -32,12 +32,12 @@ class GuardianCard extends StatelessWidget {
               decoration: BoxDecoration(
               color: context.hcSurface,
               borderRadius: BorderRadius.circular(18),
-              border: Border(
+              border: const Border(
                 left: BorderSide(color: AppColors.accent, width: 4),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -53,7 +53,7 @@ class GuardianCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.person_rounded,

@@ -20,19 +20,23 @@ class _ReportScreenState extends State<ReportScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _types = ['daily', 'weekly', 'monthly'];
+  int _loadedIndex = 1;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, initialIndex: 1, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
+      if (!_tabController.indexIsChanging &&
+          _loadedIndex != _tabController.index) {
+        _loadedIndex = _tabController.index;
         context
             .read<GuardianProvider>()
             .loadReports(type: _types[_tabController.index]);
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<GuardianProvider>().loadReports(type: 'weekly');
     });
   }
@@ -69,7 +73,7 @@ class _ReportScreenState extends State<ReportScreen>
         actions: [
           if (isMother)
             IconButton(
-              icon: Icon(Icons.add_circle_outline_rounded,
+              icon: const Icon(Icons.add_circle_outline_rounded,
                   color: AppColors.primary),
               tooltip: isUrdu ? 'رپورٹ بنائیں' : 'Generate Report',
               onPressed: provider.isLoading
@@ -110,7 +114,7 @@ class _ReportScreenState extends State<ReportScreen>
 
     if (provider.error != null) {
       return Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -151,7 +155,7 @@ class _ReportScreenState extends State<ReportScreen>
   Widget _buildEmpty(BuildContext context, bool isUrdu, String type) {
     final isMother = context.read<AuthProvider>().user?.role == 'mother';
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -226,7 +230,7 @@ class _ReportCard extends StatelessWidget {
       case 'severe':
         return AppColors.error;
       case 'high':
-        return AppColors.error.withOpacity(0.75);
+        return AppColors.error.withValues(alpha: 0.75);
       case 'moderate':
         return AppColors.warning;
       case 'low':
@@ -280,7 +284,7 @@ class _ReportCard extends StatelessWidget {
         border: Border.all(color: context.hcOutline),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -292,7 +296,7 @@ class _ReportCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -367,7 +371,7 @@ class _ReportCard extends StatelessWidget {
   Widget _divider() => Container(
         width: 1,
         height: 40,
-        color: AppColors.outline.withOpacity(0.3),
+        color: AppColors.outline.withValues(alpha: 0.3),
         margin: const EdgeInsets.symmetric(horizontal: 4),
       );
 }

@@ -40,9 +40,8 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
       child: Form(
         key: widget.formKey,
         child: Column(
-          crossAxisAlignment: widget.isUrdu
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              widget.isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             // ── Mode of Delivery ────────────────────────────────────────
             _SectionLabel(
@@ -53,7 +52,7 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
               isUrdu: widget.isUrdu,
               value: widget.data.deliveryMethod,
               options: [
-                _RadioOption(
+                const _RadioOption(
                   value: DeliveryMethod.vaginal,
                   labelEn: 'Vaginal / Natural',
                   labelUr: 'قدرتی ولادت',
@@ -106,7 +105,7 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
               isUrdu: widget.isUrdu,
               value: widget.data.babyGender,
               options: [
-                _RadioOption(
+                const _RadioOption(
                   value: BabyGender.male,
                   labelEn: 'Male',
                   labelUr: 'لڑکا',
@@ -134,9 +133,8 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
 
             // ── Obstetric Complications ──────────────────────────────────
             _SectionLabel(
-              label: widget.isUrdu
-                  ? 'کوئی پیچیدگیاں؟'
-                  : 'Obstetric Complications',
+              label:
+                  widget.isUrdu ? 'کوئی پیچیدگیاں؟' : 'Obstetric Complications',
               isUrdu: widget.isUrdu,
               footnote: widget.isUrdu
                   ? '(سب جو قابل اطلاق ہوں منتخب کریں)'
@@ -234,103 +232,103 @@ class _RadioGroup<T> extends FormField<T> {
   }) : super(
           initialValue: value,
           builder: (field) {
-            return Column(
-              children: [
-                ...options.map(
-                  (opt) => GestureDetector(
-                    onTap: () {
-                      onChanged(opt.value);
-                      field.didChange(opt.value);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: value == opt.value
-                            ? AppColors.primaryContainer
-                            : AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
+            return RadioGroup<T>(
+              groupValue: value,
+              onChanged: (v) {
+                onChanged(v);
+                field.didChange(v);
+              },
+              child: Column(
+                children: [
+                  ...options.map(
+                    (opt) => GestureDetector(
+                      onTap: () {
+                        onChanged(opt.value);
+                        field.didChange(opt.value);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
                           color: value == opt.value
-                              ? AppColors.primary
-                              : AppColors.outline.withOpacity(0.4),
-                          width: value == opt.value ? 1.8 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        textDirection:
-                            isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                        children: [
-                          Icon(
-                            opt.icon,
+                              ? AppColors.primaryContainer
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
                             color: value == opt.value
                                 ? AppColors.primary
-                                : AppColors.textSecondary,
-                            size: 22,
+                                : AppColors.outline.withValues(alpha: 0.4),
+                            width: value == opt.value ? 1.8 : 1,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: isUrdu
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isUrdu ? opt.labelUr : opt.labelEn,
-                                  style: isUrdu
-                                      ? AppTextStyles.urduBody.copyWith(
-                                          fontSize: 15,
-                                          color: field.context.hcTextPrimary,
-                                        )
-                                      : AppTextStyles.bodyLarge.copyWith(
-                                          fontWeight: FontWeight.w500,
-                                          color: field.context.hcTextPrimary,
-                                        ),
-                                  textDirection: isUrdu
-                                      ? TextDirection.rtl
-                                      : TextDirection.ltr,
-                                ),
-                                if (opt.riskNote != null)
+                        ),
+                        child: Row(
+                          textDirection:
+                              isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                          children: [
+                            Icon(
+                              opt.icon,
+                              color: value == opt.value
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: isUrdu
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    opt.riskNote!,
-                                    style:
-                                        AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.warning,
-                                    ),
+                                    isUrdu ? opt.labelUr : opt.labelEn,
+                                    style: isUrdu
+                                        ? AppTextStyles.urduBody.copyWith(
+                                            fontSize: 15,
+                                            color: field.context.hcTextPrimary,
+                                          )
+                                        : AppTextStyles.bodyLarge.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: field.context.hcTextPrimary,
+                                          ),
                                     textDirection: isUrdu
                                         ? TextDirection.rtl
                                         : TextDirection.ltr,
                                   ),
-                              ],
+                                  if (opt.riskNote != null)
+                                    Text(
+                                      opt.riskNote!,
+                                      style: AppTextStyles.labelSmall.copyWith(
+                                        color: AppColors.warning,
+                                      ),
+                                      textDirection: isUrdu
+                                          ? TextDirection.rtl
+                                          : TextDirection.ltr,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Radio<T>(
-                            value: opt.value,
-                            groupValue: value,
-                            onChanged: (v) {
-                              onChanged(v);
-                              field.didChange(v);
-                            },
-                          ),
-                        ],
+                            Radio<T>(
+                              value: opt.value,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (field.hasError)
-                  Align(
-                    alignment: isUrdu
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Text(
-                      field.errorText!,
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.error),
+                  if (field.hasError)
+                    Align(
+                      alignment:
+                          isUrdu ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Text(
+                        field.errorText!,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.error),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             );
           },
         );
@@ -360,14 +358,13 @@ class _ParitySelector extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.secondary
-                  : AppColors.surfaceVariant,
+              color:
+                  isSelected ? AppColors.secondary : AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isSelected
                     ? AppColors.secondary
-                    : AppColors.outline.withOpacity(0.3),
+                    : AppColors.outline.withValues(alpha: 0.3),
               ),
             ),
             child: Center(
@@ -486,22 +483,18 @@ class _ComplicationTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isChecked
-              ? AppColors.warningContainer
-              : AppColors.surface,
+          color: isChecked ? AppColors.warningContainer : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isChecked
                 ? AppColors.warning
-                : AppColors.outline.withOpacity(0.3),
+                : AppColors.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
-          textDirection:
-              isUrdu ? TextDirection.rtl : TextDirection.ltr,
+          textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           children: [
             Checkbox(
               value: isChecked,
@@ -513,9 +506,8 @@ class _ComplicationTile extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Column(
-                crossAxisAlignment: isUrdu
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
                   Text(
                     isUrdu ? complication.labelUr : complication.labelEn,
@@ -580,8 +572,7 @@ class _ClinicalNoteCard extends StatelessWidget {
                   : AppTextStyles.bodySmall.copyWith(
                       color: AppColors.onSecondaryContainer,
                     ),
-              textDirection:
-                  isUrdu ? TextDirection.rtl : TextDirection.ltr,
+              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             ),
           ),
         ],
