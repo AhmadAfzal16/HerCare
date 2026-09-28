@@ -1,0 +1,28 @@
+# ─── HerCare Flutter ─────────────────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.g.dart
+*.freezed.dart
+
+# Environment
+.env
+!.env.example
+
+# ─── HerCare Backend ─────────────────────────────────────────────────────────
+node_modules/
+dist/
+logs/
+*.log
+
+# Environment
+hercare_backend/.env
+!hercare_backend/.env.example
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
