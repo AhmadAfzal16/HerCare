@@ -22,14 +22,21 @@ async function run() {
 
     for (const filename of files) {
       const sql = await fs.readFile(path.join(__dirname, filename), 'utf8');
-      const checksum = crypto.createHash('sha256').update(sql).digest('hex');
+      // Git may check out the same SQL with LF or CRLF on different deployment
+      // hosts. Treat newline encoding as transport detail while still failing
+      // when any SQL content was actually modified.
+      const normalizedSql = sql.replace(/\r\n/g, '\n');
+      const checksum = crypto.createHash('sha256').update(normalizedSql).digest('hex');
+      const crlfChecksum = crypto.createHash('sha256')
+        .update(normalizedSql.replace(/\n/g, '\r\n'))
+        .digest('hex');
       const applied = await client.query(
         'SELECT checksum FROM schema_migrations WHERE filename = $1',
         [filename],
       );
 
       if (applied.rows[0]) {
-        if (applied.rows[0].checksum !== checksum) {
+        if (![checksum, crlfChecksum].includes(applied.rows[0].checksum)) {
           throw new Error(`Applied migration was modified: ${filename}`);
         }
         continue;

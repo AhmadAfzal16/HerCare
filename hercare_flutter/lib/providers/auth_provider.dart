@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/models/user_model.dart';
+import '../services/push_notification_service.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
@@ -43,6 +44,7 @@ class AuthProvider extends ChangeNotifier {
       );
       _status = AuthStatus.authenticated;
       notifyListeners();
+      await PushNotificationService.instance.onAuthenticated();
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -60,6 +62,7 @@ class AuthProvider extends ChangeNotifier {
       _user = await _repo.login(phone: phone, password: password);
       _status = AuthStatus.authenticated;
       notifyListeners();
+      await PushNotificationService.instance.onAuthenticated();
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -71,6 +74,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     _setLoading();
     try {
+      await PushNotificationService.instance.beforeLogout();
       await _repo.logout();
     } finally {
       _user = null;
@@ -86,6 +90,9 @@ class AuthProvider extends ChangeNotifier {
       _user = await _repo.getMe();
       _status =
           _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+      if (_user != null) {
+        await PushNotificationService.instance.onAuthenticated();
+      }
     } catch (_) {
       _status = AuthStatus.unauthenticated;
     }

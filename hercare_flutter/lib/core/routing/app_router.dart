@@ -27,6 +27,11 @@ import '../../providers/auth_provider.dart';
 import '../../presentation/mood/mood_journal_screen.dart';
 import '../../presentation/crisis/crisis_support_screen.dart';
 import '../../presentation/chat/secure_chat_screen.dart';
+import '../../presentation/therapy/therapy_hub_screen.dart';
+import '../../presentation/therapy/breathing_exercise_screen.dart';
+import '../../presentation/therapy/meditation_screen.dart';
+import '../../presentation/therapy/cbt_exercise_screen.dart';
+import '../../presentation/therapy/therapy_game_screen.dart';
 
 /// Central routing configuration using go_router.
 ///
@@ -60,6 +65,11 @@ abstract final class AppRoutes {
   static const String chatbot = '/chatbot'; // Phase 2
   static const String crisis = '/crisis'; // Phase 3
   static const String secureChat = '/secure-chat';
+  static const String therapy = '/therapy';
+  static const String breathing = '/therapy/breathing';
+  static const String meditation = '/therapy/meditation';
+  static const String cbtExercise = '/therapy/cbt';
+  static const String therapyGame = '/therapy/game';
 }
 
 abstract final class AppRouter {
@@ -295,6 +305,59 @@ abstract final class AppRouter {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SecureChatScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.therapy,
+        name: 'therapy',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const TherapyHubScreen(),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.breathing,
+        name: 'breathing',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: BreathingExerciseScreen(
+            patternId: state.uri.queryParameters['id'] ?? 'box_breathing',
+          ),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.meditation,
+        name: 'meditation',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: MeditationScreen(
+            activityId: state.uri.queryParameters['id'] ?? 'mindfulness',
+          ),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.cbtExercise,
+        name: 'cbt-exercise',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: CbtExerciseScreen(
+            activityId: state.uri.queryParameters['id'] ?? 'thought_challenge',
+          ),
+          transitionsBuilder: _fadeSlideTransition,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.therapyGame,
+        name: 'therapy-game',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: TherapyGameScreen(
+            gameId: state.uri.queryParameters['id'] ?? 'memory_match',
+          ),
           transitionsBuilder: _fadeSlideTransition,
         ),
       ),
