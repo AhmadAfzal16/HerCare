@@ -56,6 +56,13 @@ class SettingsScreen extends StatelessWidget {
               subtitle: isUrdu ? 'رضامندی اور ڈیٹا کا انتظام' : 'Manage consent & data',
               onTap: () => context.push(AppRoutes.privacy),
             ),
+            _SettingsTile(
+              icon: Icons.family_restroom_rounded,
+              iconColor: AppColors.primary,
+              title: isUrdu ? 'سرپرست اور فیملی' : 'Guardian & Family',
+              subtitle: isUrdu ? 'رسائی کا انتظام کریں' : 'Manage guardian access',
+              onTap: () => context.push(AppRoutes.guardianLink),
+            ),
 
             const SizedBox(height: 8),
 
