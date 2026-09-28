@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/language_provider.dart';
+import '../../../core/routing/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
   const HomeHeader({super.key});
@@ -37,7 +40,7 @@ class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
         : 'Hi there';
 
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.hcSurface,
       elevation: 0,
       scrolledUnderElevation: 0.5,
       surfaceTintColor: Colors.transparent,
@@ -60,7 +63,7 @@ class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.favorite_rounded,
+            child: Icon(Icons.favorite_rounded,
                 color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
@@ -89,9 +92,9 @@ class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none_rounded,
-                  color: AppColors.textPrimary, size: 26),
-              onPressed: () {},
+              icon: Icon(Icons.notifications_none_rounded,
+                  color: context.hcTextPrimary, size: 26),
+              onPressed: () => GoRouter.of(context).push(AppRoutes.notifications),
             ),
             Positioned(
               right: 10,
@@ -108,9 +111,9 @@ class HomeHeader extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
         IconButton(
-          icon: const Icon(Icons.settings_outlined,
-              color: AppColors.textPrimary, size: 24),
-          onPressed: () {},
+          icon: Icon(Icons.settings_outlined,
+              color: context.hcTextPrimary, size: 24),
+          onPressed: () => GoRouter.of(context).push(AppRoutes.settings),
         ),
         const SizedBox(width: 4),
       ],

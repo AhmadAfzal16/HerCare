@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
 
@@ -23,7 +24,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.hcBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -33,7 +34,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: context.hcTextPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -122,7 +123,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.hcSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.outline),
       ),
@@ -136,7 +137,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle, 
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodySmall.copyWith(color: context.hcTextSecondary),
                 ),
               ],
             ),
@@ -165,7 +166,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.hcSurface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.outline),
         ),

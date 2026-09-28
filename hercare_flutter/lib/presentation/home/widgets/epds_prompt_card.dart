@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 
@@ -56,7 +57,7 @@ class EpdsPromptCard extends StatelessWidget {
           // Card
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.hcSurface,
               borderRadius: BorderRadius.circular(20),
               border: Border(
                 left: BorderSide(
