@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/routing/app_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_ext.dart';
@@ -24,8 +26,10 @@ class GuardianCard extends StatelessWidget {
             style: AppTextStyles.titleSmall.copyWith(fontSize: 16),
           ),
           const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
+          GestureDetector(
+            onTap: () => context.push(AppRoutes.guardianLink),
+            child: Container(
+              decoration: BoxDecoration(
               color: context.hcSurface,
               borderRadius: BorderRadius.circular(18),
               border: Border(
@@ -100,7 +104,7 @@ class GuardianCard extends StatelessWidget {
 
                 // Send Update button
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () => context.push(AppRoutes.reports),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.accent,
                     side: const BorderSide(color: AppColors.accent, width: 1.4),
@@ -124,6 +128,7 @@ class GuardianCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         ],
       ),
