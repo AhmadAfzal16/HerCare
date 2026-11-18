@@ -27,6 +27,10 @@ test('M11 real PostgreSQL catalog/consent/review/retry/safety lifecycle (rollbac
     if (!exists.rows[0].table_name) {
       await client.query(readFileSync(join(__dirname, '../migrations/021_content_recommendations.sql'), 'utf8'));
     }
+    const views = await client.query("SELECT to_regclass('content_views') AS table_name");
+    if (!views.rows[0].table_name) {
+      await client.query(readFileSync(join(__dirname, '../migrations/024_content_personalization.sql'), 'utf8'));
+    }
     const admin = randomUUID(); const mother = randomUUID(); const guardian = randomUUID();
     for (const [id, role] of [[admin, 'admin'], [mother, 'mother'], [guardian, 'guardian']]) {
       await client.query(`INSERT INTO users(id,phone,password_hash,role,onboarding_complete) VALUES($1,$2,'synthetic-no-login',$3,TRUE)`,

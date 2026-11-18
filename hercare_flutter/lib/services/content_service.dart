@@ -119,9 +119,10 @@ class ContentService {
     }
   }
 
-  Future<ContentItem> detail(String id) async {
+  Future<ContentItem> detail(String id, {String? reason}) async {
     _validateId(id);
-    final json = await _request('GET', '/items/$id');
+    final json = await _request('GET', '/items/$id',
+        query: _reasonOk(reason) ? {'reason': reason} : null);
     try {
       return ContentItem.fromJson(Map<String, dynamic>.from(json as Map));
     } on Object {
@@ -141,6 +142,41 @@ class ContentService {
     await _request('PUT', '/items/$id/feedback',
         data: {'client_request_id': requestId, 'value': value});
   }
+
+  /// Counts and seconds only: she pressed play, finished, or spent time on an
+  /// item. No content of what she watched elsewhere is collected.
+  Future<void> engagement(String id, String event,
+      {int seconds = 0, String? reason}) async {
+    _validateId(id);
+    if (!{'media_opened', 'completed', 'engaged'}.contains(event)) {
+      throw ArgumentError.value(event, 'event');
+    }
+    await _request('POST', '/items/$id/engagement', data: {
+      'event': event,
+      'seconds': seconds.clamp(0, 7200),
+      if (_reasonOk(reason)) 'reason': reason,
+    });
+  }
+
+  Future<LiveFeed> live({required String language}) async {
+    final json = await _request('GET', '/live',
+        query: {'language': language == 'ur' ? 'ur' : 'en', 'limit': 8});
+    try {
+      return LiveFeed.fromJson(Map<String, dynamic>.from(json as Map));
+    } on Object {
+      throw const ContentException('Invalid content response. Please retry.');
+    }
+  }
+
+  Future<void> hideLive(String videoId) async {
+    if (!RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(videoId)) {
+      throw const FormatException('Invalid video ID');
+    }
+    await _request('POST', '/live/hide', data: {'video_id': videoId});
+  }
+
+  static bool _reasonOk(String? value) =>
+      value != null && RegExp(r'^[a-z_]{1,24}$').hasMatch(value);
 
   Future<void> save(String id, bool saved, String requestId) async {
     _validateId(id);

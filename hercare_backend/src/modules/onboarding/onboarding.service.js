@@ -21,9 +21,9 @@ async function completeOnboarding(userId, data) {
          has_postpartum_hemorrhage, has_preterm_birth,
          has_gestational_diabetes, household_type, income_range,
          primary_support, consent_tier1, consent_tier2, consent_tier3,
-         updated_at
+         months_since_birth_recorded_at, updated_at
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW()
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW(),NOW()
        )
        ON CONFLICT (user_id) DO UPDATE SET
          full_name = EXCLUDED.full_name,
@@ -31,6 +31,7 @@ async function completeOnboarding(userId, data) {
          education_level = EXCLUDED.education_level,
          city = EXCLUDED.city,
          months_since_birth = EXCLUDED.months_since_birth,
+         months_since_birth_recorded_at = NOW(),
          delivery_method = EXCLUDED.delivery_method,
          parity = EXCLUDED.parity,
          baby_gender = EXCLUDED.baby_gender,

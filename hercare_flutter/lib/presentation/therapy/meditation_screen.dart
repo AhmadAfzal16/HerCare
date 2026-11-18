@@ -13,6 +13,7 @@ import '../../providers/language_provider.dart';
 import '../../providers/therapy_provider.dart';
 import 'therapy_completion_sheet.dart';
 import 'breathing_posture_screen.dart';
+import 'session_check_card.dart';
 import 'meditation_audio.dart';
 import 'meditation_guides.dart';
 
@@ -35,6 +36,7 @@ class _MeditationScreenState extends State<MeditationScreen>
   bool _running = false;
   bool _saved = false;
   bool _completionOpen = false;
+  TherapyMeasures _measures = const TherapyMeasures();
   late final Stopwatch _activeClock;
   late final MeditationAudio _audio;
   Map<String, List<MeditationCue>>? _guides;
@@ -199,12 +201,15 @@ class _MeditationScreenState extends State<MeditationScreen>
     );
     if (!mounted || !_ownerCurrent) return;
     if (practiced == true) {
+      _measures = await maybeAfterReading(context, _measures, isUrdu);
+      if (!mounted || !_ownerCurrent) return;
       final session = await showTherapyCompletionSheet(
         context,
         type: 'meditation',
         activityId: _activityId,
         durationSeconds: _elapsed.clamp(1, 7200),
         isUrdu: isUrdu,
+        measures: _measures,
       );
       if (mounted && session != null) setState(() => _saved = true);
     }
@@ -215,13 +220,20 @@ class _MeditationScreenState extends State<MeditationScreen>
     if (_completionOpen || _saved || _elapsed < 1 || !_ownerCurrent) return;
     _pause();
     _completionOpen = true;
+    final isUrdu = context.read<LanguageProvider>().isUrdu;
+    _measures = await maybeAfterReading(context, _measures, isUrdu);
+    if (!mounted || !_ownerCurrent) {
+      _completionOpen = false;
+      return;
+    }
     final session = await showTherapyCompletionSheet(
       context,
       type: 'meditation',
       activityId: _activityId,
       durationSeconds: _elapsed.clamp(1, 7200),
-      isUrdu: context.read<LanguageProvider>().isUrdu,
+      isUrdu: isUrdu,
       completed: false,
+      measures: _measures,
     );
     if (!mounted || !_ownerCurrent) return;
     setState(() {
@@ -240,6 +252,7 @@ class _MeditationScreenState extends State<MeditationScreen>
       _setupStep = 0;
       _ready = false;
       _saved = false;
+      _measures = const TherapyMeasures();
     });
   }
 
@@ -363,6 +376,13 @@ class _MeditationScreenState extends State<MeditationScreen>
                     ))
                 .toList(),
           ),
+        if (_setupStep == _poseSteps.length - 1) ...[
+          const SizedBox(height: 16),
+          PreSessionCheck(
+              isUrdu: isUrdu,
+              measures: _measures,
+              onChanged: (value) => setState(() => _measures = value)),
+        ],
         const SizedBox(height: 20),
         _audioControls(isUrdu),
         if (_guidesFailed)

@@ -154,15 +154,46 @@ class _TestsScreenState extends State<TestsScreen> with WidgetsBindingObserver {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text(
-                        ur
-                            ? 'اپنی رفتار سے اپنی صحت کا خیال رکھیں'
-                            : 'A little time for your wellbeing',
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 8),
-                    Text(ur
-                        ? 'روزانہ موڈ چیک اِن، ہر ۷ دن بعد EPDS اور ہر ۱۴ دن بعد PHQ-9۔ یہ جانچیں تشخیص نہیں ہیں۔'
-                        : 'Daily mood check-ins, EPDS every 7 days, and PHQ-9 every 14 days. These are screening tools, not a diagnosis.'),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient:
+                            context.isDark ? null : AppColors.heroGradient,
+                        color: context.isDark ? context.hcSurface : null,
+                        borderRadius: BorderRadius.circular(26),
+                      ),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.favorite_rounded,
+                                color: AppColors.secondary
+                                    .withValues(alpha: 0.8)),
+                            const SizedBox(height: 10),
+                            Text(
+                                ur
+                                    ? 'اپنی رفتار سے اپنی صحت کا خیال رکھیں'
+                                    : 'A little time for your wellbeing',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                        color: context.isDark
+                                            ? null
+                                            : AppColors.textPrimary)),
+                            const SizedBox(height: 8),
+                            Text(
+                                ur
+                                    ? 'روزانہ موڈ چیک اِن، ہر ۷ دن بعد EPDS اور ہر ۱۴ دن بعد PHQ-9۔ یہ جانچیں تشخیص نہیں ہیں۔'
+                                    : 'Daily mood check-ins, EPDS every 7 days, and PHQ-9 every 14 days. These are screening tools, not a diagnosis.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                        color: context.isDark
+                                            ? context.hcTextSecondary
+                                            : AppColors.textSecondary)),
+                          ]),
+                    ),
                     const SizedBox(height: 16),
                     if (_loading) const LinearProgressIndicator(),
                     if (_error != null) ...[
@@ -191,16 +222,48 @@ class _TestsScreenState extends State<TestsScreen> with WidgetsBindingObserver {
                     ],
                     const SizedBox(height: 12),
                     _heading(ur ? 'روزانہ موڈ' : 'Your daily mood'),
-                    Text(ur
-                        ? 'روزانہ احساسات درج کریں۔ PHQ-9 پھر بھی پچھلے دو ہفتوں کے بارے میں ہے۔'
-                        : 'Record how you feel today. PHQ-9 still asks about the past two weeks.'),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => context.push(AppRoutes.mood),
-                      icon: const Icon(Icons.mood_rounded),
-                      label: Text(ur
-                          ? 'موڈ چیک اِن کھولیں'
-                          : 'Open daily mood check-in'),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: context.hcSurface,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: context.hcSoftShadow,
+                      ),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                    color: AppColors.secondaryContainer,
+                                    borderRadius: BorderRadius.circular(15)),
+                                child: const Icon(Icons.mood_rounded,
+                                    color: AppColors.secondary),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                    ur
+                                        ? 'روزانہ احساسات درج کریں۔ PHQ-9 پھر بھی پچھلے دو ہفتوں کے بارے میں ہے۔'
+                                        : 'Record how you feel today. PHQ-9 still asks about the past two weeks.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                            color: context.hcTextSecondary)),
+                              ),
+                            ]),
+                            const SizedBox(height: 14),
+                            OutlinedButton.icon(
+                              onPressed: () => context.push(AppRoutes.mood),
+                              icon: const Icon(Icons.mood_rounded),
+                              label: Text(ur
+                                  ? 'موڈ چیک اِن کھولیں'
+                                  : 'Open daily mood check-in'),
+                            ),
+                          ]),
                     ),
                     const SizedBox(height: 16),
                     _notice(ur
@@ -223,13 +286,31 @@ class _TestsScreenState extends State<TestsScreen> with WidgetsBindingObserver {
   }
 
   Widget _heading(String title) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        padding: const EdgeInsets.only(top: 12, bottom: 12),
+        child: Text(title,
+            style:
+                Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18)),
       );
 
-  Widget _notice(String text) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(text),
+  Widget _notice(String text) => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: context.hcSurfaceVariant,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.info_outline_rounded,
+              size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: context.hcTextSecondary)),
+          ),
+        ]),
       );
 
   Widget _testCard(ScheduledScreening test, bool ur) {
@@ -238,35 +319,72 @@ class _TestsScreenState extends State<TestsScreen> with WidgetsBindingObserver {
     final date = MaterialLocalizations.of(context).formatMediumDate(local);
     final time = MaterialLocalizations.of(context)
         .formatTimeOfDay(TimeOfDay.fromDateTime(local));
+    final color = epds ? AppColors.secondary : AppColors.primary;
+    final tint =
+        epds ? AppColors.secondaryContainer : AppColors.primaryContainer;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       color: context.hcSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         onTap: test.due || test.draftId != null ? () => _open(test) : null,
         child: Padding(
           padding: const EdgeInsets.all(18),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(epds ? Icons.favorite_outline : Icons.assignment_outlined,
-                color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text(epds ? 'EPDS' : 'PHQ-9',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 6),
-            Text(epds
-                ? (ur
-                    ? '۱۰ سوالات · پچھلے ۷ دن'
-                    : '10 questions · About the past 7 days')
-                : (ur
-                    ? '۹ سوالات · پچھلے ۱۴ دن'
-                    : '9 questions · About the past 14 days')),
-            const SizedBox(height: 8),
-            Text(test.due
-                ? (ur ? 'جانچ کا وقت ہو گیا ہے' : 'Due now')
-                : (ur ? 'اگلی جانچ: $date · $time' : 'Next: $date · $time')),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                    color: context.isDark ? color.withValues(alpha: 0.2) : tint,
+                    borderRadius: BorderRadius.circular(16)),
+                child: Icon(
+                    epds ? Icons.favorite_rounded : Icons.assignment_rounded,
+                    color: color),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(epds ? 'EPDS' : 'PHQ-9',
+                          style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 2),
+                      Text(
+                          epds
+                              ? (ur
+                                  ? '۱۰ سوالات · پچھلے ۷ دن'
+                                  : '10 questions · About the past 7 days')
+                              : (ur
+                                  ? '۹ سوالات · پچھلے ۱۴ دن'
+                                  : '9 questions · About the past 14 days'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: context.hcTextSecondary)),
+                    ]),
+              ),
+            ]),
             const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: (test.due ? AppColors.peach : AppColors.success)
+                    .withValues(alpha: context.isDark ? 0.2 : 0.12),
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(
+                  test.due
+                      ? (ur ? 'جانچ کا وقت ہو گیا ہے' : 'Due now')
+                      : (ur
+                          ? 'اگلی جانچ: $date · $time'
+                          : 'Next: $date · $time'),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: test.due ? AppColors.peach : AppColors.success)),
+            ),
+            const SizedBox(height: 14),
             if (test.due || test.draftId != null)
               FilledButton.icon(
                 key: ValueKey('start-${test.instrumentType}'),

@@ -224,6 +224,7 @@ class TherapyProvider extends ChangeNotifier {
     bool completed = true,
     String? clientRequestId,
     DateTime? clientCompletedAt,
+    TherapyMeasures? measures,
   }) {
     final generation = _generation;
     if (!_same(generation)) return Future.value();
@@ -251,7 +252,8 @@ class TherapyProvider extends ChangeNotifier {
         moodAfter: moodAfter,
         breathingParticipation: breathingParticipation,
         completed: completed,
-        clientCompletedAt: completedAt);
+        clientCompletedAt: completedAt,
+        measures: measures);
     _saves[requestId] = work;
     return work.whenComplete(() {
       if (_same(generation) && identical(_saves[requestId], work)) {
@@ -271,6 +273,7 @@ class TherapyProvider extends ChangeNotifier {
     String? breathingParticipation,
     required bool completed,
     required DateTime clientCompletedAt,
+    TherapyMeasures? measures,
   }) async {
     _start(saving: true);
     try {
@@ -284,6 +287,7 @@ class TherapyProvider extends ChangeNotifier {
         completed: completed,
         clientRequestId: requestId,
         clientCompletedAt: clientCompletedAt,
+        measures: measures,
       );
       if (!_same(generation)) return null;
       if (!session.isSynced) _offline = true;

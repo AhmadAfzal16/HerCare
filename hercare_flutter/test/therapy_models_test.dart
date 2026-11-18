@@ -15,7 +15,9 @@ void main() {
   });
 
   test('catalog resolves every supported lightweight activity', () {
-    expect(TherapyCatalog.activities.length, 14);
+    expect(TherapyCatalog.activities.length, 16);
+    expect(TherapyCatalog.byId('cyclic_sighing').type, 'breathing');
+    expect(TherapyCatalog.byId('resonance_breathing').type, 'breathing');
     expect(TherapyCatalog.byId('memory_match').type, 'game');
     expect(TherapyCatalog.byId('breathing_478').type, 'breathing');
     expect(TherapyCatalog.byId('domestic_puzzle').type, 'game');

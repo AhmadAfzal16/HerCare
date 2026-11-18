@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../data/models/therapy_models.dart';
 import '../../providers/therapy_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/mood_service.dart';
+import 'session_check_card.dart';
 
 Future<TherapySession?> showTherapyCompletionSheet(
   BuildContext context, {
@@ -15,9 +17,10 @@ Future<TherapySession?> showTherapyCompletionSheet(
   required int durationSeconds,
   required bool isUrdu,
   bool completed = true,
-}) {
+  TherapyMeasures? measures,
+}) async {
   final provider = context.read<TherapyProvider>();
-  return showModalBottomSheet<TherapySession>(
+  final session = await showModalBottomSheet<TherapySession>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -32,8 +35,75 @@ Future<TherapySession?> showTherapyCompletionSheet(
       durationSeconds: durationSeconds,
       isUrdu: isUrdu,
       completed: completed,
+      measures: measures ?? const TherapyMeasures(),
     ),
   );
+  if (session != null && needsSupport(session) && context.mounted) {
+    await showPracticeSupport(context, isUrdu: isUrdu);
+  }
+  return session;
+}
+
+/// A practice may have made things worse: she said it was distressing, her
+/// tension rose by 3+ points, or her mood dropped by 2+ points. Meditation
+/// can occasionally increase anxiety or low mood (Farias et al. 2020).
+bool needsSupport(TherapySession session) {
+  final m = session.measures;
+  final moodDrop = session.moodBefore != null &&
+      session.moodAfter != null &&
+      session.moodAfter! - session.moodBefore! <= -2;
+  return m?.distressReported == true ||
+      (m?.tensionChange ?? 0) >= 3 ||
+      moodDrop;
+}
+
+Future<void> showPracticeSupport(BuildContext context, {required bool isUrdu}) {
+  String t(String en, String ur) => isUrdu ? ur : en;
+  return showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (sheetContext) => Directionality(
+          textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+          // Scrollable: large text or a short screen must never hide the buttons.
+          child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(Icons.volunteer_activism_outlined,
+                        size: 36, color: AppColors.secondary),
+                    const SizedBox(height: 8),
+                    Text(t('Thank you for telling us', 'بتانے کا شکریہ'),
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(
+                        t('Sometimes a practice stirs up difficult feelings. That is not your fault. For now, try something with your eyes open, or talk to someone.',
+                            'کبھی کبھی مشق مشکل احساسات جگا دیتی ہے۔ یہ آپ کی غلطی نہیں۔ ابھی آنکھیں کھلی رکھ کر کچھ آزمائیں، یا کسی سے بات کریں۔'),
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          context.push('/therapy/cbt?id=grounding_54321');
+                        },
+                        icon: const Icon(Icons.visibility_outlined),
+                        label: Text(t('5-4-3-2-1 grounding (eyes open)',
+                            '5-4-3-2-1 گراؤنڈنگ (آنکھیں کھلی)'))),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          context.push('/crisis');
+                        },
+                        icon: const Icon(Icons.support_agent),
+                        label: Text(t('Get support now', 'ابھی مدد لیں'))),
+                    TextButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        child:
+                            Text(t("I'm okay for now", 'ابھی میں ٹھیک ہوں'))),
+                  ]))));
 }
 
 class _CompletionSheet extends StatefulWidget {
@@ -46,6 +116,7 @@ class _CompletionSheet extends StatefulWidget {
     required this.durationSeconds,
     required this.isUrdu,
     required this.completed,
+    required this.measures,
   });
   final TherapyProvider provider;
   final String? owner;
@@ -53,6 +124,7 @@ class _CompletionSheet extends StatefulWidget {
   final String type, activityId;
   final int durationSeconds;
   final bool isUrdu, completed;
+  final TherapyMeasures measures;
 
   @override
   State<_CompletionSheet> createState() => _CompletionSheetState();
@@ -66,6 +138,11 @@ class _CompletionSheetState extends State<_CompletionSheet> {
   String? _error;
   DateTime? _submittedAt;
   String? _participation, _submittedParticipation;
+  int? _tensionAfter;
+  bool? _distress;
+  TherapyMeasures? _submittedMeasures;
+  bool get _monitored =>
+      widget.type == 'breathing' || widget.type == 'meditation';
 
   bool get _sameAccount =>
       widget.provider.canUseAccount &&
@@ -87,6 +164,10 @@ class _CompletionSheetState extends State<_CompletionSheet> {
       _submittedAfter = _after;
       _submittedParticipation = _participation;
       _submittedAt = DateTime.now();
+      _submittedMeasures = _monitored
+          ? widget.measures.copyWith(
+              tensionAfter: _tensionAfter, distressReported: _distress)
+          : null;
     }
     setState(() {
       _saving = true;
@@ -103,6 +184,9 @@ class _CompletionSheetState extends State<_CompletionSheet> {
       completed: widget.completed,
       clientRequestId: _requestId,
       clientCompletedAt: _submittedAt,
+      measures: _submittedMeasures == null || _submittedMeasures!.isEmpty
+          ? null
+          : _submittedMeasures,
     );
     if (!mounted) return;
     if (!_sameAccount) {
@@ -195,6 +279,61 @@ class _CompletionSheetState extends State<_CompletionSheet> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                    ],
+                    if (_monitored) ...[
+                      _Comparison(
+                          measures: widget.measures
+                              .copyWith(tensionAfter: _tensionAfter),
+                          isUrdu: _liveUrdu),
+                      // Opens automatically when she did a before-check, so
+                      // the "after" questions pair with what she recorded.
+                      ExpansionTile(
+                        key: const Key('after-check'),
+                        tilePadding: EdgeInsets.zero,
+                        initiallyExpanded: !widget.measures.isEmpty,
+                        title: Text(
+                            _text('How do you feel now? (optional)',
+                                'اب آپ کیسا محسوس کر رہی ہیں؟ (اختیاری)'),
+                            style: AppTextStyles.labelLarge),
+                        children: [
+                          TensionSlider(
+                              key: const Key('tension-after'),
+                              label: _text(
+                                  'How tense do you feel now? (Optional)',
+                                  'اب آپ کتنا تناؤ محسوس کر رہی ہیں؟ (اختیاری)'),
+                              value: _tensionAfter,
+                              isUrdu: _liveUrdu,
+                              onChanged: _attempted
+                                  ? null
+                                  : (value) =>
+                                      setState(() => _tensionAfter = value)),
+                          const SizedBox(height: 8),
+                          Text(
+                              _text(
+                                  'Did anything during this practice feel distressing or uncomfortable? (Optional)',
+                                  'کیا اس مشق کے دوران کچھ پریشان کن یا تکلیف دہ محسوس ہوا؟ (اختیاری)'),
+                              textAlign: TextAlign.center),
+                          Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              children: [
+                                for (final (value, en, ur) in const [
+                                  (false, 'No', 'نہیں'),
+                                  (true, 'Yes', 'ہاں'),
+                                ])
+                                  ChoiceChip(
+                                      key: Key('distress-$value'),
+                                      label: Text(_text(en, ur)),
+                                      selected: _distress == value,
+                                      onSelected: _attempted
+                                          ? null
+                                          : (selected) => setState(() =>
+                                              _distress =
+                                                  selected ? value : null)),
+                              ]),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ],
                     Text(
                         _text(
@@ -296,6 +435,47 @@ class _CompletionSheetState extends State<_CompletionSheet> {
         ),
       ),
     );
+  }
+}
+
+/// Before → after summary, shown only for values she actually recorded.
+class _Comparison extends StatelessWidget {
+  const _Comparison({required this.measures, required this.isUrdu});
+  final TherapyMeasures measures;
+  final bool isUrdu;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <String>[
+      if (measures.tensionBefore != null && measures.tensionAfter != null)
+        isUrdu
+            ? 'تناؤ: ${measures.tensionBefore} ← ${measures.tensionAfter}'
+            : 'Tension: ${measures.tensionBefore} → ${measures.tensionAfter}',
+      if (measures.hrBefore != null && measures.hrAfter != null)
+        isUrdu
+            ? 'دل کی رفتار: ${measures.hrBefore} ← ${measures.hrAfter}'
+            : 'Heart rate: ${measures.hrBefore} → ${measures.hrAfter} bpm',
+      if (measures.hrvBefore != null && measures.hrvAfter != null)
+        isUrdu
+            ? 'تغیر: ${measures.hrvBefore} ← ${measures.hrvAfter} ملی سیکنڈ'
+            : 'Variability: ${measures.hrvBefore} → ${measures.hrvAfter} ms',
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: AppColors.primaryContainer.withValues(alpha: .5),
+            borderRadius: BorderRadius.circular(14)),
+        child: Column(children: [
+          for (final row in rows) Text(row, style: AppTextStyles.labelLarge),
+          if (measures.physioSource == 'camera')
+            Text(
+                isUrdu
+                    ? 'کیمرے کی پیمائش تخمینی ہے۔'
+                    : 'Camera readings are approximate.',
+                style: AppTextStyles.bodySmall),
+        ]));
   }
 }
 

@@ -231,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.35),
@@ -247,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_theme.dart';
 
 /// Theme-aware color helpers.
 /// Use `context.hcBg`, `context.hcSurface`, etc. everywhere instead of
@@ -8,31 +9,38 @@ extension HerCareTheme on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 
   // ── Backgrounds ───────────────────────────────────────────────────────────
-  Color get hcBg =>
-      isDark ? const Color(0xFF0F0A1E) : AppColors.background;
+  Color get hcBg => isDark ? AppTheme.darkBg : AppColors.background;
 
-  Color get hcSurface =>
-      isDark ? const Color(0xFF1C1531) : AppColors.surface;
+  Color get hcSurface => isDark ? AppTheme.darkSurface : AppColors.surface;
 
   Color get hcSurfaceVariant =>
-      isDark ? const Color(0xFF251E3A) : AppColors.surfaceVariant;
+      isDark ? AppTheme.darkSurfaceVariant : AppColors.surfaceVariant;
 
   Color get hcInputFill =>
-      isDark ? const Color(0xFF251E3A) : AppColors.inputFill;
+      isDark ? AppTheme.darkSurfaceVariant : AppColors.inputFill;
 
   // ── Text ──────────────────────────────────────────────────────────────────
-  Color get hcTextPrimary =>
-      isDark ? const Color(0xFFF3EEFF) : AppColors.textPrimary;
+  Color get hcTextPrimary => isDark ? AppTheme.darkText : AppColors.textPrimary;
 
   Color get hcTextSecondary =>
-      isDark ? const Color(0xFF9E8FBD) : AppColors.textSecondary;
+      isDark ? AppTheme.darkSubText : AppColors.textSecondary;
 
-  Color get hcTextHint =>
-      isDark ? const Color(0xFF6B5F8A) : AppColors.textHint;
+  Color get hcTextHint => isDark ? AppTheme.darkHint : AppColors.textHint;
 
   // ── Borders ───────────────────────────────────────────────────────────────
-  Color get hcOutline =>
-      isDark ? const Color(0xFF3A2F5A) : AppColors.outline;
+  Color get hcOutline => isDark ? AppTheme.darkOutline : AppColors.outline;
+
+  // ── Shadows ───────────────────────────────────────────────────────────────
+  /// Soft, violet-tinted shadow for floating cards (none in dark mode).
+  List<BoxShadow> get hcSoftShadow => isDark
+      ? const []
+      : [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.07),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ];
 
   // ── Convenience shorthand ─────────────────────────────────────────────────
   /// Scaffold background — use as backgroundColor on Scaffold / AppBar.

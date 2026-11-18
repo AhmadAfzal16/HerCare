@@ -79,12 +79,28 @@ class FakeContent extends ContentService {
     return current;
   }
 
+  final detailReasons = <String?>[];
+  final engagements = <String>[];
   @override
-  Future<ContentItem> detail(String id) async {
+  Future<ContentItem> detail(String id, {String? reason}) async {
     detailCalls++;
+    detailReasons.add(reason);
     if (detailError != null) throw detailError!;
     return current.items.first;
   }
+
+  @override
+  Future<void> engagement(String id, String event,
+      {int seconds = 0, String? reason}) async {
+    engagements.add('$event:$seconds');
+  }
+
+  LiveFeed liveResult = const LiveFeed();
+  final hiddenLive = <String>[];
+  @override
+  Future<LiveFeed> live({required String language}) async => liveResult;
+  @override
+  Future<void> hideLive(String videoId) async => hiddenLive.add(videoId);
 
   @override
   Future<CachedContent?> readCache() async => cached;
@@ -559,7 +575,7 @@ void main() {
     }));
     final provider =
         ContentProvider(service: ContentService(client: dio), now: () => _at)
-      ..bindAccount('mother-a', role: 'mother');
+          ..bindAccount('mother-a', role: 'mother');
     await provider.load();
     expect(provider.items().single.id, 'old-origin');
     dio.options.baseUrl = 'https://new-api.example/api/v1';
@@ -734,6 +750,173 @@ void main() {
     expect(find.text('مواد'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('مفید نہیں').hitTestable(), 160,
         scrollable: find.byType(Scrollable).first);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    provider.dispose();
+    language.dispose();
+  });
+
+  test(
+      'YouTube previews come only from exact video links; reason codes stay out of offline copies',
+      () {
+    final video = _item({
+      'format': 'video',
+      'media_url': 'https://www.youtube.com/watch?v=KBlVBOP7TGc',
+      'reason_codes': ['low_mood', 'stage', 'BAD CODE'],
+    });
+    expect(video.youtubeId, 'KBlVBOP7TGc');
+    expect(
+        video.thumbnailUrl, 'https://i.ytimg.com/vi/KBlVBOP7TGc/hqdefault.jpg');
+    expect(video.primaryReason, 'low_mood');
+    expect(video.reasonCodes, ['low_mood', 'stage']);
+    expect(video.toOfflineJson().containsKey('reason_codes'), false);
+    expect(_item({'media_url': 'https://youtu.be/KBlVBOP7TGc'}).youtubeId,
+        'KBlVBOP7TGc');
+    for (final bad in [
+      'http://www.youtube.com/watch?v=KBlVBOP7TGc',
+      'https://www.youtube.com.evil.example/watch?v=KBlVBOP7TGc',
+      'https://www.youtube.com/watch?v=short',
+      'https://media.example/watch?v=KBlVBOP7TGc',
+    ]) {
+      expect(_item({'media_url': bad}).thumbnailUrl, isNull, reason: bad);
+    }
+  });
+
+  Map<String, dynamic> liveJson(String id,
+          {Map<String, dynamic> extra = const {}}) =>
+      {
+        'video_id': id,
+        'title': 'Gentle breathing for new mothers',
+        'channel_title': 'Headspace',
+        'topic': 'calm',
+        'category': 'soothing',
+        'duration_seconds': 300,
+        'reviewed': false,
+        'reason_en': 'Live from a trusted channel, for a calm moment.',
+        ...extra,
+      };
+
+  test('live results reject reviewed claims, bad IDs and oversized lists', () {
+    final video = LiveVideo.fromJson(liveJson('abcdefghijk'));
+    expect(video.mediaUrl, 'https://www.youtube.com/watch?v=abcdefghijk');
+    expect(
+        video.thumbnailUrl, 'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg');
+    for (final bad in [
+      liveJson('short'),
+      liveJson('abcdefghijk', extra: {'reviewed': true}),
+      liveJson('abcdefghijk', extra: {'category': 'native_intent'}),
+      liveJson('abcdefghijk', extra: {'title': ''}),
+    ]) {
+      expect(() => LiveVideo.fromJson(bad), throwsFormatException);
+    }
+    expect(
+        () => LiveFeed.fromJson(
+            {'items': List.generate(9, (i) => liveJson('abcdefghij$i'))}),
+        throwsFormatException);
+  });
+
+  testWidgets(
+      'live section is labelled unreviewed, respects music opt-out, hides on request and disappears in a crisis',
+      (tester) async {
+    final language = LanguageProvider();
+    final fake = FakeContent()
+      ..liveResult = LiveFeed.fromJson({
+        'enabled': true,
+        'notice_en': 'Not individually reviewed by HerCare.',
+        'items': [
+          liveJson('abcdefghijk'),
+          liveJson('musicmusic1',
+              extra: {'title': 'Calm piano', 'is_music': true}),
+        ],
+      });
+    final provider = ContentProvider(service: fake, now: () => _at)
+      ..bindAccount('mother-a', role: 'mother');
+    await tester.pumpWidget(MultiProvider(providers: [
+      ChangeNotifierProvider<LanguageProvider>.value(value: language),
+      ChangeNotifierProvider<ContentProvider>.value(value: provider),
+    ], child: const MaterialApp(home: ContentScreen())));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Live from YouTube'), 200);
+    expect(find.text('Not individually reviewed by HerCare.'), findsOneWidget);
+    expect(find.text('Gentle breathing for new mothers'), findsOneWidget);
+    expect(find.text('Calm piano'), findsNothing,
+        reason: 'music needs her opt-in, even if the server sent it');
+    await tester.scrollUntilVisible(
+        find.text("Don't show this").hitTestable(), 200);
+    await tester.tap(find.text("Don't show this").hitTestable());
+    await tester.pumpAndSettle();
+    expect(fake.hiddenLive, ['abcdefghijk']);
+    expect(find.text('Gentle breathing for new mothers'), findsNothing);
+    fake.liveResult = LiveFeed.fromJson({
+      'enabled': true,
+      'items': [liveJson('zyxwvutsrqp')]
+    });
+    fake.current = _feed(safety: true);
+    await provider.load(force: true);
+    await tester.pumpAndSettle();
+    expect(find.text('Live from YouTube'), findsNothing);
+    expect(provider.liveVideos, isEmpty);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    provider.dispose();
+    language.dispose();
+  });
+
+  test('interests and formats round-trip and unknown values are dropped', () {
+    final value = ContentPreferences.fromJson({
+      'religious_enabled': true,
+      'interests': ['sleep', 'faith', 'not_a_topic'],
+      'preferred_formats': ['video', 'hologram'],
+      'version': 2,
+    });
+    expect(value.interests, ['sleep', 'faith']);
+    expect(value.preferredFormats, ['video']);
+    expect(value.toJson()['interests'], ['sleep', 'faith']);
+    expect(const ContentPreferences().toJson()['preferred_formats'], isEmpty);
+  });
+
+  testWidgets(
+      'opening a card reports its reason once and the sheet saves chosen topics',
+      (tester) async {
+    final language = LanguageProvider();
+    final fake = FakeContent()
+      ..current = _feed(items: [
+        _item({
+          'reason_codes': ['interest']
+        })
+      ]);
+    final provider = ContentProvider(service: fake, now: () => _at)
+      ..bindAccount('mother-a', role: 'mother');
+    await tester.pumpWidget(MultiProvider(providers: [
+      ChangeNotifierProvider<LanguageProvider>.value(value: language),
+      ChangeNotifierProvider<ContentProvider>.value(value: provider),
+    ], child: const MaterialApp(home: ContentScreen())));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+        find.text('View content →').hitTestable(), 150);
+    await tester.tap(find.text('View content →').hitTestable());
+    await tester.pumpAndSettle();
+    expect(fake.detailReasons.first, 'interest');
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+    expect(fake.detailReasons.last, isNull, reason: 'reason is sent once');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Content preferences'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quran and dua'), findsNothing,
+        reason: 'faith topic needs the religious opt-in');
+    await tester.tap(find.text('Sleep'));
+    await tester.ensureVisible(find.text('Videos'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Videos'));
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text('Save preferences'), 180,
+        scrollable: find.byType(Scrollable).last);
+    await tester.tap(find.text('Save preferences'));
+    await tester.pumpAndSettle();
+    expect(fake.nextPreferences?.interests, ['sleep']);
+    expect(fake.nextPreferences?.preferredFormats, ['video']);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     provider.dispose();

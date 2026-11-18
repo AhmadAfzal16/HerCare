@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../providers/content_provider.dart';
 import '../../providers/language_provider.dart';
+import '../shared/hc_widgets.dart';
 import 'content_widgets.dart';
 
 /// A foreground/visible home preview, not a background polling service. The
@@ -107,36 +108,35 @@ class _ContentForYouCardState extends State<ContentForYouCard>
     final items = provider.items();
     final verse = provider.dailyVerse;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          spacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(ur ? 'آپ کے لیے' : 'For you',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            TextButton(
-                onPressed: widget.onOpen ?? () => context.push('/content'),
-                child: Text(ur ? 'سب دیکھیں' : 'View all')),
-          ]),
+      HcSectionHeader(
+          title: ur ? 'آپ کے لیے' : 'For you',
+          subtitle: ur
+              ? 'ویڈیوز، سکون بخش آوازیں اور آیات'
+              : 'Videos, calming sounds and verses',
+          actionLabel: ur ? 'سب دیکھیں' : 'View all',
+          onAction: widget.onOpen ?? () => context.push('/content')),
+      const SizedBox(height: 12),
       if (provider.safetyPriority)
-        Card(
-            color: context.hcSurface,
-            child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(ur
-                          ? 'اس وقت براہ راست تعاون پہلے ہے۔ عام مواد فوری مدد کا متبادل نہیں۔'
-                          : 'Direct support comes first right now. Ordinary content is not a substitute for immediate help.'),
-                      TextButton.icon(
-                          onPressed: () => context.push('/crisis'),
-                          icon: const Icon(Icons.health_and_safety_outlined),
-                          label: Text(ur ? 'فوری مدد' : 'Immediate support')),
-                    ])))
+        HcCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const HcIconBadge(
+                      icon: Icons.favorite_rounded,
+                      color: AppColors.secondary,
+                      background: AppColors.secondaryContainer,
+                      size: 40),
+                  const SizedBox(height: 10),
+                  Text(ur
+                      ? 'اس وقت براہ راست تعاون پہلے ہے۔ عام مواد فوری مدد کا متبادل نہیں۔'
+                      : 'Direct support comes first right now. Ordinary content is not a substitute for immediate help.'),
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                      onPressed: () => context.push('/crisis'),
+                      icon: const Icon(Icons.health_and_safety_outlined),
+                      label: Text(ur ? 'فوری مدد' : 'Immediate support')),
+                ]))
       else if (items.isNotEmpty) ...[
         if (provider.isOffline)
           Padding(
@@ -161,19 +161,17 @@ class _ContentForYouCardState extends State<ContentForYouCard>
                 onTap: () => context
                     .push('/content?id=${Uri.encodeComponent(item.id)}'))),
       ] else
-        Card(
-            color: context.hcSurface,
-            child: InkWell(
-                onTap: widget.onOpen ?? () => context.push('/content'),
-                child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.auto_awesome_outlined,
-                              color: AppColors.primary),
-                          const SizedBox(height: 8),
-                          Text(provider.isLoading
+        HcCard(
+            onTap: widget.onOpen ?? () => context.push('/content'),
+            child: Row(children: [
+              const HcIconBadge(
+                  icon: Icons.auto_awesome_rounded,
+                  color: AppColors.primary,
+                  background: AppColors.primaryContainer,
+                  size: 44),
+              const SizedBox(width: 14),
+              Expanded(
+                          child: Text(provider.isLoading
                               ? (ur
                                   ? 'مواد تازہ ہو رہا ہے…'
                                   : 'Refreshing your content…')
@@ -183,8 +181,10 @@ class _ContentForYouCardState extends State<ContentForYouCard>
                                       : 'Content could not be refreshed. Tap to retry.')
                                   : (ur
                                       ? 'جائزہ شدہ مواد اور اپنی پسند دیکھیں۔ اسلامی مواد اور موسیقی آپ کی مرضی سے۔'
-                                      : 'Explore reviewed content and your preferences. Islamic content and music are optional.')),
-                        ])))),
+                                      : 'Explore reviewed content and your preferences. Islamic content and music are optional.'))),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: context.hcTextHint),
+            ])),
     ]);
   }
 }

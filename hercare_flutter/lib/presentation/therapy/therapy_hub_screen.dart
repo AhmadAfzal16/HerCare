@@ -73,10 +73,9 @@ class _TherapyHubScreenState extends State<TherapyHubScreen>
     return Scaffold(
       backgroundColor: context.hcBg,
       appBar: AppBar(
-        backgroundColor: context.hcSurface,
+        backgroundColor: context.hcBg,
         surfaceTintColor: Colors.transparent,
-        title: Text(isUrdu ? 'سکون اور مشقیں' : 'Calm & Activities',
-            style: AppTextStyles.titleMedium),
+        title: Text(isUrdu ? 'سکون اور مشقیں' : 'Calm & Activities'),
       ),
       body: RefreshIndicator(
         onRefresh: provider.load,
@@ -338,30 +337,39 @@ class _Progress extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       LayoutBuilder(builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 440 &&
-            MediaQuery.textScalerOf(context).scale(14) <= 21;
-        final width =
-            wide ? (constraints.maxWidth - 20) / 3 : constraints.maxWidth;
-        return Wrap(spacing: 10, runSpacing: 8, children: [
-          SizedBox(
-              width: width,
-              child: _Stat(
-                  value: '${summary.completedSessions}',
-                  label: isUrdu ? 'سیشن' : 'Sessions')),
-          SizedBox(
-              width: width,
-              child: _Stat(
-                  value: '${(summary.totalSeconds / 60).round()}',
-                  label: isUrdu ? 'منٹ' : 'Minutes')),
-          SizedBox(
-              width: width,
-              child: _Stat(
-                  value: summary.averageMoodChange == null
-                      ? '—'
-                      : '${summary.averageMoodChange! >= 0 ? '+' : ''}${summary.averageMoodChange!.toStringAsFixed(2)}',
-                  label:
-                      isUrdu ? 'اختیاری موڈ فرق' : 'Optional mood difference')),
-        ]);
+        // Side by side on normal phones; stacked on tiny screens or very
+        // large text so nothing is squeezed.
+        final wide = constraints.maxWidth >= 300 &&
+            MediaQuery.textScalerOf(context).scale(14) <= 18.5;
+        final stats = [
+          _Stat(
+              value: '${summary.completedSessions}',
+              label: isUrdu ? 'سیشن' : 'Sessions'),
+          _Stat(
+              value: '${(summary.totalSeconds / 60).round()}',
+              label: isUrdu ? 'منٹ' : 'Minutes'),
+          _Stat(
+              value: summary.averageMoodChange == null
+                  ? '—'
+                  : '${summary.averageMoodChange! >= 0 ? '+' : ''}${summary.averageMoodChange!.toStringAsFixed(2)}',
+              label: isUrdu ? 'اختیاری موڈ فرق' : 'Optional mood difference'),
+        ];
+        if (!wide) {
+          return Column(children: [
+            for (var i = 0; i < stats.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              SizedBox(width: double.infinity, child: stats[i]),
+            ],
+          ]);
+        }
+        return IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            for (var i = 0; i < stats.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: stats[i]),
+            ],
+          ]),
+        );
       });
 }
 
@@ -393,12 +401,13 @@ class _HistoryItem extends StatelessWidget {
       _ => null,
     };
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(13),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
           color: context.hcSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.hcOutline)),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: context.hcSoftShadow,
+          border: context.isDark ? Border.all(color: context.hcOutline) : null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -432,17 +441,21 @@ class _Stat extends StatelessWidget {
   final String label;
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
         decoration: BoxDecoration(
             color: context.hcSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: context.hcOutline)),
-        child: Column(children: [
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: context.hcSoftShadow,
+            border: context.isDark ? Border.all(color: context.hcOutline) : null),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Text(value,
-              style:
-                  AppTextStyles.titleMedium.copyWith(color: AppColors.primary)),
+              style: AppTextStyles.titleLarge.copyWith(
+                  color: Theme.of(context).colorScheme.primary)),
           const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.labelSmall)
+          Text(label,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: context.hcTextSecondary))
         ]),
       );
 }
@@ -465,43 +478,99 @@ class _Section extends StatelessWidget {
   final ValueChanged<TherapyActivity> onTap;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 22),
+        padding: const EdgeInsets.only(bottom: 26),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             if (imageAsset == null)
-              Icon(icon, color: color, size: 22)
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                    color: color.withValues(alpha: context.isDark ? 0.2 : 0.12),
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: color, size: 20),
+              )
             else
-              ClipOval(
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
                 child: Image.asset(imageAsset!,
-                    width: 28, height: 28, fit: BoxFit.cover),
+                    width: 36, height: 36, fit: BoxFit.cover),
               ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(title, style: AppTextStyles.titleMedium))
+            const SizedBox(width: 12),
+            Expanded(
+                child: Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontSize: 18)))
           ]),
-          const SizedBox(height: 10),
-          ...values.map((activity) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                color: context.hcSurface,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    side: BorderSide(color: context.hcOutline)),
-                child: ListTile(
-                  onTap: () => onTap(activity),
-                  leading: imageAsset == null
-                      ? null
-                      : CircleAvatar(
-                          backgroundImage: AssetImage(imageAsset!),
+          const SizedBox(height: 12),
+          ...values.map((activity) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: context.hcSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: context.hcSoftShadow,
+                  border: context.isDark
+                      ? Border.all(color: context.hcOutline)
+                      : null,
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  borderRadius: BorderRadius.circular(20),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => onTap(activity),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(children: [
+                        if (imageAsset == null)
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                                color: color.withValues(
+                                    alpha: context.isDark ? 0.2 : 0.1),
+                                borderRadius: BorderRadius.circular(14)),
+                            child: Icon(icon, color: color, size: 22),
+                          )
+                        else
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundImage: AssetImage(imageAsset!),
+                          ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isUrdu ? activity.titleUr : activity.title,
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall),
+                                const SizedBox(height: 2),
+                                Text(
+                                    isUrdu
+                                        ? activity.descriptionUr
+                                        : activity.description,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                        color: context.hcTextSecondary)),
+                              ]),
                         ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  title: Text(isUrdu ? activity.titleUr : activity.title,
-                      style: AppTextStyles.titleSmall),
-                  subtitle: Text(
-                      isUrdu ? activity.descriptionUr : activity.description,
-                      style: AppTextStyles.bodySmall),
-                  trailing: Text('${activity.minutes}m',
-                      style: AppTextStyles.labelSmall.copyWith(color: color)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                              color: color.withValues(
+                                  alpha: context.isDark ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(99)),
+                          child: Text('${activity.minutes}m',
+                              style: AppTextStyles.labelSmall
+                                  .copyWith(color: color)),
+                        ),
+                      ]),
+                    ),
+                  ),
                 ),
               )),
         ]),

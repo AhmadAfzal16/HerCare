@@ -108,6 +108,46 @@ async function fetchQuranAyah(reference, { fetchImpl = globalThis.fetch } = {}) 
   }
 }
 
+// YouTube: confirm the video still exists, is public/embeddable and belongs to the expected
+// channel, using the keyless oEmbed endpoint. Titles/summaries stay operator-written.
+const GENERATED_YOUTUBE_KEYS = Object.freeze(['media_url', 'source_url', 'source_name', 'attribution', 'license_name']);
+const YOUTUBE_LICENSE = 'Standard YouTube Licence. Streamed from the publisher\'s YouTube channel; not downloaded, edited or re-hosted.';
+function youtubeId(value) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(value)) fail('Use an 11-character YouTube video ID.');
+  return value;
+}
+function youtubeChannel(value) {
+  if (typeof value !== 'string' || !value.trim() || value.length > 120) fail('Name the expected YouTube channel.');
+  return value.trim();
+}
+function oembedURL(videoId) {
+  return `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId(videoId)}`)}`;
+}
+function parseYouTube(payload, videoId, channel) {
+  if (!plainObject(payload) || typeof payload.title !== 'string' || !payload.title.trim()
+      || typeof payload.author_name !== 'string' || !payload.author_name.trim()) fail('YouTube did not confirm this video.');
+  const author = payload.author_name.trim().slice(0, 180);
+  if (author.toLowerCase() !== channel.toLowerCase()) fail('The YouTube video is no longer published by the expected channel.');
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  return { media_url: url, source_url: url, source_name: `${author} (YouTube)`, license_name: YOUTUBE_LICENSE,
+    attribution: `Video by ${author}, published on YouTube. Original title: "${payload.title.trim().slice(0, 400)}". `
+      + 'Shown as reviewed general information or calming content, not medical advice.' };
+}
+async function fetchYouTube(videoId, channel, { fetchImpl = globalThis.fetch } = {}) {
+  const address = oembedURL(videoId);
+  let response;
+  try {
+    response = await fetchImpl(address, { method: 'GET', redirect: 'error',
+      signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS), headers: { Accept: 'application/json' } });
+    if (!response.ok || response.redirected || (response.url && response.url !== address)) fail('YouTube video unavailable.');
+    return parseYouTube(await readJSON(response), videoId, channel);
+  } catch {
+    fail(`YouTube video ${videoId} could not be verified (removed, private, not embeddable or channel changed). No item was imported.`);
+  } finally {
+    if (response?.body && !response.body.locked) await response.body.cancel().catch(() => {});
+  }
+}
+
 function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (plainObject(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
@@ -134,10 +174,17 @@ function validateManifest(manifest) {
     seen.add(entry.key);
     if (!plainObject(entry.item)) fail('Each catalog entry needs an item object.');
     if (entry.source !== undefined) {
-      exactKeys(entry.source, ['type', 'ayah']);
-      if (entry.source.type !== 'quran') fail('The catalog contains an unsupported source adapter.');
-      ayahReference(entry.source.ayah);
-      if (Object.keys(entry.item).some((key) => GENERATED_QURAN_KEYS.includes(key))) fail('Do not override verified Quran source fields.');
+      if (entry.source?.type === 'youtube') {
+        exactKeys(entry.source, ['type', 'video_id', 'channel']);
+        youtubeId(entry.source.video_id); youtubeChannel(entry.source.channel);
+        if (Object.keys(entry.item).some((key) => GENERATED_YOUTUBE_KEYS.includes(key))) fail('Do not override verified YouTube source fields.');
+        if (!entry.item.review_after) fail('YouTube items need a fixed review_after date in the manifest.');
+      } else {
+        exactKeys(entry.source, ['type', 'ayah']);
+        if (entry.source.type !== 'quran') fail('The catalog contains an unsupported source adapter.');
+        ayahReference(entry.source.ayah);
+        if (Object.keys(entry.item).some((key) => GENERATED_QURAN_KEYS.includes(key))) fail('Do not override verified Quran source fields.');
+      }
     }
     if (Object.keys(entry.item).some((key) => !policy.CONTENT_KEYS.includes(key))) fail('Catalog items may not set IDs, status, approvals or publication fields.');
   }
@@ -148,7 +195,9 @@ async function prepareCatalog(manifest, options = {}) {
   const prepared = [];
   // Resolve and validate the entire batch before any administrator request can write a draft.
   for (const entry of manifest.items) {
-    const source = entry.source ? await fetchQuranAyah(entry.source.ayah, options) : {};
+    const source = !entry.source ? {}
+      : entry.source.type === 'youtube' ? await fetchYouTube(entry.source.video_id, entry.source.channel, options)
+        : await fetchQuranAyah(entry.source.ayah, options);
     const item = policy.item({ ...entry.item, ...source });
     prepared.push({ key: entry.key, ...item, client_request_id: stableRequestId(manifest.catalog_id, entry.key, item) });
   }
@@ -156,4 +205,5 @@ async function prepareCatalog(manifest, options = {}) {
 }
 
 module.exports = { SOURCE_LIMIT, SOURCE_TIMEOUT_MS, EDITIONS, quranURL, parseQuran, fetchQuranAyah,
+  oembedURL, parseYouTube, fetchYouTube, YOUTUBE_LICENSE,
   readJSON, stableRequestId, validateManifest, prepareCatalog };

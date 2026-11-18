@@ -28,6 +28,7 @@ class ContentItem {
     this.durationSeconds,
     this.reasonEn = '',
     this.reasonUr = '',
+    this.reasonCodes = const [],
     this.saved = false,
     this.feedback,
     this.reviewAfter,
@@ -55,6 +56,32 @@ class ContentItem {
   final int? durationSeconds;
   final DateTime? reviewAfter;
   final DateTime? availableFrom, availableUntil;
+
+  /// Server reason codes, first one shown on the card. Sent back only as the
+  /// single code of the card she opened, so the operator report can tell which
+  /// recommendation reasons are useful.
+  final List<String> reasonCodes;
+  String? get primaryReason => reasonCodes.isEmpty ? null : reasonCodes.first;
+
+  /// The YouTube video ID for reviewed YouTube media, used for a preview image.
+  String? get youtubeId {
+    final uri = Uri.tryParse(mediaUrl ?? '');
+    if (uri == null || uri.scheme != 'https') return null;
+    final host = uri.host.toLowerCase();
+    final id = host == 'youtu.be'
+        ? (uri.pathSegments.isEmpty ? null : uri.pathSegments.first)
+        : (host == 'www.youtube.com' || host == 'youtube.com') &&
+                uri.path == '/watch'
+            ? uri.queryParameters['v']
+            : null;
+    return id != null && RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(id)
+        ? id
+        : null;
+  }
+
+  String? get thumbnailUrl => youtubeId == null
+      ? null
+      : 'https://i.ytimg.com/vi/$youtubeId/hqdefault.jpg';
 
   String title(bool ur) => ur && titleUr.isNotEmpty ? titleUr : titleEn;
   String summary(bool ur) => ur && summaryUr.isNotEmpty ? summaryUr : summaryEn;
@@ -107,6 +134,10 @@ class ContentItem {
       durationSeconds: _integer(json['duration_seconds'], 1, 7200),
       reasonEn: _text(json['reason_en'], 1000),
       reasonUr: _text(json['reason_ur'], 1500),
+      reasonCodes: _list(json['reason_codes'], 10)
+          .whereType<String>()
+          .where((code) => RegExp(r'^[a-z_]{1,24}$').hasMatch(code))
+          .toList(),
       saved: json['saved'] == true,
       feedback: {'helpful', 'not_helpful', 'dismissed'}.contains(feedback)
           ? feedback
@@ -144,6 +175,7 @@ class ContentItem {
         'duration_seconds': durationSeconds,
         'reason_en': reasonEn,
         'reason_ur': reasonUr,
+        'reason_codes': reasonCodes,
         'saved': saved,
         'feedback': feedback,
         'review_after': reviewAfter?.toIso8601String(),
@@ -156,6 +188,7 @@ class ContentItem {
   Map<String, dynamic> toOfflineJson() => toJson()
     ..remove('reason_en')
     ..remove('reason_ur')
+    ..remove('reason_codes')
     ..remove('media_url')
     ..remove('feedback');
 }
@@ -165,9 +198,27 @@ class ContentPreferences {
       {this.religiousEnabled = false,
       this.musicEnabled = false,
       this.disabledCategories = const [],
+      this.interests = const [],
+      this.preferredFormats = const [],
       this.version = 0});
+
+  /// Topics she can choose; the server maps each to reviewed catalogue tags.
+  static const interestKeys = [
+    'sleep',
+    'calm',
+    'music',
+    'low_mood',
+    'anxiety',
+    'feeding',
+    'body_recovery',
+    'baby_bonding',
+    'relationships',
+    'faith',
+    'learning',
+  ];
   final bool religiousEnabled, musicEnabled;
   final List<String> disabledCategories;
+  final List<String> interests, preferredFormats;
   final int version;
   factory ContentPreferences.fromJson(Map<String, dynamic> json) =>
       ContentPreferences(
@@ -177,12 +228,22 @@ class ContentPreferences {
             .whereType<String>()
             .where(ContentItem.categories.contains)
             .toList(),
+        interests: _list(json['interests'], interestKeys.length)
+            .whereType<String>()
+            .where(interestKeys.contains)
+            .toList(),
+        preferredFormats: _list(json['preferred_formats'], 4)
+            .whereType<String>()
+            .where(ContentItem.formats.contains)
+            .toList(),
         version: _integer(json['version'], 0, 2147483647) ?? 0,
       );
   Map<String, dynamic> toJson() => {
         'religious_enabled': religiousEnabled,
         'music_enabled': musicEnabled,
         'disabled_categories': disabledCategories,
+        'interests': interests,
+        'preferred_formats': preferredFormats,
         'version': version,
       };
   bool allows(ContentItem item) =>
@@ -233,6 +294,83 @@ class ContentFeed {
         allowedMediaHosts: _list(json['allowed_media_hosts'], 100)
             .whereType<String>()
             .where((host) => RegExp(r'^[a-z0-9.-]{1,253}$').hasMatch(host))
+            .toList(),
+      );
+}
+
+/// An unreviewed result from trusted YouTube channels. Text is untrusted and
+/// only ever rendered as plain text; links open after an explicit choice.
+class LiveVideo {
+  const LiveVideo({
+    required this.videoId,
+    required this.title,
+    required this.channelTitle,
+    required this.topic,
+    this.durationSeconds,
+    this.isMusic = false,
+    this.isReligious = false,
+    this.category = 'soothing',
+    this.reasonEn = '',
+    this.reasonUr = '',
+  });
+  final String videoId,
+      title,
+      channelTitle,
+      topic,
+      category,
+      reasonEn,
+      reasonUr;
+  final int? durationSeconds;
+  final bool isMusic, isReligious;
+
+  String get mediaUrl => 'https://www.youtube.com/watch?v=$videoId';
+  String get thumbnailUrl => 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg';
+  String reason(bool ur) => ur && reasonUr.isNotEmpty ? reasonUr : reasonEn;
+
+  factory LiveVideo.fromJson(Map<String, dynamic> json) {
+    final id = _text(json['video_id'], 11);
+    final title = _text(json['title'], 200);
+    final category = _text(json['category'], 32);
+    if (!RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(id) ||
+        title.isEmpty ||
+        !ContentItem.categories.contains(category) ||
+        json['reviewed'] == true) {
+      throw const FormatException('Invalid live result');
+    }
+    return LiveVideo(
+      videoId: id,
+      title: title,
+      channelTitle: _text(json['channel_title'], 120),
+      topic: _text(json['topic'], 24),
+      durationSeconds: _integer(json['duration_seconds'], 1, 4 * 3600),
+      isMusic: json['is_music'] == true,
+      isReligious: json['is_religious'] == true,
+      category: category,
+      reasonEn: _text(json['reason_en'], 300),
+      reasonUr: _text(json['reason_ur'], 400),
+    );
+  }
+}
+
+class LiveFeed {
+  const LiveFeed(
+      {this.enabled = false,
+      this.items = const [],
+      this.noticeEn = '',
+      this.noticeUr = '',
+      this.safetyPriority = false});
+  final bool enabled, safetyPriority;
+  final List<LiveVideo> items;
+  final String noticeEn, noticeUr;
+  String notice(bool ur) => ur && noticeUr.isNotEmpty ? noticeUr : noticeEn;
+  factory LiveFeed.fromJson(Map<String, dynamic> json) => LiveFeed(
+        enabled: json['enabled'] == true,
+        safetyPriority: json['safety_priority'] == true,
+        noticeEn: _text(json['notice_en'], 400),
+        noticeUr: _text(json['notice_ur'], 500),
+        items: _list(json['items'], 8)
+            .map((value) =>
+                LiveVideo.fromJson(Map<String, dynamic>.from(value as Map)))
             .toList(),
       );
 }

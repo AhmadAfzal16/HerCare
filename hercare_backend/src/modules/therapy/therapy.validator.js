@@ -5,8 +5,44 @@ const { AppError } = require('../../middleware/error_handler');
 const SESSION_FIELDS = new Set([
   'activity_type', 'activity_id', 'duration_seconds', 'mood_before',
   'mood_after', 'completed', 'client_request_id', 'client_completed_at',
-  'breathing_participation',
+  'breathing_participation', 'measures',
 ]);
+// Optional monitoring measures (all fields optional). Ranges match migration 028.
+const MEASURE_RANGES = Object.freeze({
+  tension_before: [0, 10], tension_after: [0, 10], hr_before: [35, 220], hr_after: [35, 220],
+  hrv_before: [1, 300], hrv_after: [1, 300],
+});
+const MEASURE_KEYS = Object.freeze([...Object.keys(MEASURE_RANGES), 'distress_reported', 'physio_source']);
+
+function normalizeMeasures(measures, activityType) {
+  if (measures == null) return {};
+  if (typeof measures !== 'object' || Array.isArray(measures)
+      || Object.keys(measures).some((key) => !MEASURE_KEYS.includes(key))) {
+    throw new AppError('Invalid practice measures.', 422);
+  }
+  if (!['breathing', 'meditation'].includes(activityType)) {
+    throw new AppError('Practice measures are recorded for breathing and meditation only.', 422);
+  }
+  const result = {};
+  for (const [key, [min, max]] of Object.entries(MEASURE_RANGES)) {
+    const value = measures[key];
+    if (value == null) continue;
+    if (!Number.isInteger(value) || value < min || value > max) throw new AppError(`Invalid ${key.replace('_', ' ')}.`, 422);
+    result[key] = value;
+  }
+  if (measures.distress_reported != null) {
+    if (typeof measures.distress_reported !== 'boolean') throw new AppError('Distress answer must be yes or no.', 422);
+    result.distress_reported = measures.distress_reported;
+  }
+  const physio = ['hr_before', 'hr_after', 'hrv_before', 'hrv_after'].some((key) => result[key] != null);
+  if (measures.physio_source != null || physio) {
+    if (!physio || !['camera', 'band'].includes(measures.physio_source)) {
+      throw new AppError('Heart readings need their source (camera or band).', 422);
+    }
+    result.physio_source = measures.physio_source;
+  }
+  return result;
+}
 
 function normalizeCompletedAt(value, asOf) {
   const match = typeof value === 'string'
@@ -64,6 +100,7 @@ function normalizeSession(value, asOf = Date.now()) {
     mood_after: value.mood_after ?? null,
     completed: value.completed ?? true,
     ...(value.breathing_participation == null ? {} : { breathing_participation: value.breathing_participation }),
+    ...normalizeMeasures(value.measures, value.activity_type),
     client_request_id: value.client_request_id.toLowerCase(),
     ...(value.client_completed_at === undefined ? {} : {
       client_completed_at: normalizeCompletedAt(value.client_completed_at, asOf),
@@ -89,5 +126,5 @@ function validate(req, res, next) {
   return next();
 }
 
-module.exports = { sessionValidation, historyValidation, validate, normalizeSession };
+module.exports = { sessionValidation, historyValidation, validate, normalizeSession, normalizeMeasures, MEASURE_KEYS };
 

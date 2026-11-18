@@ -24,6 +24,72 @@ Missing signals remain missing and receive a general feed. There is no new compu
 
 Ranking is an **explainable content-based heuristic with feedback**, not a newly trained or clinically validated ML model. Context-tag matches, editorial priority, helpfulness, saved status, practice preference, diversity and daily rotation determine order. Weights are versioned in PostgreSQL and can be changed by an administrator without rebuilding the app. Faith/music opt-outs are never treated as distress signals. The unvalidated M4 future-depression forecast is deliberately not presented as a reliable recommendation input.
 
+### Phase 1 personalization (migration 024)
+
+Three more transparent signals, still rules rather than a prediction model:
+
+- **Profile (weight `profile`, default 20):** the self-reported onboarding fields `months_since_birth`, delivery method, complications, household type and primary support. The postpartum stage advances from `months_since_birth_recorded_at`, which is set whenever onboarding is saved. Name, city, income and education are not read.
+- **7-day trends (existing `context` weight):** low mood means at least 3 check-ins averaging ≤ 2.5. A falling mood means the last 3 days average at least 1 point below the 4 days before. Poor sleep means at least 3 nights averaging under 6 h, or average quality ≤ 2.
+- **Repeat damping (`repeat`, default −8; `novelty`, default +4):** opening an item's detail screen counts as one view, at most once per 30 minutes, stored in `content_views`. An article opened in the last 14 days moves down, by up to 3 views and less as time passes. Unopened items get a small boost. Activities, saved items and items marked helpful are exempt.
+
+Today's state is still shown as the card's first reason, ahead of profile reasons. An unresolved crisis still empties the feed. Weights saved before migration 024 get the defaults above when read.
+
+**Tags editors can add to content** (a clinician should review each item):
+
+| Tag | Shown when |
+|---|---|
+| `stage_0_6w`, `stage_6w_3m`, `stage_3_6m`, `stage_6_12m`, `stage_12m_plus` | Her estimated time since birth is in that band |
+| `cesarean_recovery` | C-section and under 3 months |
+| `physical_recovery` | Postpartum haemorrhage or pre-eclampsia, and under 3 months |
+| `preterm_baby` | Preterm birth, first year |
+| `health_followup` | Pre-eclampsia or gestational diabetes, first year (BP or glucose follow-up) |
+| `low_support` | Primary support is "none" |
+| `joint_family` | Lives in a joint family |
+| `mood_declining` | Mood fell this week (the item should usually also carry `low_mood`) |
+
+The existing tags `low_mood`, `positive_mood`, `sleep_support`, `screen_break`, `education` and `guardian` are unchanged. The Urdu reason text for `stage`, `recovery`, `support` and `mood_declining` should be checked by a native speaker.
+
+### Phase 2: learning from what she does (migration 025)
+
+- **Engagement, counts only:** `POST /content/items/:id/engagement` with `event` = `media_opened` | `completed` | `engaged` and optional `seconds` (≤ 7200) and `reason` (the card's reason code). These are added to the counts in `content_views`; no event log or watch history is kept. The app sends `media_opened` when she taps Play. It sends `completed` when she comes back after about half the video, or after reading an article for roughly its reading time.
+- **Learned taste (`affinity`, default 15):** finished, opened, saved or helpful items add to her score for their tags and category. Not-helpful items subtract. The effect halves every 21 days. It reaches full strength only after real history (about 3 finished items), so one tap cannot reshape the feed. Dismissing an item hides only that item.
+- **Her own choices:** `interests` (sleep, calm, music, low_mood, anxiety, feeding, body_recovery, baby_bonding, relationships, faith, learning; weight `interest` 25) and `preferred_formats` (weight `format` 8) are set from new chips in the preferences sheet. Music and faith topics still need the separate music and religious opt-ins. Older app versions that don't send these fields keep the stored choice.
+- **Exploration (`explore_slots`, default 1, max 3):** once she has history, the best item from a category she hasn't tried is placed at slot 3, with the reason "Something different to try".
+- **Urdu:** when the feed is requested in Urdu, items tagged `urdu` get the `format` lift.
+
+### Phase 3: measuring and tuning
+
+`node scripts/content-report.js` prints opens, plays, finishes and helpful/not-helpful/dismissed rates. Results are broken down by the reason on the card, and by category, format and tag. It also shows an observational "next-day mood vs her own average" after finishing content, which is not proof of benefit. Any group with fewer than 5 accounts is hidden. It suggests weight changes in plain language, and an operator changes weights through the admin policy. The script never changes anything itself.
+
+### Starter catalogue: real videos and music
+
+`content-catalog/hercare-starter-v1.json` contains 33 YouTube videos and 5 Quran verses. The videos come from NHS, Mayo Clinic, Maudsley NHS, Tommy's, Lullaby Trust, HSE Ireland, Headspace, Therapy in a Nutshell, Pakistani doctors on oladoc, Marham and Gynae Solution, Alafasy's official channel, and calm music and nature-sound channels. Every item has English and Urdu text and ranking tags. The importer's `youtube` source checks each video through YouTube's keyless oEmbed endpoint. It fails if a video is removed, made private or not embeddable, or is no longer published by the expected channel.
+
+```
+node -r dotenv/config scripts/content-import.js --file content-catalog/hercare-starter-v1.json            # verify only
+node -r dotenv/config scripts/content-import.js --file content-catalog/hercare-starter-v1.json --db --apply # create drafts
+```
+
+Imports are drafts only. An admin opens **Content catalog → Drafts**, uses **Watch / listen to check** on each item, then **Approve & publish selected**. That records one review note and qualification for up to 50 items, and each item still goes through the normal checks. Re-run the dry run before the `review_after` date (2027-05-17) to catch removed videos. Feed cards show the YouTube preview image (`i.ytimg.com`), and the video opens in the YouTube app or browser only when she taps Play.
+
+### Live YouTube search (migration 026)
+
+`GET /content/live` returns up to 8 fresh YouTube videos. The app shows them in a separate **Live from YouTube** section under the reviewed feed, labelled as not individually reviewed. The hardening is in `content.live.js`:
+
+- **Key:** `YOUTUBE_API_KEY` stays on the server and is sent in the `X-Goog-Api-Key` header, never in a URL. Live search is off if the key is missing or `CONTENT_LIVE_SEARCH=off`.
+- **Queries:** fixed per topic (low mood, anxiety, sleep, calm, music, feeding, body recovery, bonding, relationships, faith, learning), in English and Urdu. No user text, health data or account ID goes to YouTube. Topics come from her chosen interests, then her current state, then calm and learning, up to 3 per request. Guardians get relationships and learning.
+- **Trusted channels only:** `content-catalog/live-sources.json` lists channel IDs, each with a kind (health, calm, music or faith), and a channel only appears under topics suited to its kind. Removing a channel, or adding to `blocked_videos` or `blocked_terms`, applies to cached results immediately.
+- **YouTube filters:** SafeSearch strict; public, embeddable and processed videos only; no live streams, no Shorts (under 60 s), no age-restricted or Pakistan-blocked videos; health videos up to 1 h, music and recitation up to 4 h.
+- **Word filter:** titles and descriptions with self-harm, suicide, miracle-cure or "guaranteed" claims, wazifa, taweez, black magic, jinn, "stop your medication", weight-loss, prank or horror terms (English and Urdu) are dropped. Titles are cleaned of control and bidi-override characters and shown as plain text only.
+- **Opt-ins and safety:** music needs the music opt-in and recitation the religious opt-in, checked on the server and again on the phone. An open crisis returns nothing. Videos already in the reviewed catalogue are not repeated.
+- **Hiding:** she can tap "Don't show this" (stored in `content_live_hidden`). A video hidden by 3 or more mothers is hidden for everyone.
+- **Quota:** results are cached per topic and language in `content_live_cache` for `CONTENT_LIVE_TTL_HOURS` (default 12). Refreshes are de-duplicated and capped at 40 an hour, and a failed refresh backs off for 15 minutes. If YouTube is down, cached results up to 72 h old are served. One refresh costs about 101 of the 10,000 free daily units.
+
+- **Trusted-channel library (migration 027):** a broad search mostly returns small unknown channels, which the allowlist correctly drops; in testing, 1 of 50 English results came from a trusted channel. So the backend also reads the latest ~200 uploads of every trusted channel through its uploads playlist, at about 1 unit per 50 videos (about 220 units for all 33 channels). Each video passes the same word filter, the off-audience filter and the details checks. They're stored in `content_live_library` and matched to topics by keywords in the title and by channel kind. Each channel is refreshed at most once every 24 h, in the background, so a mother's request never waits for it. A channel that fails backs off for a day. `node scripts/content-live-refresh.js [--force]` refreshes on demand, for example from a daily scheduled task.
+- **Off-audience filter:** fertility, IVF, conception, pregnancy tests, ovulation, miscarriage, stillbirth, baby loss, abortion, ectopic, NICU, grief and trimester content, and pregnancy-only videos unless they're about after birth. These are dropped even from trusted channels, because they're the wrong stage, or upsetting when she didn't ask for them.
+
+**Setup:** in Google Cloud, create a project, enable *YouTube Data API v3*, create an API key, restrict it to that API, and set `YOUTUBE_API_KEY` in `hercare_backend/.env`. Restart the backend.
+
 The daily verse advances through eligible reviewed database verses on a **UTC calendar day**, with a stable account offset. It does not depend on a compiled list of verses or external API requests on each phone refresh.
 
 ## What “live” means here

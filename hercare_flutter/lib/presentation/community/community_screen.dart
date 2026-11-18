@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_ext.dart';
 import '../../providers/language_provider.dart';
+import '../shared/hc_widgets.dart';
 import '../../data/models/community_models.dart';
 import '../../services/community_service.dart';
 import 'community_composer.dart';
@@ -13,21 +16,40 @@ export 'community_sessions.dart' show CommunitySessions;
 class CommunityEntryCard extends StatelessWidget {
   const CommunityEntryCard({super.key});
   @override
-  Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Card(
-          child: ListTile(
-        leading: const Icon(Icons.diversity_1_outlined),
-        title: Text(context.watch<LanguageProvider>().isUrdu
-            ? 'ساتھیوں کا حلقہ'
-            : 'Peer community'),
-        subtitle: Text(context.watch<LanguageProvider>().isUrdu
-            ? 'بات کرنے اور مدد کا محفوظ حلقہ'
-            : 'A moderated space to share and support'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const CommunityScreen())),
-      )));
+  Widget build(BuildContext context) {
+    final urdu = context.watch<LanguageProvider>().isUrdu;
+    final theme = Theme.of(context);
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: HcCard(
+            padding: const EdgeInsets.all(16),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CommunityScreen())),
+            child: Row(children: [
+              const HcIconBadge(
+                  icon: Icons.diversity_1_rounded,
+                  color: AppColors.secondary,
+                  background: AppColors.secondaryContainer,
+                  size: 48),
+              const SizedBox(width: 14),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(urdu ? 'ساتھیوں کا حلقہ' : 'Peer community',
+                        style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(
+                        urdu
+                            ? 'بات کرنے اور مدد کا محفوظ حلقہ'
+                            : 'A moderated space to share and support',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: context.hcTextSecondary)),
+                  ])),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: context.hcTextHint),
+            ])));
+  }
 }
 
 /// One paginated view serves topics, personal threads, discussions and review.

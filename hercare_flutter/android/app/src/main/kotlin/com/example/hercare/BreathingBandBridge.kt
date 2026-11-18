@@ -229,11 +229,24 @@ internal class BreathingBandBridge(
             low or ((data[2].toInt() and 0xff) shl 8)
         }
         if (rate !in 1..300) return
+        // Heart Rate Measurement (0x2A37): after the rate, optional energy-expended (bit 3, uint16),
+        // then optional RR intervals (bit 4), uint16 each in 1/1024 s. Converted to ms for HRV.
+        var offset = if ((flags and 1) == 0) 2 else 3
+        if ((flags and 8) != 0) offset += 2
+        val intervals = ArrayList<Int>()
+        if ((flags and 16) != 0) {
+            while (offset + 1 < data.size && intervals.size < 16) {
+                val raw = (data[offset].toInt() and 0xff) or ((data[offset + 1].toInt() and 0xff) shl 8)
+                val ms = (raw * 1000L / 1024L).toInt()
+                if (ms in 250..2000) intervals.add(ms)
+                offset += 2
+            }
+        }
         main.post {
             if (connection !== gatt) return@post
             main.removeCallbacks(readingTimeout)
             main.postDelayed(readingTimeout, 12_000)
-            sink?.success(mapOf("status" to "live", "bpm" to rate))
+            sink?.success(mapOf("status" to "live", "bpm" to rate, "rr" to intervals))
         }
     }
 

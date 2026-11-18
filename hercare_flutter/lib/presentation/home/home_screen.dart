@@ -97,30 +97,31 @@ class _HomeDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const gap = SizedBox(height: 28);
     return Scaffold(
       backgroundColor: context.hcBg,
       appBar: const HomeHeader(),
       body: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
           const MoodHeroCard(),
-          const SizedBox(height: 24),
-          const WellbeingGrid(),
-          const SizedBox(height: 24),
-          const EpdsPromptCard(),
-          const SizedBox(height: 24),
+          gap,
           const QuickActionsRow(),
-          const SizedBox(height: 24),
-          const GuardianCard(),
-          const SizedBox(height: 24),
-          const CommunityEntryCard(),
-          const SizedBox(height: 24),
+          gap,
+          const WellbeingGrid(),
+          gap,
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ContentForYouCard(
                   active: active,
                   onOpen: () => context.push(AppRoutes.content))),
+          gap,
+          const EpdsPromptCard(),
+          gap,
+          const GuardianCard(),
+          const SizedBox(height: 16),
+          const CommunityEntryCard(),
         ],
       ),
     );
@@ -144,102 +145,100 @@ class _BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     const items = [
       _NavItem(
-        icon: Icons.home_rounded,
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
         labelEn: 'Home',
         labelUr: 'ہوم',
       ),
       _NavItem(
         icon: Icons.assignment_outlined,
+        activeIcon: Icons.assignment_rounded,
         labelEn: 'Tests',
         labelUr: 'جانچ',
       ),
       _NavItem(
         icon: Icons.chat_bubble_outline_rounded,
+        activeIcon: Icons.chat_bubble_rounded,
         labelEn: 'Hum-Raaz',
         labelUr: 'ہم راز',
       ),
       _NavItem(
-        icon: Icons.bedtime_outlined,
+        icon: Icons.spa_outlined,
+        activeIcon: Icons.spa_rounded,
         labelEn: 'Wellbeing',
         labelUr: 'صحت',
       ),
       _NavItem(
         icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
         labelEn: 'Profile',
         labelUr: 'پروفائل',
       ),
     ];
+    final primary = Theme.of(context).colorScheme.primary;
+    final muted = context.hcTextSecondary;
 
     return Container(
       decoration: BoxDecoration(
         color: context.hcSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+            color: AppColors.shadow.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (i) {
               final selected = currentIndex == i;
               final item = items[i];
+              final label = isUrdu ? item.labelUr : item.labelEn;
               return Expanded(
-                  child: GestureDetector(
-                onTap: () => onTap(i),
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
+                  child: Semantics(
+                selected: selected,
+                button: true,
+                child: InkResponse(
+                  onTap: () => onTap(i),
+                  radius: 36,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.all(6),
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        width: 58,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.primaryContainer
+                              ? (context.isDark
+                                  ? primary.withValues(alpha: 0.2)
+                                  : AppColors.primaryContainer)
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(
-                          item.icon,
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                          size: 24,
+                          selected ? item.activeIcon : item.icon,
+                          color: selected ? primary : muted,
+                          size: 23,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(
-                        isUrdu ? item.labelUr : item.labelEn,
+                        label,
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
+                          color: selected ? primary : muted,
                           fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w400,
-                          fontSize: 10,
+                              selected ? FontWeight.w800 : FontWeight.w600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 2),
-                      // Active dot indicator
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: selected ? 6 : 0,
-                        height: selected ? 6 : 0,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
                       ),
                     ],
                   ),
@@ -255,11 +254,13 @@ class _BottomNav extends StatelessWidget {
 
 class _NavItem {
   final IconData icon;
+  final IconData activeIcon;
   final String labelEn;
   final String labelUr;
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.labelEn,
     required this.labelUr,
   });

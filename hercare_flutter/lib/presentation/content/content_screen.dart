@@ -79,9 +79,11 @@ class _ContentPageState extends State<_ContentPage>
       _schedule();
       return;
     }
-    await context
-        .read<ContentProvider>()
-        .load(language: _language ?? 'en', savedOnly: _savedOnly, force: force);
+    final provider = context.read<ContentProvider>();
+    await provider.load(
+        language: _language ?? 'en', savedOnly: _savedOnly, force: force);
+    if (!mounted) return;
+    if (!_savedOnly) await provider.loadLive(language: _language ?? 'en');
     if (!mounted) return;
     if (!_initialOpened && widget.initialItemId != null) {
       _initialOpened = true;
@@ -113,13 +115,13 @@ class _ContentPageState extends State<_ContentPage>
     super.dispose();
   }
 
-  Future<void> _open(String id) async {
+  Future<void> _open(String id, {String? reason}) async {
     final provider = context.read<ContentProvider>(),
         owner = context.read<ContentProvider>().accountId;
     _timer?.cancel();
     await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) =>
-            ContentAccountScope(child: _ContentDetailPage(id: id))));
+        builder: (_) => ContentAccountScope(
+            child: _ContentDetailPage(id: id, reason: reason))));
     if (mounted && provider.accountId == owner && provider.canUseAccount) {
       await _refresh(force: true);
     }
@@ -147,7 +149,7 @@ class _ContentPageState extends State<_ContentPage>
     return Scaffold(
       backgroundColor: context.hcBg,
       appBar: AppBar(
-          backgroundColor: context.hcSurface,
+          backgroundColor: context.hcBg,
           title: Text(ur ? 'آپ کے لیے' : 'For you'),
           actions: [
             IconButton(
@@ -159,18 +161,45 @@ class _ContentPageState extends State<_ContentPage>
           onRefresh: () => _refresh(force: true),
           child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 36),
               children: [
-                Text(
-                    provider.role == 'guardian'
-                        ? (ur
-                            ? 'سننے، سمجھنے اور گھر میں تعاون کے لیے رہنمائی۔'
-                            : 'Guidance for listening, understanding and supporting at home.')
-                        : (ur
-                            ? 'مختصر رہنمائی، سکون اور ہلکی مشقیں۔ صرف اپنی پسند کا مواد چنیں۔'
-                            : 'Small moments of learning, calm and gentle activity. Choose what feels right for you.'),
-                    style: Theme.of(context).textTheme.bodyLarge),
-                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: context.isDark ? null : AppColors.heroGradient,
+                    color: context.isDark ? context.hcSurface : null,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: Colors.white
+                              .withValues(alpha: context.isDark ? 0.1 : 0.8),
+                          borderRadius: BorderRadius.circular(16)),
+                      child: const Icon(Icons.auto_awesome_rounded,
+                          color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                          provider.role == 'guardian'
+                              ? (ur
+                                  ? 'سننے، سمجھنے اور گھر میں تعاون کے لیے رہنمائی۔'
+                                  : 'Guidance for listening, understanding and supporting at home.')
+                              : (ur
+                                  ? 'مختصر رہنمائی، سکون اور ہلکی مشقیں۔ صرف اپنی پسند کا مواد چنیں۔'
+                                  : 'Small moments of learning, calm and gentle activity. Choose what feels right for you.'),
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: context.isDark
+                                  ? context.hcTextPrimary
+                                  : AppColors.textPrimary,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 16),
                 Wrap(spacing: 10, runSpacing: 6, children: [
                   ChoiceChip(
                       label: Text(ur ? 'تجاویز' : 'Recommended'),
@@ -246,22 +275,30 @@ class _ContentPageState extends State<_ContentPage>
                       label: Text(
                           ur ? 'اپنی پسند چنیں' : 'Choose your preferences')),
                 ] else if (!provider.safetyPriority)
-                  ...items.map((item) =>
-                      ContentTile(item: item, onTap: () => _open(item.id))),
+                  ...items.map((item) => ContentTile(
+                      item: item,
+                      onTap: () => _open(item.id, reason: item.primaryReason))),
+                if (!_savedOnly &&
+                    _category == null &&
+                    !provider.safetyPriority)
+                  const LiveVideoSection(),
                 const SizedBox(height: 18),
                 _Notice(
                     icon: Icons.privacy_tip_outlined,
                     text: ur
-                        ? 'مواد سرور کے جائزہ شدہ کیٹلاگ سے آتا ہے۔ اسلامی مواد اور موسیقی الگ الگ اختیاری ہیں۔ بیرونی سائٹ صرف آپ کے انتخاب کے بعد کھلتی ہے؛ نجی گفتگو یا صحت کے اسکور اس کو نہیں بھیجے جاتے۔'
-                        : 'Content comes from the reviewed server catalogue. Islamic content and music are separate choices. External sites open only after you choose; private conversations and health scores are not sent to them.'),
+                        ? 'مواد سرور کے جائزہ شدہ کیٹلاگ سے آتا ہے۔ اسلامی مواد اور موسیقی الگ الگ اختیاری ہیں۔ ویڈیو کی تصویر یوٹیوب سے لوڈ ہوتی ہے؛ ویڈیو صرف آپ کے انتخاب کے بعد کھلتی ہے۔ نجی گفتگو یا صحت کے اسکور انہیں نہیں بھیجے جاتے۔ ایپ صرف یہ گنتی رکھتی ہے کہ آپ نے کیا کھولا یا مکمل کیا، تاکہ تجاویز بہتر ہوں۔'
+                        : 'Content comes from the reviewed server catalogue. Islamic content and music are separate choices. Video preview images load from YouTube; videos open only after you choose. Private conversations and health scores are never sent to them. The app counts what you open or finish, to improve suggestions.'),
               ])),
     );
   }
 }
 
 class _ContentDetailPage extends StatefulWidget {
-  const _ContentDetailPage({required this.id});
+  const _ContentDetailPage({required this.id, this.reason});
   final String id;
+
+  /// The recommendation reason on the card she tapped, reported once.
+  final String? reason;
   @override
   State<_ContentDetailPage> createState() => _ContentDetailPageState();
 }
@@ -270,9 +307,15 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
     with WidgetsBindingObserver {
   ContentDetail? _detail;
   String? _error;
-  bool _loading = false, _foreground = true;
+  bool _loading = false, _foreground = true, _reasonSent = false;
   Timer? _timer;
   int _request = 0;
+  // Engagement: time on this page while visible, and time away after
+  // opening media in the YouTube app or browser.
+  ContentProvider? _provider;
+  final Stopwatch _onPage = Stopwatch();
+  DateTime? _mediaOpenedAt;
+  bool _completedSent = false;
   @override
   void initState() {
     super.initState();
@@ -283,19 +326,63 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _provider = context.read<ContentProvider>();
+  }
+
+  @override
   void dispose() {
     _request++;
     _timer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    _reportReading();
     super.dispose();
+  }
+
+  /// Article reading: send the seconds spent, and "completed" once she spent
+  /// about as long as the text takes to read (capped at one minute).
+  void _reportReading() {
+    _onPage.stop();
+    final item = _detail?.item, provider = _provider;
+    if (item == null || provider == null || _detail!.offline) return;
+    final seconds = _onPage.elapsed.inSeconds;
+    if (seconds < 10) return;
+    final text = item.bodyEn.isNotEmpty ? item.bodyEn : item.bodyUr;
+    final words = text.split(RegExp(r'\s+')).length;
+    final readSeconds = (words / 200 * 60 * .6).clamp(15, 60).round();
+    final finished = item.format == 'article' && seconds >= readSeconds;
+    provider.recordEngagement(
+        item, finished && !_completedSent ? 'completed' : 'engaged',
+        seconds: seconds.clamp(0, 7200));
+  }
+
+  /// Back from the YouTube app/browser: treat a long enough visit as finished.
+  void _reportMediaReturn() {
+    final openedAt = _mediaOpenedAt, item = _detail?.item;
+    _mediaOpenedAt = null;
+    if (openedAt == null || item == null || _provider == null) return;
+    final away = DateTime.now().difference(openedAt).inSeconds.clamp(0, 7200);
+    final duration = item.durationSeconds;
+    final finished = away >= 60 &&
+        (duration == null || away >= (duration * .5).clamp(60, 1800));
+    if (finished && !_completedSent) {
+      _completedSent = true;
+      _provider!.recordEngagement(item, 'completed', seconds: away);
+    } else if (away >= 10) {
+      _provider!.recordEngagement(item, 'engaged', seconds: away);
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _foreground = state == AppLifecycleState.resumed;
     if (_foreground) {
+      _onPage.start();
+      _reportMediaReturn();
       _refresh();
     } else {
+      _onPage.stop();
       _timer?.cancel();
     }
   }
@@ -315,9 +402,14 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
       _error = null;
     });
     try {
-      final detail = await provider.detail(widget.id);
+      final detail = await provider.detail(widget.id,
+          reason: _reasonSent ? null : widget.reason);
       if (!mounted || request != _request || provider.accountId != owner) {
         return;
+      }
+      _reasonSent = true;
+      if (detail != null && !detail.offline && !_onPage.isRunning) {
+        _onPage.start();
       }
       setState(() {
         _detail = detail;
@@ -416,6 +508,10 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
       }
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened && mounted) throw StateError('No browser available');
+      if (!source) {
+        _mediaOpenedAt = DateTime.now();
+        provider.recordEngagement(accepted.item, 'media_opened');
+      }
     } catch (_) {
       if (mounted && provider.accountId == owner) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -507,6 +603,17 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
                       text: ur
                           ? 'پہلے سے محفوظ آف لائن نقل۔ تازہ دستیابی کی تصدیق نہیں ہو سکی۔ بیرونی میڈیا اور تبدیلیاں آن لائن ہونے پر دستیاب ہوں گی۔'
                           : 'Previously saved offline copy. Current availability could not be checked. External media and changes require a connection.'),
+                if (!detail.offline &&
+                    item.thumbnailUrl != null &&
+                    ContentActions.mediaLink(
+                            item.mediaUrl, provider.allowedMediaHosts) !=
+                        null) ...[
+                  ContentVideoPreview(
+                      item: item,
+                      onTap: _launch,
+                      semanticLabel: ur ? 'ویڈیو چلائیں' : 'Play video'),
+                  const SizedBox(height: 16),
+                ],
                 Text(contentCategory(item.category, ur),
                     style: Theme.of(context)
                         .textTheme
@@ -572,9 +679,11 @@ class _ContentDetailPageState extends State<_ContentDetailPage>
                       icon: Icon(item.format == 'video'
                           ? Icons.play_circle_outline
                           : Icons.headphones),
-                      label: Text(ur
-                          ? 'جائزہ شدہ میڈیا کھولیں'
-                          : 'Open reviewed media')),
+                      label: Text(item.youtubeId != null
+                          ? (ur ? 'یوٹیوب پر چلائیں' : 'Play on YouTube')
+                          : (ur
+                              ? 'جائزہ شدہ میڈیا کھولیں'
+                              : 'Open reviewed media'))),
                 if (ContentActions.activityRoute(item, role: provider.role) !=
                     null)
                   FilledButton.icon(
@@ -661,7 +770,7 @@ class _ContentPreferencesSheet extends StatefulWidget {
 
 class _ContentPreferencesSheetState extends State<_ContentPreferencesSheet> {
   bool? _religious, _music;
-  Set<String>? _disabled;
+  Set<String>? _disabled, _interests, _formats;
   int? _version;
   @override
   Widget build(BuildContext context) {
@@ -671,6 +780,8 @@ class _ContentPreferencesSheetState extends State<_ContentPreferencesSheet> {
     _religious ??= preferences.religiousEnabled;
     _music ??= preferences.musicEnabled;
     _disabled ??= preferences.disabledCategories.toSet();
+    _interests ??= preferences.interests.toSet();
+    _formats ??= preferences.preferredFormats.toSet();
     _version ??= preferences.version;
     return ConstrainedBox(
         constraints:
@@ -714,6 +825,55 @@ class _ContentPreferencesSheetState extends State<_ContentPreferencesSheet> {
                   const Divider(height: 28),
                   Text(
                       ur
+                          ? 'آج کل آپ کو کس چیز میں مدد چاہیے؟'
+                          : 'What would help you right now?',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                      ur
+                          ? 'جو موضوع چنیں گی وہ تجاویز میں پہلے آئیں گے۔ کبھی بھی بدل سکتی ہیں۔'
+                          : 'Topics you choose come first in your suggestions. Change them any time.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: ContentPreferences.interestKeys
+                          .where((key) =>
+                              (key != 'music' || _music!) &&
+                              (key != 'faith' || _religious!))
+                          .map((key) => FilterChip(
+                              label: Text(contentInterest(key, ur)),
+                              selected: _interests!.contains(key),
+                              onSelected: provider.savingPreferences
+                                  ? null
+                                  : (on) => setState(() => on
+                                      ? _interests!.add(key)
+                                      : _interests!.remove(key))))
+                          .toList()),
+                  const SizedBox(height: 14),
+                  Text(
+                      ur
+                          ? 'آپ کو کیا پسند ہے؟'
+                          : 'How do you like to take things in?',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: ContentItem.formats
+                          .map((format) => FilterChip(
+                              label: Text(contentFormat(format, ur)),
+                              selected: _formats!.contains(format),
+                              onSelected: provider.savingPreferences
+                                  ? null
+                                  : (on) => setState(() => on
+                                      ? _formats!.add(format)
+                                      : _formats!.remove(format))))
+                          .toList()),
+                  const Divider(height: 28),
+                  Text(
+                      ur
                           ? 'کن اقسام کو دکھایا جائے؟'
                           : 'Which categories should appear?',
                       style: Theme.of(context).textTheme.titleSmall),
@@ -754,6 +914,15 @@ class _ContentPreferencesSheetState extends State<_ContentPreferencesSheet> {
                                           musicEnabled: _music!,
                                           disabledCategories:
                                               _disabled!.toList(),
+                                          // A topic needing an opt-in that is
+                                          // now off is dropped, not kept hidden.
+                                          interests: _interests!
+                                              .where((key) =>
+                                                  (key != 'music' || _music!) &&
+                                                  (key != 'faith' ||
+                                                      _religious!))
+                                              .toList(),
+                                          preferredFormats: _formats!.toList(),
                                           version: _version!));
                                   if (context.mounted &&
                                       saved &&
@@ -785,10 +954,16 @@ class _Notice extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
           color: context.hcSurfaceVariant,
-          borderRadius: BorderRadius.circular(14)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 21, color: AppColors.primary),
-        const SizedBox(height: 8),
-        Text(text, style: Theme.of(context).textTheme.bodySmall),
+          borderRadius: BorderRadius.circular(18)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: context.hcTextSecondary)),
+        ),
       ]));
 }

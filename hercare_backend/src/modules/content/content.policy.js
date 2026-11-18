@@ -109,12 +109,21 @@ function item(body) {
   if (data.category === 'quran' && (!data.arabic_text || !data.transliteration || !data.verse_reference || data.is_music)) fail('Quran content requires Arabic, transliteration and a verse reference.');
   return data;
 }
+const INTEREST_KEYS = Object.freeze(['sleep', 'calm', 'music', 'low_mood', 'anxiety', 'feeding', 'body_recovery',
+  'baby_bonding', 'relationships', 'faith', 'learning']);
+// Optional lists: older app versions omit them and keep the stored choice (undefined).
+function optionalList(value, allowed) {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length > allowed.length || value.some((s) => !allowed.includes(s))) fail();
+  return [...new Set(value)].sort();
+}
 function preferences(body) {
-  onlyKeys(body, ['version', 'religious_enabled', 'music_enabled', 'disabled_categories']);
+  onlyKeys(body, ['version', 'religious_enabled', 'music_enabled', 'disabled_categories', 'interests', 'preferred_formats']);
   const disabled = body.disabled_categories;
   if (!Array.isArray(disabled) || disabled.length > CATEGORIES.length || disabled.some((s) => !CATEGORIES.includes(s))) fail();
   return { version: integer(body.version, 0, 2147483646), religious_enabled: bool(body.religious_enabled), music_enabled: bool(body.music_enabled),
-    disabled_categories: [...new Set(disabled)].sort() };
+    disabled_categories: [...new Set(disabled)].sort(), interests: optionalList(body.interests, INTEREST_KEYS),
+    preferred_formats: optionalList(body.preferred_formats, FORMATS) };
 }
 function listQuery(query, admin = false, maxLimit = 30) {
   onlyKeys(query, admin ? ['status', 'limit', 'offset'] : ['language', 'limit']);
@@ -124,4 +133,4 @@ function listQuery(query, admin = false, maxLimit = 30) {
     : { language: query.language == null ? 'en' : enumValue(query.language, ['en', 'ur']), limit: parse(query.limit, 20, 1, maxLimit) };
 }
 
-module.exports = { CATEGORIES, CONTENT_KEYS, onlyKeys, uuid, integer, enumValue, text, bool, item, preferences, listQuery, allowedHosts, url, fail };
+module.exports = { CATEGORIES, FORMATS, INTEREST_KEYS, CONTENT_KEYS, onlyKeys, uuid, integer, enumValue, text, bool, item, preferences, listQuery, allowedHosts, url, fail };

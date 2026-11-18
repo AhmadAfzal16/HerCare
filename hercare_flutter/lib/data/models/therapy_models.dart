@@ -23,6 +23,137 @@ class TherapyRecommendation {
       );
 }
 
+/// Optional monitoring around one breathing/meditation session: tension 0-10
+/// before/after, a distress answer, and a short heart reading before/after.
+/// Only these summary numbers are saved; camera frames and beat timings stay
+/// on the phone and are discarded after the reading.
+class TherapyMeasures {
+  const TherapyMeasures({
+    this.tensionBefore,
+    this.tensionAfter,
+    this.distressReported,
+    this.hrBefore,
+    this.hrAfter,
+    this.hrvBefore,
+    this.hrvAfter,
+    this.physioSource,
+  });
+
+  final int? tensionBefore,
+      tensionAfter,
+      hrBefore,
+      hrAfter,
+      hrvBefore,
+      hrvAfter;
+  final bool? distressReported;
+
+  /// 'camera' (fingertip, approximate) or 'band' (Bluetooth heart-rate band).
+  final String? physioSource;
+
+  bool get hasHeart =>
+      hrBefore != null ||
+      hrAfter != null ||
+      hrvBefore != null ||
+      hrvAfter != null;
+  bool get isEmpty =>
+      tensionBefore == null &&
+      tensionAfter == null &&
+      distressReported == null &&
+      !hasHeart;
+  int? get tensionChange => tensionBefore == null || tensionAfter == null
+      ? null
+      : tensionAfter! - tensionBefore!;
+
+  TherapyMeasures copyWith({
+    int? tensionBefore,
+    int? tensionAfter,
+    bool? distressReported,
+    int? hrBefore,
+    int? hrAfter,
+    int? hrvBefore,
+    int? hrvAfter,
+    String? physioSource,
+  }) =>
+      TherapyMeasures(
+        tensionBefore: tensionBefore ?? this.tensionBefore,
+        tensionAfter: tensionAfter ?? this.tensionAfter,
+        distressReported: distressReported ?? this.distressReported,
+        hrBefore: hrBefore ?? this.hrBefore,
+        hrAfter: hrAfter ?? this.hrAfter,
+        hrvBefore: hrvBefore ?? this.hrvBefore,
+        hrvAfter: hrvAfter ?? this.hrvAfter,
+        physioSource: physioSource ?? this.physioSource,
+      );
+
+  /// Server/queue shape. Heart readings are only sent with their source.
+  Map<String, dynamic> toJson() => {
+        if (tensionBefore != null) 'tension_before': tensionBefore,
+        if (tensionAfter != null) 'tension_after': tensionAfter,
+        if (distressReported != null) 'distress_reported': distressReported,
+        if (hasHeart && physioSource != null) ...{
+          if (hrBefore != null) 'hr_before': hrBefore,
+          if (hrAfter != null) 'hr_after': hrAfter,
+          if (hrvBefore != null) 'hrv_before': hrvBefore,
+          if (hrvAfter != null) 'hrv_after': hrvAfter,
+          'physio_source': physioSource,
+        },
+      };
+
+  static TherapyMeasures? fromJson(dynamic json) {
+    if (json is! Map) return null;
+    final source = json['physio_source'];
+    final value = TherapyMeasures(
+      tensionBefore: _integer(json['tension_before'], maximum: 10),
+      tensionAfter: _integer(json['tension_after'], maximum: 10),
+      distressReported: json['distress_reported'] is bool
+          ? json['distress_reported'] as bool
+          : null,
+      hrBefore: _integer(json['hr_before'], minimum: 35, maximum: 220),
+      hrAfter: _integer(json['hr_after'], minimum: 35, maximum: 220),
+      hrvBefore: _integer(json['hrv_before'], minimum: 1, maximum: 300),
+      hrvAfter: _integer(json['hrv_after'], minimum: 1, maximum: 300),
+      physioSource:
+          source == 'camera' || source == 'band' ? source as String : null,
+    );
+    return value.isEmpty ? null : value;
+  }
+
+  /// Validates a queued/outgoing map exactly as the server will.
+  static bool validJson(dynamic json) {
+    if (json == null) return true;
+    if (json is! Map) return false;
+    const ranges = {
+      'tension_before': (0, 10),
+      'tension_after': (0, 10),
+      'hr_before': (35, 220),
+      'hr_after': (35, 220),
+      'hrv_before': (1, 300),
+      'hrv_after': (1, 300),
+    };
+    for (final key in json.keys) {
+      if (!ranges.containsKey(key) &&
+          key != 'distress_reported' &&
+          key != 'physio_source') {
+        return false;
+      }
+    }
+    var heart = false;
+    for (final entry in ranges.entries) {
+      final value = json[entry.key];
+      if (value == null) continue;
+      if (value is! int || value < entry.value.$1 || value > entry.value.$2) {
+        return false;
+      }
+      if (entry.key.startsWith('hr')) heart = true;
+    }
+    final distress = json['distress_reported'];
+    if (distress != null && distress is! bool) return false;
+    final source = json['physio_source'];
+    if (heart != (source != null)) return false;
+    return source == null || source == 'camera' || source == 'band';
+  }
+}
+
 class TherapySession {
   const TherapySession({
     required this.id,
@@ -35,7 +166,10 @@ class TherapySession {
     this.moodBefore,
     this.moodAfter,
     this.isSynced = true,
+    this.measures,
   });
+
+  final TherapyMeasures? measures;
 
   final String id;
   final String activityType;
@@ -61,6 +195,7 @@ class TherapySession {
         moodAfter: _integer(json['mood_after'], minimum: 1, maximum: 5),
         completed: json['completed'] == true,
         breathingParticipation: json['breathing_participation'] as String?,
+        measures: TherapyMeasures.fromJson(json['measures']),
         completedAt:
             DateTime.tryParse(json['completed_at']?.toString() ?? '') ??
                 DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
@@ -135,6 +270,24 @@ class TherapyActivity {
 
 abstract final class TherapyCatalog {
   static const activities = <TherapyActivity>[
+    // Best-supported patterns first: exhale-focused cyclic sighing (Balban et
+    // al. 2023) and slow ~6 breaths/minute breathing (Lehrer & Gevirtz 2014).
+    TherapyActivity(
+        id: 'cyclic_sighing',
+        type: 'breathing',
+        title: 'Calming Sigh',
+        titleUr: 'پرسکون آہ',
+        description: 'Two short breaths in, one long breath out.',
+        descriptionUr: 'دو چھوٹی سانسیں اندر، ایک لمبی سانس باہر۔',
+        minutes: 5),
+    TherapyActivity(
+        id: 'resonance_breathing',
+        type: 'breathing',
+        title: 'Slow Steady Breathing',
+        titleUr: 'آہستہ اور یکساں سانس',
+        description: 'Six slow breaths a minute, no holding.',
+        descriptionUr: 'ایک منٹ میں چھ آہستہ سانسیں، سانس روکے بغیر۔',
+        minutes: 5),
     TherapyActivity(
         id: 'breathing_478',
         type: 'breathing',

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_ext.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 import '../../../providers/screening_provider.dart';
-import '../../../core/routing/app_router.dart';
+import '../../shared/hc_widgets.dart';
 
 /// Card prompting the user to complete their weekly EPDS screening.
 /// Shows a progress bar of last score against the 30-point maximum.
@@ -28,176 +28,90 @@ class EpdsPromptCard extends StatelessWidget {
     final lastScore = screening.latest?.totalScore;
     final progress = (lastScore ?? 0) / 30;
     final isDue = screening.reminder?.due;
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header with DUE badge
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              Text(
-                isUrdu ? 'ہفتہ وار جانچ' : 'Weekly Check-in',
-                style: AppTextStyles.titleSmall.copyWith(fontSize: 16),
-              ),
-              if (isDue != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: (isDue ? AppColors.error : AppColors.success)
-                        .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
+          HcSectionHeader(
+            title: isUrdu ? 'ہفتہ وار جانچ' : 'Weekly check-in',
+            trailing: isDue == null
+                ? null
+                : HcPill(
+                    label: isDue
+                        ? (isUrdu ? 'واجب' : 'Due now')
+                        : (isUrdu ? 'مکمل' : 'Up to date'),
+                    icon: isDue
+                        ? Icons.schedule_rounded
+                        : Icons.check_circle_rounded,
+                    color: isDue ? AppColors.peach : AppColors.success,
                   ),
-                  child: Text(
-                    isDue
-                        ? (isUrdu ? 'واجب' : 'DUE')
-                        : (isUrdu ? 'مکمل' : 'UP TO DATE'),
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: isDue ? AppColors.error : AppColors.success,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 10,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-            ],
           ),
           const SizedBox(height: 12),
-
-          // Card
-          Container(
-            decoration: BoxDecoration(
-              color: context.hcSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: const Border(
-                left: BorderSide(
-                  color: AppColors.primary,
-                  width: 4,
-                ),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top row: icon + title
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_outlined,
-                          color: AppColors.primary,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isUrdu ? 'EPDS اسکریننگ' : 'EPDS Screening',
-                              style: AppTextStyles.titleSmall,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              isUrdu
-                                  ? 'ایڈنبرا پوسٹ نیٹل ڈپریشن اسکیل — 10 سوالات، ~3 منٹ'
-                                  : 'Edinburgh Postnatal Depression Scale — 10 questions, ~3 mins',
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(fontSize: 11),
-                              textDirection: isUrdu
-                                  ? TextDirection.rtl
-                                  : TextDirection.ltr,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Progress bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 8,
-                      backgroundColor: AppColors.primaryContainer,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
+          HcCard(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const HcIconBadge(
+                      icon: Icons.assignment_rounded,
+                      color: AppColors.primary,
+                      background: AppColors.primaryContainer,
+                      size: 48,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    lastScore == null
-                        ? (isUrdu
-                            ? 'ابھی تک کوئی مکمل اسکریننگ نہیں'
-                            : 'No completed screening yet')
-                        : (isUrdu
-                            ? 'آخری اسکور: $lastScore / 30'
-                            : 'Last score: $lastScore / 30'),
-                    style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // CTA Button
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                        minHeight: 48, minWidth: double.infinity),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.30),
-                            blurRadius: 12,
-                            offset: const Offset(0, 5),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isUrdu ? 'EPDS اسکریننگ' : 'EPDS screening',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isUrdu
+                                ? '10 سوالات · تقریباً 3 منٹ'
+                                : '10 gentle questions · about 3 minutes',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: context.hcTextSecondary),
                           ),
                         ],
                       ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.push(AppRoutes.tests);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          isUrdu ? 'میری جانچیں دیکھیں' : 'View my tests',
-                          style: AppTextStyles.labelLarge
-                              .copyWith(color: Colors.white),
-                        ),
-                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  lastScore == null
+                      ? (isUrdu
+                          ? 'ابھی تک کوئی مکمل اسکریننگ نہیں'
+                          : 'No completed screening yet')
+                      : (isUrdu
+                          ? 'آخری اسکور: $lastScore / 30'
+                          : 'Last score: $lastScore / 30'),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: context.hcTextSecondary),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => context.push(AppRoutes.tests),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 20),
+                  label: Text(isUrdu ? 'میری جانچیں دیکھیں' : 'View my tests'),
+                ),
+              ],
             ),
           ),
         ],

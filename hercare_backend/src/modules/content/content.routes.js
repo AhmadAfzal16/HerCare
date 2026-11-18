@@ -22,9 +22,12 @@ const endpoint = (fn, status = 200) => async (req, res, next) => {
 };
 router.get('/feed', endpoint((r) => service.feed(r.user.userId, r.query)));
 router.get('/saved', endpoint((r) => service.feed(r.user.userId, r.query, true)));
+router.get('/live', endpoint((r) => service.liveFeed(r.user.userId, r.query)));
+router.post('/live/hide', endpoint((r) => service.hideLive(r.user.userId, r.body)));
 router.get('/preferences', endpoint((r) => service.getPreferences(r.user.userId)));
 router.put('/preferences', endpoint((r) => service.updatePreferences(r.user.userId, r.body)));
-router.get('/items/:id', endpoint((r) => service.detail(r.user.userId, r.params.id)));
+router.get('/items/:id', endpoint((r) => service.detail(r.user.userId, r.params.id, r.query)));
+router.post('/items/:id/engagement', endpoint((r) => service.engagement(r.user.userId, r.params.id, r.body)));
 router.put('/items/:id/feedback', endpoint((r) => service.interaction(r.user.userId, r.params.id, r.body, 'feedback')));
 router.put('/items/:id/saved', endpoint((r) => service.interaction(r.user.userId, r.params.id, r.body, 'saved')));
 router.get('/admin/items', endpoint((r) => service.adminList(r.user.userId, r.query)));
@@ -33,6 +36,7 @@ router.put('/admin/items/:id', endpoint((r) => service.updateItem(r.user.userId,
 router.put('/admin/items/:id/review', endpoint((r) => service.reviewItem(r.user.userId, r.params.id, r.body)));
 router.put('/admin/items/:id/publication', endpoint((r) => service.publication(r.user.userId, r.params.id, r.body)));
 router.delete('/admin/items/:id', endpoint((r) => service.archive(r.user.userId, r.params.id, r.query.version)));
+router.post('/admin/bulk-review', endpoint((r) => service.bulkReview(r.user.userId, r.body)));
 router.get('/admin/policy', endpoint((r) => service.adminPolicy(r.user.userId)));
 router.put('/admin/policy', endpoint((r) => service.adminPolicy(r.user.userId, r.body)));
 

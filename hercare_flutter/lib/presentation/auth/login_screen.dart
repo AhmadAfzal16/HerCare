@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.35),
@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(30)),
                       ),
                       child: auth.isLoading
                           ? const SizedBox(

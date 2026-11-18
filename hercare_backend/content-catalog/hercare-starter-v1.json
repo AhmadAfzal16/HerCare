@@ -1,0 +1,479 @@
+{
+  "catalog_id": "hercare-starter-v1",
+  "items": [
+    {
+      "key": "ppd-nhs-how-do-i-know",
+      "source": { "type": "youtube", "video_id": "KBlVBOP7TGc", "channel": "NHS" },
+      "item": {
+        "title_en": "How do I know if I have postnatal depression?",
+        "title_ur": "کیسے پتا چلے کہ مجھے زچگی کے بعد ڈپریشن ہے؟",
+        "summary_en": "A short NHS video on the common signs of postnatal depression and when to talk to a doctor or midwife.",
+        "summary_ur": "این ایچ ایس کی مختصر ویڈیو: زچگی کے بعد ڈپریشن کی عام علامات اور کب ڈاکٹر یا دائی سے بات کرنی چاہیے۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 208, "tags": ["low_mood", "mood_declining", "education", "stage_0_6w", "stage_6w_3m", "stage_3_6m"],
+        "priority": 20, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-mayo-what-to-know",
+      "source": { "type": "youtube", "video_id": "fBYYr_kEjmo", "channel": "Mayo Clinic" },
+      "item": {
+        "title_en": "Postpartum depression: what you need to know",
+        "title_ur": "زچگی کے بعد ڈپریشن: ضروری معلومات",
+        "summary_en": "Mayo Clinic explains what postpartum depression is, how it differs from ordinary tiredness, and that it is treatable.",
+        "summary_ur": "میو کلینک بتاتا ہے کہ زچگی کے بعد ڈپریشن کیا ہے، یہ عام تھکن سے کیسے مختلف ہے، اور اس کا علاج ممکن ہے۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "tags": ["low_mood", "education", "stage_6w_3m", "stage_3_6m", "stage_6_12m"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-ochsner-baby-blues",
+      "source": { "type": "youtube", "video_id": "wICSeAjxyiU", "channel": "Ochsner Health" },
+      "item": {
+        "title_en": "Baby blues or postpartum depression?",
+        "title_ur": "بے بی بلوز یا زچگی کے بعد ڈپریشن؟",
+        "summary_en": "A two-minute explanation of the difference between the short-lived baby blues and postpartum depression.",
+        "summary_ur": "دو منٹ میں وضاحت: عارضی اداسی (بے بی بلوز) اور زچگی کے بعد ڈپریشن میں کیا فرق ہے۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 121, "tags": ["low_mood", "education", "stage_0_6w", "stage_6w_3m"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-tommys-stephanie",
+      "source": { "type": "youtube", "video_id": "ALLbXxd35ig", "channel": "Tommy's" },
+      "item": {
+        "title_en": "\"I wasn't alone\": a mother's story of postnatal depression",
+        "title_ur": "\"میں اکیلی نہیں تھی\": ایک ماں کی زچگی کے بعد ڈپریشن کی کہانی",
+        "summary_en": "Stephanie shares how antenatal and postnatal depression felt, and what helped her ask for support.",
+        "summary_ur": "اسٹیفنی بتاتی ہیں کہ حمل اور زچگی کے بعد ڈپریشن کیسا محسوس ہوا اور کس چیز نے انہیں مدد مانگنے میں ہمت دی۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "tags": ["low_mood", "mood_declining", "low_support"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-maudsley-getting-help",
+      "source": { "type": "youtube", "video_id": "QRa5JIFKGd0", "channel": "Maudsley NHS" },
+      "item": {
+        "title_en": "Getting help for postnatal depression",
+        "title_ur": "زچگی کے بعد ڈپریشن کے لیے مدد کیسے لیں",
+        "summary_en": "Mental health professionals explain what support exists and that asking for help early makes a difference.",
+        "summary_ur": "ذہنی صحت کے ماہرین بتاتے ہیں کہ کون سی مدد دستیاب ہے اور جلد مدد مانگنا کیوں فرق ڈالتا ہے۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "tags": ["low_mood", "mood_declining", "education", "low_support"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-urdu-oladoc",
+      "source": { "type": "youtube", "video_id": "C0LKfMzLCHk", "channel": "oladoc - Find The Best Doctors" },
+      "item": {
+        "title_en": "Postnatal depression: symptoms and treatment (Urdu)",
+        "title_ur": "زچگی کے بعد ڈپریشن: علامات اور علاج (اردو)",
+        "summary_en": "A Pakistani doctor explains, in Urdu, the signs of postnatal depression, how it differs from baby blues and how it is treated.",
+        "summary_ur": "ایک پاکستانی ڈاکٹر اردو میں زچگی کے بعد ڈپریشن کی علامات، بے بی بلوز سے فرق اور علاج کے طریقے بتاتے ہیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 721, "tags": ["low_mood", "education", "urdu"],
+        "priority": 20, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "ppd-urdu-sehatyab",
+      "source": { "type": "youtube", "video_id": "_EHcFqgruIU", "channel": "SehatYab - Online Mental Health Service - Pakistan" },
+      "item": {
+        "title_en": "What is postpartum depression? (Urdu)",
+        "title_ur": "زچگی کے بعد ڈپریشن کیا ہے؟ (اردو)",
+        "summary_en": "A Pakistani mental health service explains in Urdu why sadness after childbirth can be an illness, not a weakness.",
+        "summary_ur": "پاکستانی ذہنی صحت سروس اردو میں سمجھاتی ہے کہ زچگی کے بعد اداسی ایک بیماری ہو سکتی ہے، کمزوری نہیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 231, "tags": ["low_mood", "education", "urdu", "joint_family"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "anxiety-therapy-in-a-nutshell",
+      "source": { "type": "youtube", "video_id": "cXJmvUPQ-WY", "channel": "Therapy in a Nutshell" },
+      "item": {
+        "title_en": "Postpartum anxiety and intrusive thoughts",
+        "title_ur": "زچگی کے بعد بے چینی اور ناپسندیدہ خیالات",
+        "summary_en": "A licensed therapist explains postpartum anxiety and scary intrusive thoughts, why they are common, and skills that help.",
+        "summary_ur": "ایک لائسنس یافتہ معالج زچگی کے بعد بے چینی اور ڈراؤنے خیالات کی وضاحت کرتی ہیں، یہ کیوں عام ہیں، اور کون سی مہارتیں مدد کرتی ہیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 828, "tags": ["anxiety", "education"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "anxiety-tedx-royale",
+      "source": { "type": "youtube", "video_id": "3o80dVXzKXE", "channel": "TEDx Talks" },
+      "item": {
+        "title_en": "Postpartum anxiety, the little cousin of postpartum depression",
+        "title_ur": "زچگی کے بعد بے چینی: ڈپریشن کی کم معروف ساتھی",
+        "summary_en": "A mother's TEDx talk about living with postpartum anxiety and why it deserves the same attention as depression.",
+        "summary_ur": "ایک ماں کی ٹیڈ ایکس گفتگو: زچگی کے بعد بے چینی کے ساتھ جینا اور اسے ڈپریشن جتنی توجہ کیوں ملنی چاہیے۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 715, "tags": ["anxiety", "low_support"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "sleep-nhs-newborn",
+      "source": { "type": "youtube", "video_id": "2QJ3Vf55z-Q", "channel": "NHS" },
+      "item": {
+        "title_en": "How much sleep does a newborn need?",
+        "title_ur": "نومولود کو کتنی نیند چاہیے؟",
+        "summary_en": "NHS guidance on newborn sleep, so broken nights feel more expected and less like something is wrong.",
+        "summary_ur": "نومولود کی نیند پر این ایچ ایس کی رہنمائی، تاکہ ٹوٹی ہوئی راتیں غیر متوقع یا پریشان کن نہ لگیں۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 79, "tags": ["sleep_support", "baby_sleep", "baby_care", "stage_0_6w", "stage_6w_3m"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "sleep-lullaby-trust-safer",
+      "source": { "type": "youtube", "video_id": "NO2vbtjNk2c", "channel": "Lullaby Trust" },
+      "item": {
+        "title_en": "Safer sleep for babies",
+        "title_ur": "بچوں کے لیے محفوظ نیند",
+        "summary_en": "The Lullaby Trust shows simple steps for safer baby sleep, which can ease night-time worry.",
+        "summary_ur": "لولابائی ٹرسٹ بچے کی محفوظ نیند کے آسان طریقے دکھاتا ہے، جو رات کی فکر کم کر سکتے ہیں۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 123, "tags": ["baby_sleep", "baby_care", "anxiety", "stage_0_6w", "stage_6w_3m", "preterm_baby"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "csection-physio-advice",
+      "source": { "type": "youtube", "video_id": "69S_4nqB85k", "channel": "Modernising Patient Pathways Programme" },
+      "item": {
+        "title_en": "Physiotherapy advice after a caesarean",
+        "title_ur": "سیزیرین کے بعد فزیوتھراپی کے مشورے",
+        "summary_en": "An NHS Scotland physiotherapy guide to moving, coughing and getting out of bed comfortably after a caesarean.",
+        "summary_ur": "این ایچ ایس اسکاٹ لینڈ کی رہنمائی: سیزیرین کے بعد آرام سے حرکت کرنا، کھانسنا اور بستر سے اٹھنا۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 238, "tags": ["cesarean_recovery", "physical_recovery", "postnatal_exercise", "stage_0_6w"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "csection-epworth-recover",
+      "source": { "type": "youtube", "video_id": "aMpsNiXg_yM", "channel": "Epworth HealthCare" },
+      "item": {
+        "title_en": "Helping your body recover after a caesarean",
+        "title_ur": "سیزیرین کے بعد جسم کی بحالی میں مدد",
+        "summary_en": "A hospital physiotherapy video on gentle recovery steps in the first weeks after a caesarean.",
+        "summary_ur": "ہسپتال کی فزیوتھراپی ویڈیو: سیزیرین کے بعد ابتدائی ہفتوں میں بحالی کے نرم اقدامات۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 154, "tags": ["cesarean_recovery", "physical_recovery", "stage_0_6w", "stage_6w_3m"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "csection-urdu-care",
+      "source": { "type": "youtube", "video_id": "DHqgW-hQgvs", "channel": "Gynae Solution" },
+      "item": {
+        "title_en": "Caring for yourself after a C-section (Urdu)",
+        "title_ur": "سی سیکشن کے بعد اپنا خیال کیسے رکھیں (اردو)",
+        "summary_en": "A gynaecologist explains in Urdu how to look after your wound, rest, eat and move after a C-section.",
+        "summary_ur": "ایک گائناکالوجسٹ اردو میں بتاتی ہیں کہ سی سیکشن کے بعد زخم، آرام، خوراک اور چلنے پھرنے کا خیال کیسے رکھیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 572, "tags": ["cesarean_recovery", "physical_recovery", "urdu", "stage_0_6w", "stage_6w_3m"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "feeding-sandwell-comfortably",
+      "source": { "type": "youtube", "video_id": "leuiua2aPco", "channel": "Sandwell & West Birmingham NHS Trust" },
+      "item": {
+        "title_en": "How to breastfeed comfortably",
+        "title_ur": "آرام سے دودھ کیسے پلائیں",
+        "summary_en": "An NHS infant feeding team shows positioning and attachment so feeds are more comfortable for you and your baby.",
+        "summary_ur": "این ایچ ایس کی فیڈنگ ٹیم دکھاتی ہے کہ بچے کو کس طرح پکڑیں اور لگائیں تاکہ دودھ پلانا آپ دونوں کے لیے آرام دہ ہو۔",
+        "category": "bonding", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 262, "tags": ["feeding", "breastfeeding", "baby_care", "stage_0_6w", "stage_6w_3m"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "feeding-urdu-marham-myths",
+      "source": { "type": "youtube", "video_id": "Z4glwJRKZaU", "channel": "Marham Find A Doctor" },
+      "item": {
+        "title_en": "Breastfeeding myths and facts (Urdu)",
+        "title_ur": "دودھ پلانے سے متعلق غلط فہمیاں اور حقائق (اردو)",
+        "summary_en": "A doctor answers common family beliefs about breastfeeding in Urdu, so you can feel more confident.",
+        "summary_ur": "ایک ڈاکٹر اردو میں دودھ پلانے سے متعلق عام خاندانی باتوں کا جواب دیتے ہیں تاکہ آپ زیادہ پراعتماد محسوس کریں۔",
+        "category": "bonding", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 652, "tags": ["feeding", "breastfeeding", "urdu", "joint_family", "stage_0_6w", "stage_6w_3m", "stage_3_6m"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "bonding-hse-skin-to-skin",
+      "source": { "type": "youtube", "video_id": "7AiF7Id3yAQ", "channel": "HSE Ireland" },
+      "item": {
+        "title_en": "Safe skin-to-skin with your baby",
+        "title_ur": "بچے کے ساتھ محفوظ طریقے سے جلد سے جلد کا لمس",
+        "summary_en": "How to hold your baby skin-to-skin safely, and how it can calm both of you.",
+        "summary_ur": "بچے کو جلد سے جلد ملا کر محفوظ طریقے سے کیسے رکھیں، اور یہ آپ دونوں کو کیسے سکون دیتا ہے۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 485, "tags": ["bonding", "baby_care", "calm", "stage_0_6w", "preterm_baby"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "bonding-stlouis-benefits",
+      "source": { "type": "youtube", "video_id": "6cv_MKrX0wU", "channel": "St. Louis Children's Hospital" },
+      "item": {
+        "title_en": "Skin-to-skin: benefits for baby and parents",
+        "title_ur": "جلد سے جلد کا لمس: بچے اور والدین کے لیے فائدے",
+        "summary_en": "A children's hospital explains how skin-to-skin contact supports bonding, feeding and calm for baby and parent.",
+        "summary_ur": "بچوں کا ہسپتال بتاتا ہے کہ جلد سے جلد کا لمس تعلق، دودھ پلانے اور سکون میں کیسے مدد دیتا ہے۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 113, "tags": ["bonding", "baby_care", "partner"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "partner-parents-what-to-do",
+      "source": { "type": "youtube", "video_id": "FnpAIMpVgZ8", "channel": "Parents" },
+      "item": {
+        "title_en": "What a partner can do about postpartum depression",
+        "title_ur": "زچگی کے بعد ڈپریشن میں شوہر یا ساتھی کیا کر سکتا ہے",
+        "summary_en": "Practical ways a husband or family member can notice, listen and help with night feeds and rest.",
+        "summary_ur": "شوہر یا گھر والے کیسے علامات پہچانیں، بات سنیں اور رات کی دیکھ بھال اور آرام میں ہاتھ بٹائیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 119, "tags": ["guardian", "education", "partner", "relationships", "low_support"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "partner-centracare-husbands",
+      "source": { "type": "youtube", "video_id": "FffiaUrbO3E", "channel": "CentraCare" },
+      "item": {
+        "title_en": "Postpartum depression: a guide for husbands and partners",
+        "title_ur": "زچگی کے بعد ڈپریشن: شوہروں اور ساتھیوں کے لیے رہنمائی",
+        "summary_en": "A health system explains what postpartum depression looks like at home and how a partner can support treatment.",
+        "summary_ur": "ایک طبی ادارہ بتاتا ہے کہ گھر میں یہ ڈپریشن کیسا دکھتا ہے اور شوہر علاج میں کیسے ساتھ دے سکتا ہے۔",
+        "category": "psychoeducation", "format": "video", "audience": "guardian", "is_religious": false, "is_music": false,
+        "duration_seconds": 552, "tags": ["guardian", "education", "partner", "relationships"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "exercise-nhs-pelvic-floor",
+      "source": { "type": "youtube", "video_id": "JFJtUtKQCuM", "channel": "NHS" },
+      "item": {
+        "title_en": "How to do pelvic floor exercises",
+        "title_ur": "پیڑو کے پٹھوں کی ورزش کیسے کریں",
+        "summary_en": "An NHS guide to gentle pelvic floor exercises that help recovery after any kind of birth.",
+        "summary_ur": "این ایچ ایس کی رہنمائی: پیڑو کے پٹھوں کی نرم ورزشیں جو ہر طرح کی زچگی کے بعد بحالی میں مدد دیتی ہیں۔",
+        "category": "psychoeducation", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 188, "tags": ["postnatal_exercise", "physical_recovery", "recovery", "stage_6w_3m", "stage_3_6m"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "calm-epworth-mindful-breathing",
+      "source": { "type": "youtube", "video_id": "I-SFdhVwrVA", "channel": "Epworth HealthCare" },
+      "item": {
+        "title_en": "Five-minute mindful breathing",
+        "title_ur": "پانچ منٹ کی پرسکون سانس کی مشق",
+        "summary_en": "A guided five-minute breathing practice you can do while your baby sleeps or feeds.",
+        "summary_ur": "پانچ منٹ کی رہنمائی والی سانس کی مشق، جو آپ بچے کے سوتے یا دودھ پیتے وقت بھی کر سکتی ہیں۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 301, "tags": ["breathing", "calm", "anxiety", "low_mood", "screen_break"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "calm-headspace-body-scan",
+      "source": { "type": "youtube", "video_id": "kq2TuzbVR6U", "channel": "Headspace" },
+      "item": {
+        "title_en": "10-minute body scan to relax and sleep",
+        "title_ur": "آرام اور نیند کے لیے دس منٹ کی جسمانی آگاہی مشق",
+        "summary_en": "A Headspace guided body scan to release tension and settle into sleep when you get the chance.",
+        "summary_ur": "ہیڈ اسپیس کی رہنمائی والی مشق جو جسم کا تناؤ کم کرتی ہے تاکہ موقع ملنے پر آپ آسانی سے سو سکیں۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 612, "tags": ["meditation", "relaxation", "sleep_support", "sleep", "anxiety"],
+        "priority": 15, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "calm-anja-postpartum-meditation",
+      "source": { "type": "youtube", "video_id": "lraaZa-K-FM", "channel": "Hypnobirthing With Anja" },
+      "item": {
+        "title_en": "Postpartum meditation: feeling calm and grounded",
+        "title_ur": "زچگی کے بعد مراقبہ: پرسکون اور مضبوط محسوس کریں",
+        "summary_en": "A gentle guided meditation written for new mothers, focused on calm and self-kindness.",
+        "summary_ur": "نئی ماؤں کے لیے نرم رہنمائی والا مراقبہ، جس کا مقصد سکون اور اپنے ساتھ مہربانی ہے۔",
+        "category": "soothing", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 681, "tags": ["meditation", "calm", "low_mood", "stage_0_6w", "stage_6w_3m", "stage_3_6m"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "calm-ppt-mothers-meditation",
+      "source": { "type": "youtube", "video_id": "4NMrQj9N_jQ", "channel": "Pregnancy and Postpartum TV" },
+      "item": {
+        "title_en": "Six-minute self-kindness meditation for mothers",
+        "title_ur": "ماؤں کے لیے چھ منٹ کا خود سے مہربانی کا مراقبہ",
+        "summary_en": "A short, beginner-friendly meditation for days when you feel you are not doing enough.",
+        "summary_ur": "ان دنوں کے لیے مختصر اور آسان مراقبہ جب لگے کہ آپ کافی نہیں کر پا رہیں۔",
+        "category": "soothing", "format": "video", "audience": "mother", "is_religious": false, "is_music": false,
+        "duration_seconds": 408, "tags": ["meditation", "calm", "low_mood", "mood_declining"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "sounds-rain-90min",
+      "source": { "type": "youtube", "video_id": "yhx3JIF7bGU", "channel": "TexasHighDef" },
+      "item": {
+        "title_en": "Gentle rain sounds (no music), 90 minutes",
+        "title_ur": "ہلکی بارش کی آواز (موسیقی کے بغیر)، 90 منٹ",
+        "summary_en": "Steady rain sounds with no music, for resting or falling asleep. Suitable if you prefer not to listen to music.",
+        "summary_ur": "موسیقی کے بغیر بارش کی مسلسل آواز، آرام یا نیند کے لیے۔ اگر آپ موسیقی نہیں سننا چاہتیں تو یہ موزوں ہے۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": false,
+        "duration_seconds": 5410, "tags": ["sleep_support", "sleep", "relaxation", "calm", "screen_break"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "music-ybc-sleep-1h",
+      "source": { "type": "youtube", "video_id": "2fvPad12Gb8", "channel": "Yellow Brick Cinema - Relaxing Music" },
+      "item": {
+        "title_en": "One hour of relaxing sleep music",
+        "title_ur": "ایک گھنٹے کی پرسکون نیند کی موسیقی",
+        "summary_en": "Soft instrumental music to help you unwind or sleep. Shown only if you have turned music on.",
+        "summary_ur": "آرام یا نیند کے لیے نرم موسیقی۔ صرف تب دکھائی جاتی ہے جب آپ نے موسیقی کی اجازت دی ہو۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": true,
+        "duration_seconds": 3641, "tags": ["sleep_support", "sleep", "relaxation", "calm"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "music-soothing-relaxation-piano",
+      "source": { "type": "youtube", "video_id": "3NycM9lYdRI", "channel": "Soothing Relaxation" },
+      "item": {
+        "title_en": "Relaxing piano music for stress relief",
+        "title_ur": "تناؤ کم کرنے کے لیے پرسکون پیانو موسیقی",
+        "summary_en": "Gentle piano pieces for a quiet moment, feeding time or winding down.",
+        "summary_ur": "پرسکون لمحے، دودھ پلانے کے وقت یا دن کے آخر میں آرام کے لیے نرم پیانو۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": true,
+        "tags": ["relaxation", "calm", "anxiety", "low_mood"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "music-relaxdaily-peaceful-mind",
+      "source": { "type": "youtube", "video_id": "P0LvHeJnSsQ", "channel": "relaxdaily" },
+      "item": {
+        "title_en": "Peaceful mind: calm piano for anxious moments",
+        "title_ur": "پرسکون ذہن: بے چینی کے لمحوں کے لیے نرم پیانو",
+        "summary_en": "Slow, calm piano for when your thoughts are racing or the house feels busy.",
+        "summary_ur": "آہستہ اور پرسکون پیانو، جب خیالات تیز چل رہے ہوں یا گھر میں شور ہو۔",
+        "category": "soothing", "format": "video", "audience": "both", "is_religious": false, "is_music": true,
+        "duration_seconds": 4892, "tags": ["anxiety", "calm", "relaxation", "screen_break"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "music-super-simple-bedtime",
+      "source": { "type": "youtube", "video_id": "RIJ4MTjQfFo", "channel": "Super Simple Songs - Kids Songs" },
+      "item": {
+        "title_en": "Gentle bedtime lullabies to share with your baby",
+        "title_ur": "بچے کے ساتھ سننے کے لیے نرم لوریاں",
+        "summary_en": "Soft lullabies you can play or sing along to at bedtime, a small moment of closeness with your baby.",
+        "summary_ur": "سونے کے وقت چلانے یا ساتھ گنگنانے کے لیے نرم لوریاں، بچے کے ساتھ قربت کا ایک چھوٹا لمحہ۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": true,
+        "tags": ["baby_sleep", "bonding", "calm"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "music-wonderful-lullabies-2h",
+      "source": { "type": "youtube", "video_id": "W-vBu2rf8TI", "channel": "Wonderful Lullabies" },
+      "item": {
+        "title_en": "Two hours of soft baby sleep music",
+        "title_ur": "بچے کی نیند کے لیے دو گھنٹے کی نرم موسیقی",
+        "summary_en": "Calm instrumental lullabies to help your baby settle, and give you a quieter room.",
+        "summary_ur": "بچے کو سلانے میں مدد کے لیے پرسکون لوریاں، تاکہ کمرہ بھی پرسکون ہو۔",
+        "category": "bonding", "format": "video", "audience": "both", "is_religious": false, "is_music": true,
+        "duration_seconds": 7116, "tags": ["baby_sleep", "sleep_support", "calm"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "faith-alafasy-surah-rahman",
+      "source": { "type": "youtube", "video_id": "dZTfXiPSZyE", "channel": "Alafasy" },
+      "item": {
+        "title_en": "Surah Ar-Rahman, recited by Mishary Alafasy",
+        "title_ur": "سورۃ الرحمٰن، تلاوت: مشاری العفاسی",
+        "summary_en": "A calm recitation of Surah Ar-Rahman from the reciter's official channel. Faith support is optional and not a replacement for care.",
+        "summary_ur": "قاری کے آفیشل چینل سے سورۃ الرحمٰن کی پرسکون تلاوت۔ دینی سہارا اختیاری ہے، علاج کا متبادل نہیں۔",
+        "category": "islamic", "format": "video", "audience": "both", "is_religious": true, "is_music": false,
+        "duration_seconds": 822, "tags": ["calm", "relaxation", "low_mood"],
+        "priority": 10, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "faith-verse-vibe-sleep",
+      "source": { "type": "youtube", "video_id": "j9djJO7BhoA", "channel": "Verse Vibe" },
+      "item": {
+        "title_en": "Soothing Quran recitation before sleep",
+        "title_ur": "سونے سے پہلے پرسکون تلاوت",
+        "summary_en": "Al-Fatiha, Ayat al-Kursi, Ar-Rahman, Al-Mulk, Yasin and Al-Waqiah, recited softly for the night.",
+        "summary_ur": "سورۃ الفاتحہ، آیت الکرسی، الرحمٰن، الملک، یٰسین اور الواقعہ کی رات کے لیے نرم تلاوت۔",
+        "category": "islamic", "format": "video", "audience": "both", "is_religious": true, "is_music": false,
+        "duration_seconds": 3386, "tags": ["sleep_support", "sleep", "calm"],
+        "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "verse-94-5",
+      "source": { "type": "quran", "ayah": "94:5" },
+      "item": {
+        "title_en": "With hardship comes ease", "title_ur": "بے شک مشکل کے ساتھ آسانی ہے",
+        "summary_en": "A short verse often read for comfort in difficult days.", "summary_ur": "ایک مختصر آیت جو مشکل دنوں میں تسلی کے لیے پڑھی جاتی ہے۔",
+        "audience": "both", "tags": ["calm", "low_mood"], "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "verse-94-6",
+      "source": { "type": "quran", "ayah": "94:6" },
+      "item": {
+        "title_en": "Indeed, with hardship comes ease", "title_ur": "یقیناً مشکل کے ساتھ آسانی ہے",
+        "summary_en": "The promise of ease is repeated, as a reminder that hard days do pass.", "summary_ur": "آسانی کا وعدہ دہرایا گیا ہے، یاد دہانی کے طور پر کہ مشکل دن گزر جاتے ہیں۔",
+        "audience": "both", "tags": ["calm", "low_mood"], "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "verse-13-28",
+      "source": { "type": "quran", "ayah": "13:28" },
+      "item": {
+        "title_en": "Hearts find rest", "title_ur": "دلوں کو اطمینان",
+        "summary_en": "A verse about finding peace of heart in remembrance.", "summary_ur": "ذکر سے دل کے اطمینان کے بارے میں ایک آیت۔",
+        "audience": "both", "tags": ["calm", "anxiety"], "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "verse-2-286",
+      "source": { "type": "quran", "ayah": "2:286" },
+      "item": {
+        "title_en": "No soul is burdened beyond what it can bear", "title_ur": "اللہ کسی جان پر اس کی طاقت سے زیادہ بوجھ نہیں ڈالتا",
+        "summary_en": "A verse often read when responsibilities feel heavy.", "summary_ur": "ایک آیت جو اکثر تب پڑھی جاتی ہے جب ذمہ داریاں بھاری لگیں۔",
+        "audience": "both", "tags": ["calm", "low_mood"], "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    },
+    {
+      "key": "verse-39-53",
+      "source": { "type": "quran", "ayah": "39:53" },
+      "item": {
+        "title_en": "Do not lose hope", "title_ur": "مایوس نہ ہوں",
+        "summary_en": "A verse of hope and mercy for days that feel very dark. If you feel unsafe, please also reach out for help now.", "summary_ur": "امید اور رحمت کی آیت، ان دنوں کے لیے جو بہت اندھیرے لگیں۔ اگر آپ خود کو غیر محفوظ محسوس کریں تو ابھی مدد بھی لیں۔",
+        "audience": "both", "tags": ["calm", "low_mood", "mood_declining"], "priority": 5, "review_after": "2027-05-17T00:00:00Z"
+      }
+    }
+  ]
+}

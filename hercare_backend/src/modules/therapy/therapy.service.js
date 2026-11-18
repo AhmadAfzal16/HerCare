@@ -1,7 +1,7 @@
 const database = require('../../config/database');
 const { AppError } = require('../../middleware/error_handler');
 const { buildInsights } = require('../sleep/sleep.insights');
-const { normalizeSession } = require('./therapy.validator');
+const { normalizeSession, MEASURE_KEYS } = require('./therapy.validator');
 const { isKnownActivity } = require('./therapy.catalog');
 
 const query = (...args) => database.query(...args);
@@ -21,7 +21,16 @@ function publicSession(row) {
     breathing_participation: row.breathing_participation ?? null,
     completed_at: row.completed_at,
     practice_verified: false,
+    measures: publicMeasures(row),
   };
+}
+// Only what was recorded; changes are computed for display, not stored.
+function publicMeasures(row) {
+  const measures = Object.fromEntries(MEASURE_KEYS.filter((key) => row[key] != null).map((key) => [key, row[key]]));
+  if (!Object.keys(measures).length) return null;
+  const change = (before, after) => (row[before] != null && row[after] != null ? row[after] - row[before] : null);
+  return { ...measures, tension_change: change('tension_before', 'tension_after'), hr_change: change('hr_before', 'hr_after'),
+    hrv_change: change('hrv_before', 'hrv_after') };
 }
 
 async function assertMother(userId, role, connection = database, lock = false) {
@@ -43,13 +52,16 @@ async function recordSession(userId, role, data) {
     const { rows } = await connection.query(
       `INSERT INTO therapeutic_sessions
          (mother_id, activity_type, activity_id, duration_seconds, mood_before,
-          mood_after, completed, client_request_id, completed_at, breathing_participation)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9::timestamptz,NOW()),$10)
+          mood_after, completed, client_request_id, completed_at, breathing_participation,
+          ${MEASURE_KEYS.join(', ')})
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9::timestamptz,NOW()),$10,
+          ${MEASURE_KEYS.map((_, index) => `$${index + 11}`).join(',')})
        ON CONFLICT (mother_id, client_request_id) DO NOTHING
        RETURNING *`,
       [userId, payload.activity_type, payload.activity_id, payload.duration_seconds,
         payload.mood_before, payload.mood_after, payload.completed, payload.client_request_id,
-        payload.client_completed_at ?? null, payload.breathing_participation ?? null],
+        payload.client_completed_at ?? null, payload.breathing_participation ?? null,
+        ...MEASURE_KEYS.map((key) => payload[key] ?? null)],
     );
     if (rows[0]) return publicSession(rows[0]);
     const previous = await connection.query(
@@ -58,6 +70,7 @@ async function recordSession(userId, role, data) {
     );
     const row = previous.rows[0];
     if (!row || (row.breathing_participation ?? null) !== (payload.breathing_participation ?? null)
+      || MEASURE_KEYS.some((key) => (row[key] ?? null) !== (payload[key] ?? null))
       || Object.keys(payload).some((key) => key === 'client_completed_at'
       ? new Date(row.completed_at).getTime() !== Date.parse(payload[key]) : row[key] !== payload[key])) {
       throw new AppError('This activity request was already saved with different details.', 409);
@@ -82,7 +95,7 @@ async function getHistory(userId, role, limit = 30) {
 function chooseRecommendation(signals) {
   if (signals.safetyPriority) {
     return {
-      activity_type: 'breathing', activity_id: 'breathing_478',
+      activity_type: 'breathing', activity_id: 'cyclic_sighing',
       reason: 'Use a brief calming exercise while opening immediate safety support.',
       reason_ur: 'فوری حفاظتی مدد کھولتے ہوئے مختصر پرسکون سانس کی مشق کریں۔',
       safety_priority: true,
@@ -93,6 +106,15 @@ function chooseRecommendation(signals) {
       activity_type: 'cbt', activity_id: 'grounding_54321',
       reason: 'A grounding exercise may help when today feels emotionally heavy.',
       reason_ur: 'جب آج کا دن جذباتی طور پر بھاری لگے تو گراؤنڈنگ مشق مدد کر سکتی ہے۔',
+      safety_priority: false,
+    };
+  }
+  // A practice felt distressing in the last week: eyes-open, shorter options before inward-focused ones.
+  if (signals.recentDistress) {
+    return {
+      activity_type: 'cbt', activity_id: 'grounding_54321',
+      reason: 'A recent practice felt uncomfortable, so a short eyes-open grounding exercise is suggested first.',
+      reason_ur: 'حالیہ مشق میں بے آرامی محسوس ہوئی، اس لیے پہلے آنکھیں کھلی رکھ کر مختصر گراؤنڈنگ مشق تجویز ہے۔',
       safety_priority: false,
     };
   }
@@ -114,9 +136,9 @@ function chooseRecommendation(signals) {
     };
   }
   return {
-    activity_type: 'breathing', activity_id: 'box_breathing',
-    reason: 'A short balanced breathing session is a gentle daily reset.',
-    reason_ur: 'مختصر متوازن سانس کی مشق روزانہ کا نرم سکون ہے۔',
+    activity_type: 'breathing', activity_id: 'cyclic_sighing',
+    reason: 'Five minutes of exhale-focused breathing a day is a gentle reset.',
+    reason_ur: 'روزانہ پانچ منٹ لمبی سانس چھوڑنے والی مشق ایک نرم سکون ہے۔',
     safety_priority: false,
   };
 }
@@ -126,7 +148,7 @@ function rankRecommendation(signals, history = [], recentActivity = null) {
   const metadata = { rule_version: 'm9-context-paired-ratings-v1',
     selection_source: 'recent_context_rules', clinical_improvement: false };
   // Safety support and low-mood grounding never depend on optional practice ratings.
-  if (context.safety_priority || (signals.mood !== null && signals.mood <= 2)) {
+  if (context.safety_priority || (signals.mood !== null && signals.mood <= 2) || signals.recentDistress) {
     return { ...context, ...metadata };
   }
   const candidates = history.map((row) => ({
@@ -154,7 +176,7 @@ function rankRecommendation(signals, history = [], recentActivity = null) {
 
 async function getRecommendation(userId, role) {
   await assertMother(userId, role);
-  const [moodResult, telemetryResult, screeningResult, recentResult, sleepResult, crisisResult, practiceResult] = await Promise.all([
+  const [moodResult, telemetryResult, screeningResult, recentResult, sleepResult, crisisResult, practiceResult, distressResult] = await Promise.all([
     query(`SELECT mood_rating, sleep_quality FROM mood_checkins
            WHERE mother_id = $1 AND entry_date BETWEEN CURRENT_DATE - 2 AND CURRENT_DATE ORDER BY entry_date DESC LIMIT 1`, [userId]),
     query(`SELECT t.screen_time_minutes,t.late_night_minutes FROM device_telemetry_daily t
@@ -175,6 +197,8 @@ async function getRecommendation(userId, role) {
              AND completed_at>=NOW()-INTERVAL '30 days' AND completed_at<=NOW()
            GROUP BY activity_type,activity_id HAVING COUNT(*)>=3 AND AVG(mood_after-mood_before)>0
            ORDER BY AVG(mood_after-mood_before) DESC,COUNT(*) DESC,activity_id LIMIT 14`, [userId]),
+    query(`SELECT EXISTS(SELECT 1 FROM therapeutic_sessions WHERE mother_id=$1 AND distress_reported
+             AND completed_at>=NOW()-INTERVAL '7 days') AS recent_distress`, [userId]),
   ]);
   const mood = moodResult.rows[0];
   const telemetry = telemetryResult.rows[0];
@@ -186,6 +210,7 @@ async function getRecommendation(userId, role) {
     screenMinutes: telemetry?.screen_time_minutes ?? 0,
     lateNightMinutes: telemetry?.late_night_minutes ?? 0,
     safetyPriority: crisisResult.rows[0]?.needs_help === true || screeningResult.rows[0]?.self_harm_positive === true,
+    recentDistress: distressResult.rows[0]?.recent_distress === true,
   };
   const recommendation = rankRecommendation(signals, practiceResult.rows, recentResult.rows[0]?.activity_id);
   return { ...recommendation, generated_at: new Date().toISOString() };
@@ -200,7 +225,14 @@ async function getSummary(userId, role) {
             COUNT(*) FILTER (WHERE completed = TRUE AND mood_before IS NOT NULL
               AND mood_after IS NOT NULL) AS paired_mood_sessions,
             ROUND(AVG(mood_after - mood_before) FILTER
-              (WHERE completed = TRUE AND mood_before IS NOT NULL AND mood_after IS NOT NULL), 2) AS avg_mood_change
+              (WHERE completed = TRUE AND mood_before IS NOT NULL AND mood_after IS NOT NULL), 2) AS avg_mood_change,
+            COUNT(*) FILTER (WHERE tension_before IS NOT NULL AND tension_after IS NOT NULL) AS paired_tension_sessions,
+            ROUND(AVG(tension_after - tension_before), 2) AS avg_tension_change,
+            COUNT(*) FILTER (WHERE hr_before IS NOT NULL AND hr_after IS NOT NULL) AS paired_heart_sessions,
+            ROUND(AVG(hr_after - hr_before), 1) AS avg_hr_change,
+            COUNT(*) FILTER (WHERE hrv_before IS NOT NULL AND hrv_after IS NOT NULL) AS paired_hrv_sessions,
+            ROUND(AVG(hrv_after - hrv_before), 1) AS avg_hrv_change,
+            COUNT(*) FILTER (WHERE distress_reported) AS distress_sessions
      FROM therapeutic_sessions WHERE mother_id = $1
        AND completed_at >= NOW() - INTERVAL '30 days' AND completed_at <= NOW()`,
     [userId],
@@ -213,6 +245,17 @@ async function getSummary(userId, role) {
     paired_mood_sessions: Number(row.paired_mood_sessions),
     avg_mood_change: row.avg_mood_change === null ? null : Number(row.avg_mood_change),
     period_days: SUMMARY_DAYS,
+    // Changes are after minus before. Heart readings are approximate (camera) or band-based,
+    // and describe relaxation during practice, not a diagnosis or treatment effect.
+    monitoring: {
+      paired_tension_sessions: Number(row.paired_tension_sessions ?? 0),
+      avg_tension_change: row.avg_tension_change == null ? null : Number(row.avg_tension_change),
+      paired_heart_sessions: Number(row.paired_heart_sessions ?? 0),
+      avg_hr_change: row.avg_hr_change == null ? null : Number(row.avg_hr_change),
+      paired_hrv_sessions: Number(row.paired_hrv_sessions ?? 0),
+      avg_hrv_change: row.avg_hrv_change == null ? null : Number(row.avg_hrv_change),
+      distress_sessions: Number(row.distress_sessions ?? 0),
+    },
     measurement: 'optional_self_reported_immediate_mood_change',
     clinical_improvement: false,
   };

@@ -74,6 +74,20 @@ test('M9 authorized writes, idempotency, paired summaries and privacy (synthetic
     assert.equal((await service.getHistory(owner, 'mother')).find((row) => row.id === practice.id).breathing_participation, 'some_cues');
     assert.equal((await service.recordSession(owner, 'mother', breathing)).id, practice.id);
     await assert.rejects(service.recordSession(owner, 'mother', { ...breathing, breathing_participation: null }), { statusCode: 409 });
+    // Monitoring measures round-trip through the real CHECK constraints and keep retries exact.
+    const measured = { ...request, activity_type: 'breathing', activity_id: 'cyclic_sighing', client_request_id: randomUUID(),
+      measures: { tension_before: 7, tension_after: 3, distress_reported: true, hr_before: 90, hr_after: 78,
+        hrv_before: 22, hrv_after: 35, physio_source: 'camera' } };
+    const withMeasures = await service.recordSession(owner, 'mother', measured);
+    assert.equal(withMeasures.measures.tension_change, -4);
+    assert.equal(withMeasures.measures.hrv_change, 13);
+    assert.equal((await service.recordSession(owner, 'mother', measured)).id, withMeasures.id);
+    await assert.rejects(service.recordSession(owner, 'mother', { ...measured, measures: { ...measured.measures, hr_after: 80 } }),
+      { statusCode: 409 });
+    const monitored = await service.getSummary(owner, 'mother');
+    assert.equal(monitored.monitoring.distress_sessions, 1);
+    assert.equal(monitored.monitoring.avg_hrv_change, 13);
+    assert.equal((await service.getRecommendation(owner, 'mother')).activity_id, 'grounding_54321');
     await client.query('UPDATE onboarding_data SET consent_tier1=FALSE WHERE user_id=$1', [owner]);
     for (const operation of [() => service.getHistory(owner, 'mother'), () => service.getSummary(owner, 'mother'),
       () => service.getRecommendation(owner, 'mother'), () => service.recordSession(owner, 'mother', request)]) {

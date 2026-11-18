@@ -13,6 +13,7 @@ import 'activity_clock.dart';
 import 'breathing_band_panel.dart';
 import 'breathing_posture_screen.dart';
 import 'meditation_audio.dart';
+import 'session_check_card.dart';
 import 'therapy_completion_sheet.dart';
 
 class BreathingExerciseScreen extends StatefulWidget {
@@ -41,6 +42,7 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
   bool _foreground = true;
   bool _routeActive = true;
   bool _reducedMotion = false;
+  TherapyMeasures _measures = const TherapyMeasures();
 
   int get _targetSeconds => TherapyCatalog.byId(_pattern.id).minutes * 60;
 
@@ -125,6 +127,7 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
     final progress = position / (phase.seconds * 1000);
     switch (phase.kind) {
       case _PhaseKind.inhale:
+      case _PhaseKind.topUp:
         _animation.forward(from: progress);
       case _PhaseKind.exhale:
         _animation.reverse(from: 1 - progress);
@@ -142,7 +145,8 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
   void _speak(_PhaseKind kind) {
     if (!_spokenCues || _audio.unavailable) return;
     _audio.cue(
-        'assets/audio/breathing/${_isUrdu ? 'ur' : 'en'}_${kind.name}.wav');
+        // The top-up breath reuses the recorded "inhale" cue.
+        'assets/audio/breathing/${_isUrdu ? 'ur' : 'en'}_${kind == _PhaseKind.topUp ? 'inhale' : kind.name}.wav');
   }
 
   void _pause() {
@@ -159,6 +163,8 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
     _pause();
     setState(() => _saving = true);
     final isUrdu = context.read<LanguageProvider>().isUrdu;
+    _measures = await maybeAfterReading(context, _measures, isUrdu);
+    if (!mounted) return;
     final session = await showTherapyCompletionSheet(
       context,
       type: 'breathing',
@@ -166,6 +172,7 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
       durationSeconds: _clock.recordedSeconds,
       completed: _clock.seconds >= _targetSeconds,
       isUrdu: isUrdu,
+      measures: _measures,
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -218,6 +225,14 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
                 style: AppTextStyles.bodySmall
                     .copyWith(color: context.hcTextSecondary),
               ),
+              if (elapsed == 0 && !_running) ...[
+                const SizedBox(height: 14),
+                PreSessionCheck(
+                    isUrdu: isUrdu,
+                    measures: _measures,
+                    enabled: !_saving,
+                    onChanged: (value) => setState(() => _measures = value)),
+              ],
               const SizedBox(height: 20),
               Text(
                 done
@@ -370,7 +385,8 @@ class _BreathingExerciseScreenState extends State<BreathingExerciseScreen>
   }
 }
 
-enum _PhaseKind { inhale, hold, exhale, rest }
+/// topUp: the short second inhale of a cyclic sigh (Balban et al. 2023).
+enum _PhaseKind { inhale, topUp, hold, exhale, rest }
 
 class _BreathingPhase {
   const _BreathingPhase(this.kind, this.seconds);
@@ -378,6 +394,7 @@ class _BreathingPhase {
   final int seconds;
   String label(bool urdu) => switch (kind) {
         _PhaseKind.inhale => urdu ? 'سانس لیں' : 'Inhale',
+        _PhaseKind.topUp => urdu ? 'تھوڑا اور سانس' : 'Top-up breath',
         _PhaseKind.hold => urdu ? 'روکیں' : 'Hold',
         _PhaseKind.exhale => urdu ? 'سانس چھوڑیں' : 'Exhale',
         _PhaseKind.rest => urdu ? 'آرام' : 'Rest',
@@ -389,6 +406,18 @@ class _BreathingPattern {
   final String id;
   final List<_BreathingPhase> phases;
   static _BreathingPattern fromId(String id) => switch (id) {
+        // Two inhales through the nose, then a long slow exhale (~6.7/min).
+        'cyclic_sighing' => const _BreathingPattern('cyclic_sighing', [
+            _BreathingPhase(_PhaseKind.inhale, 2),
+            _BreathingPhase(_PhaseKind.topUp, 1),
+            _BreathingPhase(_PhaseKind.exhale, 6),
+          ]),
+        // 5 s in, 5 s out = 6 breaths a minute, the usual resonance rate.
+        'resonance_breathing' =>
+          const _BreathingPattern('resonance_breathing', [
+            _BreathingPhase(_PhaseKind.inhale, 5),
+            _BreathingPhase(_PhaseKind.exhale, 5),
+          ]),
         'breathing_478' => const _BreathingPattern('breathing_478', [
             _BreathingPhase(_PhaseKind.inhale, 4),
             _BreathingPhase(_PhaseKind.hold, 7),

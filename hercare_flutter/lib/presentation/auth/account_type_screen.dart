@@ -176,7 +176,7 @@ class _AccountTypeScreenState extends State<AccountTypeScreen> {
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: context.hcOutline,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 child: auth.isLoading

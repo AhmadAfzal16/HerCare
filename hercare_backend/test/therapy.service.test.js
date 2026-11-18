@@ -35,7 +35,7 @@ test('safety signal always overrides ordinary activity selection', () => {
     mood: 5, sleepQuality: 5, screenMinutes: 0, lateNightMinutes: 0, safetyPriority: true,
   });
   assert.equal(value.safety_priority, true);
-  assert.equal(value.activity_id, 'breathing_478');
+  assert.equal(value.activity_id, 'cyclic_sighing', 'exhale-focused, no breath hold');
 });
 
 test('catalog rejects arbitrary activity identifiers', () => {
@@ -56,9 +56,9 @@ test('M9 history does not replace safety/grounding or fabricate benefit from abs
     assert.equal(result.clinical_improvement, false);
   }
   assert.equal(_private.rankRecommendation({ ...signals, mood: 2 }, [row], 'grounding_54321').activity_id, 'grounding_54321');
-  const safe = _private.rankRecommendation({ ...signals, safetyPriority: true }, [row], 'breathing_478');
+  const safe = _private.rankRecommendation({ ...signals, safetyPriority: true }, [row], 'cyclic_sighing');
   assert.equal(safe.safety_priority, true);
-  assert.equal(safe.activity_id, 'breathing_478');
+  assert.equal(safe.activity_id, 'cyclic_sighing');
 });
 
 test('M9 paired-history preference stays in the context category and is explicitly an optional observation', () => {
@@ -82,3 +82,37 @@ test('M9 paired-history preference stays in the context category and is explicit
   assert.equal(tied.activity_id, 'body_scan', 'a tied observation can prefer a different recent practice without claiming efficacy');
 });
 
+
+test('research update: daily default is cyclic sighing; a recent distressing practice steers to eyes-open grounding', () => {
+  const calm = { mood: 4, sleepQuality: 4, screenMinutes: 0, lateNightMinutes: 0, safetyPriority: false };
+  assert.equal(_private.chooseRecommendation(calm).activity_id, 'cyclic_sighing');
+  const distressed = _private.rankRecommendation({ ...calm, sleepQuality: 2, recentDistress: true },
+    [{ activity_type: 'meditation', activity_id: 'body_scan', paired_mood_sessions: 5, avg_mood_change: 2 }], 'body_scan');
+  assert.equal(distressed.activity_id, 'grounding_54321', 'ratings history cannot override a recent distress answer');
+  assert.equal(_private.chooseRecommendation({ ...calm, recentDistress: true, safetyPriority: true }).safety_priority, true);
+  assert.ok(isKnownActivity('breathing', 'cyclic_sighing') && isKnownActivity('breathing', 'resonance_breathing'));
+});
+
+test('practice measures: optional, bounded, breathing/meditation only, heart readings need a source', () => {
+  const base = { activity_type: 'breathing', activity_id: 'cyclic_sighing', duration_seconds: 300,
+    client_request_id: '4bc83dfa-3ca1-46ba-bf88-853337908a29' };
+  const full = normalizeSession({ ...base, measures: { tension_before: 7, tension_after: 3, distress_reported: false,
+    hr_before: 88, hr_after: 76, hrv_before: 24, hrv_after: 39, physio_source: 'camera' } });
+  assert.deepEqual([full.tension_before, full.tension_after, full.hr_after, full.hrv_after, full.physio_source, full.distress_reported],
+    [7, 3, 76, 39, 'camera', false]);
+  assert.equal(normalizeSession(base).tension_before, undefined);
+  assert.equal(normalizeSession({ ...base, measures: { distress_reported: true } }).distress_reported, true);
+  for (const bad of [{ tension_before: 11 }, { tension_after: -1 }, { hr_before: 300 }, { hrv_after: 0 }, { hr_before: 80 },
+    { hr_before: 80, physio_source: 'guess' }, { physio_source: 'band' }, { distress_reported: 'yes' }, { raw_frames: [1, 2] },
+    { tension_before: 4.5 }]) {
+    assert.throws(() => normalizeSession({ ...base, measures: bad }), { statusCode: 422 }, JSON.stringify(bad));
+  }
+  assert.throws(() => normalizeSession({ ...base, activity_type: 'game', activity_id: 'memory_match', measures: { tension_before: 3 } }),
+    { statusCode: 422 });
+  const shown = _private.publicSession({ id: 1, activity_type: 'breathing', activity_id: 'cyclic_sighing', duration_seconds: 300,
+    completed: true, tension_before: 7, tension_after: 3, hr_before: 88, hr_after: 76, physio_source: 'camera', distress_reported: false });
+  assert.equal(shown.measures.tension_change, -4);
+  assert.equal(shown.measures.hr_change, -12);
+  assert.equal(shown.measures.hrv_change, null);
+  assert.equal(_private.publicSession({ id: 2, completed: true }).measures, null);
+});

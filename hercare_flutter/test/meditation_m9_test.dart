@@ -80,6 +80,7 @@ class _Service extends TherapyService {
     bool completed = true,
     String? clientRequestId,
     DateTime? clientCompletedAt,
+    TherapyMeasures? measures,
   }) async {
     saves.add({
       'completed': completed,

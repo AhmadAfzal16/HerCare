@@ -4,6 +4,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// In-memory live feed from a connected heart-rate band, so a session can take
+/// a 30-second before/after reading from the band instead of the camera.
+/// Nothing here is persisted; only the final summary is saved with the session.
+class HeartBandFeed extends ChangeNotifier {
+  HeartBandFeed._();
+  static final instance = HeartBandFeed._();
+  bool live = false;
+  int? bpm;
+  final _intervals = StreamController<List<int>>.broadcast();
+
+  /// Beat-to-beat intervals in ms, when the band sends them.
+  Stream<List<int>> get intervals => _intervals.stream;
+
+  void update({required bool live, int? bpm, List<int> intervals = const []}) {
+    final changed = this.live != live || this.bpm != bpm;
+    this.live = live;
+    this.bpm = live ? bpm : null;
+    if (live && intervals.isNotEmpty) _intervals.add(intervals);
+    if (changed) notifyListeners();
+  }
+}
+
 class BreathingBandPanel extends StatefulWidget {
   const BreathingBandPanel({
     super.key,
@@ -50,10 +72,21 @@ class _BreathingBandPanelState extends State<BreathingBandPanel> {
             ? bpm
             : null;
       });
+      final rr = event['rr'];
+      HeartBandFeed.instance.update(
+          live: status == 'live' && _bpm != null,
+          bpm: _bpm,
+          intervals: rr is List
+              ? rr
+                  .whereType<int>()
+                  .where((ms) => ms >= 250 && ms <= 2000)
+                  .toList()
+              : const []);
     }
   }
 
   void _onError(Object _) {
+    HeartBandFeed.instance.update(live: false);
     if (mounted && widget.enabled) {
       setState(() {
         _status = 'connection_failed';
@@ -87,6 +120,7 @@ class _BreathingBandPanelState extends State<BreathingBandPanel> {
   void _disconnect() {
     _status = 'idle';
     _bpm = null;
+    HeartBandFeed.instance.update(live: false);
     _devices.clear();
     if (_subscription != null) unawaited(_send('stop'));
   }

@@ -9,6 +9,7 @@ function parseArgs(args) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--apply') { if (options.apply) throw new Error('Do not repeat options.'); options.apply = true; }
+    else if (arg === '--db') { if (options.db) throw new Error('Do not repeat options.'); options.db = true; }
     else if (arg === '--help') options.help = true;
     else if (['--file', '--api'].includes(arg)) {
       const key = arg.slice(2);
@@ -17,7 +18,29 @@ function parseArgs(args) {
     } else throw new Error('Unknown option. Use --help for usage.');
   }
   if (!options.help && !options.file) throw new Error('Provide --file with an operator-owned catalog JSON file.');
+  if (options.db && (!options.apply || options.api)) throw new Error('--db is used with --apply and without --api.');
   return options;
+}
+// Direct database import for operators with database access (e.g. before any admin account exists).
+// Still drafts only; an item already present with the same media link or verse is skipped.
+async function applyToDatabase(items, { database = require('../src/config/database'), write = console.log } = {}) {
+  return database.withTransaction(async (db) => {
+    let created = 0; let skipped = 0;
+    for (const item of items) {
+      const { key, ...data } = item;
+      delete data.client_request_id;
+      const existing = await db.query(`SELECT id FROM content_items WHERE status<>'archived' AND
+        ((media_url IS NOT NULL AND media_url=$1) OR (category='quran' AND verse_reference=$2))`, [data.media_url, data.verse_reference]);
+      if (existing.rows.length) { skipped += 1; write(`Already in catalog: ${key}.`); continue; }
+      const names = Object.keys(data); const values = Object.values(data);
+      const { rows } = await db.query(`INSERT INTO content_items(${names.join(',')}) VALUES(${values.map((_, i) => `$${i + 1}`).join(',')})
+        RETURNING id,version`, values);
+      await db.query(`INSERT INTO content_review_history(content_id,content_version,actor_id,action,note)
+        VALUES($1,$2,NULL,'created','Imported as a draft from a verified catalog manifest.')`, [rows[0].id, rows[0].version]);
+      created += 1; write(`Draft created: ${key}.`);
+    }
+    return { created, skipped };
+  });
 }
 function adminEndpoint(value, environment = process.env.NODE_ENV) {
   let url;
@@ -49,6 +72,11 @@ async function execute(options, { fetchImpl = globalThis.fetch, env = process.en
     write('Dry run: no administrator API requests or database changes were made. Add --apply to create drafts.');
     return { applied: false, count: items.length };
   }
+  if (options.db) {
+    const result = await applyToDatabase(items, { write });
+    write(`${result.created} drafts created, ${result.skipped} already present. Nothing was approved or published.`);
+    return { applied: true, count: result.created };
+  }
   const endpoint = adminEndpoint(options.api || env.CONTENT_IMPORT_API_URL, env.NODE_ENV);
   const token = env.CONTENT_IMPORT_TOKEN;
   if (typeof token !== 'string' || token.length < 20 || token.length > 16000 || /\s/.test(token)) throw new Error('Set CONTENT_IMPORT_TOKEN to your administrator access token.');
@@ -77,13 +105,15 @@ async function execute(options, { fetchImpl = globalThis.fetch, env = process.en
 async function main(args = process.argv.slice(2)) {
   const options = parseArgs(args);
   if (options.help) {
-    console.log('Usage: node scripts/content-import.js --file catalog.json [--api https://your-server/api/v1] [--apply]\n'
+    console.log('Usage: node scripts/content-import.js --file catalog.json [--api https://your-server/api/v1 | --db] [--apply]\n'
+      + '--db --apply writes drafts directly with the DATABASE settings from .env (operator database access required).\n'
       + 'Default: source verification and dry run only. Media/source hosts must be explicitly enabled in CONTENT_MEDIA_ALLOWED_HOSTS.\n'
       + 'Apply requires CONTENT_IMPORT_TOKEN and CONTENT_IMPORT_ACCOUNT_ID; tokens are never accepted as command arguments or printed.\n'
       + 'All items remain drafts. An authorised human must review and publish them separately.');
     return;
   }
-  await execute(options);
+  try { await execute(options); }
+  finally { if (options.db) await require('../src/config/database').pool.end().catch(() => {}); }
 }
 if (require.main === module) main().catch(() => {
   // Never print arbitrary exception text: it may include a bearer token or private endpoint details.
@@ -91,4 +121,4 @@ if (require.main === module) main().catch(() => {
     + 'If --apply was used, unchanged retries are safe; some drafts may already exist. No approval or publication was requested.');
   process.exitCode = 1;
 });
-module.exports = { parseArgs, adminEndpoint, loadManifest, execute, main };
+module.exports = { parseArgs, adminEndpoint, loadManifest, execute, main, applyToDatabase };

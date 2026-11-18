@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/content_admin_service.dart';
 import '../../services/content_service.dart' show ContentService;
+import 'content_actions.dart';
 
 class ContentAdminGuard extends StatelessWidget {
   const ContentAdminGuard(
@@ -65,8 +67,9 @@ class _Catalog extends StatefulWidget {
 
 class _CatalogState extends State<_Catalog> {
   final List<Map<String, dynamic>> _items = [];
+  final Set<String> _selected = {};
   String _status = 'draft';
-  String? _error;
+  String? _error, _notice;
   bool _loading = false, _more = false, _denied = false;
   int _generation = 0;
   bool get _current =>
@@ -87,6 +90,7 @@ class _CatalogState extends State<_Catalog> {
       _error = null;
       if (!more) {
         _items.clear();
+        _selected.clear();
         _more = false;
       }
     });
@@ -169,6 +173,38 @@ class _CatalogState extends State<_Catalog> {
         item['id'] as String, {'version': item['version'], ...decision}));
   }
 
+  /// One review record for several drafts, then publish them.
+  Future<void> _bulkApprove() async {
+    final chosen =
+        _items.where((item) => _selected.contains(item['id'])).toList();
+    if (chosen.isEmpty) return;
+    final decision = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (_) => ContentAdminGuard(
+            accountId: widget.accountId,
+            child: _ReviewDialog(count: chosen.length)));
+    if (!_current || decision == null || decision['decision'] != 'approved') {
+      return;
+    }
+    ({int approved, int failed})? outcome;
+    await _action(() async => outcome = await widget.service.bulkReview(chosen,
+        note: decision['review_note'] as String,
+        qualification: decision['reviewer_qualification'] as String));
+    if (_current && outcome != null) {
+      setState(() => _notice = outcome!.failed == 0
+          ? tr('${outcome!.approved} items approved and published.',
+              '${outcome!.approved} مواد منظور اور شائع ہو گئے۔')
+          : tr(
+              '${outcome!.approved} published, ${outcome!.failed} need attention (check source dates or edit them).',
+              '${outcome!.approved} شائع ہوئے، ${outcome!.failed} پر توجہ درکار ہے۔'));
+    }
+  }
+
+  Future<void> _openMedia(Map<String, dynamic> item) async {
+    final uri = ContentActions.httpsLink(item['media_url'] as String?);
+    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _archive(Map<String, dynamic> item) async {
     final accepted = await showDialog<bool>(
         context: context,
@@ -228,7 +264,38 @@ class _CatalogState extends State<_Catalog> {
                               _load();
                             }),
               ]),
+              if (_status == 'draft' && _items.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(spacing: 10, runSpacing: 6, children: [
+                  OutlinedButton(
+                      onPressed: _loading
+                          ? null
+                          : () => setState(() =>
+                              _selected.length == _items.length.clamp(0, 50)
+                                  ? _selected.clear()
+                                  : _selected.addAll(_items
+                                      .take(50)
+                                      .map((item) => item['id'] as String))),
+                      child: Text(_selected.length == _items.length.clamp(0, 50)
+                          ? tr('Clear selection', 'انتخاب ختم کریں')
+                          : tr('Select all (max 50)',
+                              'سب منتخب کریں (زیادہ سے زیادہ 50)'))),
+                  FilledButton.icon(
+                      key: const ValueKey('content-bulk-approve'),
+                      onPressed: _loading || _denied || _selected.isEmpty
+                          ? null
+                          : _bulkApprove,
+                      icon: const Icon(Icons.done_all),
+                      label: Text(tr(
+                          'Approve & publish selected (${_selected.length})',
+                          'منتخب منظور اور شائع کریں (${_selected.length})'))),
+                ]),
+              ],
               if (_loading) const LinearProgressIndicator(),
+              if (_notice != null && !_loading)
+                Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(_notice!)),
               if (_error != null)
                 Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -246,6 +313,21 @@ class _CatalogState extends State<_Catalog> {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              if (_status == 'draft')
+                                CheckboxListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    value: _selected.contains(item['id']),
+                                    onChanged: _loading ||
+                                            (!_selected.contains(item['id']) &&
+                                                _selected.length >= 50)
+                                        ? null
+                                        : (on) => setState(() => on == true
+                                            ? _selected
+                                                .add(item['id'] as String)
+                                            : _selected.remove(item['id'])),
+                                    title: Text(tr('Select', 'منتخب کریں'))),
                               Text(
                                   (item[ur ? 'title_ur' : 'title_en'] ?? '')
                                       .toString(),
@@ -259,6 +341,16 @@ class _CatalogState extends State<_Catalog> {
                               if (item['source_name'] != null)
                                 Text(item['source_name'].toString()),
                               Wrap(spacing: 8, runSpacing: 6, children: [
+                                if (ContentActions.httpsLink(
+                                        item['media_url'] as String?) !=
+                                    null)
+                                  TextButton.icon(
+                                      onPressed: () => _openMedia(item),
+                                      icon: const Icon(
+                                          Icons.play_circle_outline,
+                                          size: 18),
+                                      label: Text(tr('Watch / listen to check',
+                                          'جانچ کے لیے دیکھیں / سنیں'))),
                                 if (_status != 'archived') ...[
                                   TextButton(
                                       onPressed:
@@ -319,7 +411,10 @@ class _CatalogState extends State<_Catalog> {
 }
 
 class _ReviewDialog extends StatefulWidget {
-  const _ReviewDialog();
+  const _ReviewDialog({this.count});
+
+  /// Set for a bulk review: approval is the only decision offered.
+  final int? count;
   @override
   State<_ReviewDialog> createState() => _ReviewDialogState();
 }
@@ -327,7 +422,7 @@ class _ReviewDialog extends StatefulWidget {
 class _ReviewDialogState extends State<_ReviewDialog> {
   final _note = TextEditingController(),
       _qualification = TextEditingController();
-  bool _approved = false;
+  late bool _approved = widget.count != null;
   @override
   void dispose() {
     _note.dispose();
@@ -347,6 +442,10 @@ class _ReviewDialogState extends State<_ReviewDialog> {
                 children: [
                   Text(ur ? 'جائزے کا ریکارڈ' : 'Review record',
                       style: Theme.of(context).textTheme.titleLarge),
+                  if (widget.count != null)
+                    Text(ur
+                        ? '${widget.count} مواد ایک ساتھ منظور اور شائع ہوں گے۔ ہر ایک کو پہلے دیکھ یا سن لیں۔'
+                        : '${widget.count} items will be approved and published together. Watch or listen to each one first.'),
                   Text(ur
                       ? 'متن، ماخذ، حقوق اور موزونیت خود جانچیں۔ یہ خودکار تصدیق نہیں۔'
                       : 'Personally check text, source, rights and suitability. This is not automatic verification.'),

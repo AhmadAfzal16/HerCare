@@ -61,4 +61,8 @@ flutter:
     - assets/meditation_guides.json
     - assets/audio/meditation/
     - assets/audio/breathing/
+    # Nunito (SIL Open Font License, see google_fonts/OFL.txt), bundled so the
+    # app font works offline; google_fonts loads these files instead of
+    # downloading them.
+    - google_fonts/
     - .env

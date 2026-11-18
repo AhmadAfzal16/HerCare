@@ -601,7 +601,8 @@ class _TestService extends TherapyService {
       String? breathingParticipation,
       bool completed = true,
       String? clientRequestId,
-      DateTime? clientCompletedAt}) async {
+      DateTime? clientCompletedAt,
+      TherapyMeasures? measures}) async {
     calls.add({
       'client_request_id': clientRequestId,
       'mood_before': moodBefore,

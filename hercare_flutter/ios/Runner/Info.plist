@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Only when you choose a heart check, HerCare uses the camera and flash with your fingertip over the lens to estimate your heart rate for 30 seconds. Images are processed on your phone and never saved or uploaded.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>HerCare uses the microphone only when you choose to record a private voice journal.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

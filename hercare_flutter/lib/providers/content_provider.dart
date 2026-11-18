@@ -40,6 +40,63 @@ class ContentProvider extends ChangeNotifier {
   final Set<String> _mutations = {};
   Object? _careRevision;
   int _signalRevision = 0;
+  LiveFeed? _live;
+  Future<void>? _liveLoad;
+  final Set<String> _hiddenLive = {};
+
+  /// Unreviewed trusted-channel results; never cached to disk, cleared on
+  /// account change, hidden during safety priority, and re-checked against
+  /// her music/faith opt-ins on this device too.
+  List<LiveVideo> get liveVideos => !canUseAccount ||
+          _offline ||
+          safetyPriority ||
+          _live == null ||
+          _live!.safetyPriority
+      ? const []
+      : List.unmodifiable(_live!.items.where((video) =>
+          !_hiddenLive.contains(video.videoId) &&
+          (preferences.musicEnabled || !video.isMusic) &&
+          (preferences.religiousEnabled || !video.isReligious) &&
+          !preferences.disabledCategories.contains(video.category)));
+  LiveFeed? get liveFeed => canUseAccount ? _live : null;
+
+  Future<void> loadLive({String language = 'en'}) {
+    if (!canUseAccount || safetyPriority) return Future.value();
+    if (_liveLoad != null) return _liveLoad!;
+    final generation = _generation;
+    final work = () async {
+      try {
+        final result = await _service.live(language: language);
+        if (!_same(generation)) return;
+        _live = result;
+        if (result.safetyPriority) _safetyPriority = true;
+      } catch (_) {
+        // Live search is optional; the reviewed feed keeps working.
+        if (_same(generation)) _live = null;
+      }
+    }();
+    _liveLoad = work;
+    return work.whenComplete(() {
+      if (_same(generation)) {
+        _liveLoad = null;
+        _notify();
+      }
+    });
+  }
+
+  Future<bool> hideLive(LiveVideo video) async {
+    final generation = _generation;
+    if (!_same(generation)) return false;
+    _hiddenLive.add(video.videoId);
+    _notify();
+    try {
+      await _service.hideLive(video.videoId);
+      return _same(generation);
+    } catch (_) {
+      // Stay hidden on this phone for the session even if the server missed it.
+      return false;
+    }
+  }
 
   String? get accountId => _accountId;
   String get role => _role;
@@ -141,6 +198,9 @@ class ContentProvider extends ChangeNotifier {
     _failureCount = 0;
     _queuedRefresh = false;
     _careRevision = null;
+    _live = null;
+    _liveLoad = null;
+    _hiddenLive.clear();
     _signalRevision++;
     _service.bindAccount(id);
     notifyListeners();
@@ -291,11 +351,24 @@ class ContentProvider extends ChangeNotifier {
     } catch (_) {/* Fail closed in memory. */}
   }
 
-  Future<ContentDetail?> detail(String id) async {
+  /// Best-effort engagement signal for learning her topics; never blocks or
+  /// shows an error, and is skipped offline or during safety priority.
+  Future<void> recordEngagement(ContentItem item, String event,
+      {int seconds = 0, String? reason}) async {
+    final generation = _generation;
+    if (!_same(generation) || safetyPriority || _offline) return;
+    try {
+      await _service.engagement(item.id, event,
+          seconds: seconds, reason: reason);
+      if (_same(generation)) invalidate();
+    } catch (_) {/* Engagement is optional and never retried. */}
+  }
+
+  Future<ContentDetail?> detail(String id, {String? reason}) async {
     final generation = _generation;
     if (!_same(generation) || safetyPriority) return null;
     try {
-      final item = await _service.detail(id);
+      final item = await _service.detail(id, reason: reason);
       if (!_same(generation)) return null;
       return ContentDetail(item);
     } on ContentAccountException {

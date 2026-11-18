@@ -144,6 +144,37 @@ class ContentAdminService {
         id: id);
   }
 
+  /// Approve (and publish) up to 50 drafts with one review record. The server
+  /// runs the same per-item checks and reports which items succeeded.
+  Future<({int approved, int failed})> bulkReview(
+      List<Map<String, dynamic>> items,
+      {required String note,
+      required String qualification,
+      bool publish = true}) async {
+    if (items.isEmpty || items.length > 50) {
+      throw const ContentAdminException('Select between 1 and 50 items.');
+    }
+    for (final item in items) {
+      _checkId(item['id'] as String);
+    }
+    final result = await request('POST', '/bulk-review', data: {
+      'items': [
+        for (final item in items) {'id': item['id'], 'version': item['version']}
+      ],
+      'review_note': note,
+      'reviewer_qualification': qualification,
+      'publish': publish,
+    });
+    final results = result['results'];
+    if (results is! List || results.length != items.length) {
+      throw const ContentAdminException(
+          'Invalid catalog response. Please refresh.');
+    }
+    final approved =
+        results.where((row) => row is Map && row['ok'] == true).length;
+    return (approved: approved, failed: items.length - approved);
+  }
+
   Future<Map<String, dynamic>> archive(String id, int version) async {
     _checkId(id);
     return _receipt(

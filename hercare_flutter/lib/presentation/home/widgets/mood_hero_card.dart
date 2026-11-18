@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/theme_ext.dart';
 import '../../../providers/language_provider.dart';
 import '../../../providers/mood_provider.dart';
-import '../../../core/routing/app_router.dart';
-import 'package:provider/provider.dart';
 
 /// Daily mood entry point. The selection is carried into the check-in form.
 class MoodHeroCard extends StatefulWidget {
@@ -36,137 +36,117 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
     final today = context.watch<MoodProvider>().today;
     final selectedMood = today == null ? null : today.moodRating - 1;
+    final theme = Theme.of(context);
+    final dark = context.isDark;
+    const ink = AppColors.textPrimary;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        gradient: dark
+            ? const LinearGradient(
+                colors: [Color(0xFF2E2556), Color(0xFF3A2245)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight)
+            : AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: context.hcSoftShadow,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Decorative heart glow (top-right)
-          Positioned(
-            right: -16,
-            top: -16,
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
+          // Soft decorative bubbles.
+          PositionedDirectional(
+            end: -30,
+            top: -40,
+            child: _Bubble(size: 140, alpha: dark ? 0.06 : 0.45),
           ),
-          Positioned(
-            right: 16,
-            top: 16,
-            child: Icon(
-              Icons.favorite_rounded,
-              color: Colors.white.withValues(alpha: 0.20),
-              size: 52,
-            ),
+          PositionedDirectional(
+            end: 50,
+            bottom: -50,
+            child: _Bubble(size: 100, alpha: dark ? 0.04 : 0.30),
           ),
-
-          // Main content
+          PositionedDirectional(
+            end: 18,
+            top: 18,
+            child: Icon(Icons.favorite_rounded,
+                size: 34,
+                color:
+                    AppColors.secondary.withValues(alpha: dark ? 0.35 : 0.22)),
+          ),
           Padding(
-            padding:
-                EdgeInsets.fromLTRB(20, isUrdu ? 12 : 18, 20, isUrdu ? 12 : 18),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
             child: Column(
-              crossAxisAlignment:
-                  isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // A birth date is not collected, so do not invent a day count.
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white.withValues(alpha: dark ? 0.12 : 0.75),
+                    borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Text(
-                    isUrdu ? 'روزانہ موڈ' : 'Daily mood',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.wb_twilight_rounded,
+                        size: 14,
+                        color:
+                            dark ? AppColors.primaryLight : AppColors.primary),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        isUrdu ? 'روزانہ موڈ' : 'Daily mood',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                            color: dark
+                                ? AppColors.primaryLight
+                                : AppColors.primary),
+                      ),
                     ),
+                  ]),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 40),
+                  child: Text(
+                    isUrdu
+                        ? 'آج آپ کیسا محسوس کر رہی ہیں؟'
+                        : 'How are you feeling today?',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                        fontSize: 21, color: dark ? Colors.white : ink),
                   ),
                 ),
-                SizedBox(height: isUrdu ? 8 : 12),
-
-                // Title
-                Text(
-                  isUrdu
-                      ? 'آج آپ کیسا محسوس کر رہی ہیں؟'
-                      : 'How are you feeling today?',
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: isUrdu ? 16 : 20,
-                  ),
-                  textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
-                ),
-                SizedBox(height: isUrdu ? 2 : 4),
+                const SizedBox(height: 4),
                 Text(
                   selectedMood == null
                       ? (isUrdu
-                          ? 'موڈ لاگ کرنے کے لیے ٹیپ کریں'
-                          : 'Tap to log your mood')
+                          ? 'اپنا موڈ چنیں، بس ایک لمحہ لگے گا'
+                          : 'Pick a face — it only takes a moment')
                       : (isUrdu
-                          ? _moodLabelsUr[selectedMood]
-                          : _moodLabelsEn[selectedMood]),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.80),
-                    fontSize: 13,
-                  ),
-                  textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                          ? 'آج کا موڈ: ${_moodLabelsUr[selectedMood]}'
+                          : 'Today: ${_moodLabelsEn[selectedMood]}'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: dark
+                          ? Colors.white.withValues(alpha: 0.75)
+                          : AppColors.textSecondary),
                 ),
-                SizedBox(height: isUrdu ? 10 : 16),
-
-                // Emoji mood row — use Wrap to avoid RTL overflow
-                Wrap(
-                  direction: Axis.horizontal,
-                  alignment: isUrdu ? WrapAlignment.end : WrapAlignment.start,
-                  spacing: 8,
+                const SizedBox(height: 16),
+                Row(
                   children: List.generate(_moods.length, (i) {
                     final selected = selectedMood == i;
-                    return GestureDetector(
-                      onTap: () => context.push(AppRoutes.mood, extra: i + 1),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: selected ? 52 : 46,
-                        height: selected ? 52 : 46,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? Colors.white.withValues(alpha: 0.30)
-                              : Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
-                          border: selected
-                              ? Border.all(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  width: 2)
-                              : null,
-                          boxShadow: selected
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ]
-                              : [],
-                        ),
-                        child: Center(
-                          child: Text(
-                            _moods[i],
-                            style: TextStyle(fontSize: selected ? 26 : 22),
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsetsDirectional.only(
+                            end: i == _moods.length - 1 ? 0 : 8),
+                        child: Semantics(
+                          button: true,
+                          selected: selected,
+                          label: isUrdu ? _moodLabelsUr[i] : _moodLabelsEn[i],
+                          child: _MoodFace(
+                            emoji: _moods[i],
+                            selected: selected,
+                            onTap: () =>
+                                context.push(AppRoutes.mood, extra: i + 1),
                           ),
                         ),
                       ),
@@ -177,6 +157,78 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble({required this.size, required this.alpha});
+  final double size;
+  final double alpha;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: alpha),
+        ),
+      );
+}
+
+class _MoodFace extends StatelessWidget {
+  const _MoodFace(
+      {required this.emoji, required this.selected, required this.onTap});
+  final String emoji;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.isDark;
+    return AspectRatio(
+      aspectRatio: 1,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected
+              ? (dark ? Colors.white.withValues(alpha: 0.22) : Colors.white)
+              : Colors.white.withValues(alpha: dark ? 0.08 : 0.62),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+              color: selected ? AppColors.primary : Colors.transparent,
+              width: 2),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.22),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  )
+                ]
+              : const [],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text(emoji,
+                      textScaler: TextScaler.noScaling,
+                      style: TextStyle(fontSize: selected ? 28 : 25)),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

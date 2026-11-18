@@ -293,6 +293,148 @@ void main() {
     expect(service.saved.single.completed, false);
   });
 
+  testWidgets(
+      'monitoring: before/after comparison is shown, distress is saved and support is offered',
+      (tester) async {
+    final service = _FakeService();
+    await _pump(
+        tester,
+        Builder(
+            builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => showTherapyCompletionSheet(context,
+                        type: 'breathing',
+                        activityId: 'cyclic_sighing',
+                        durationSeconds: 300,
+                        isUrdu: false,
+                        measures: const TherapyMeasures(
+                            tensionBefore: 7,
+                            hrBefore: 88,
+                            hrvBefore: 24,
+                            hrAfter: 76,
+                            hrvAfter: 39,
+                            physioSource: 'camera')),
+                    child: const Text('Open save sheet'),
+                  ),
+                )),
+        service: service);
+    await tester.tap(find.text('Open save sheet'));
+    await tester.pumpAndSettle();
+    expect(find.text('Heart rate: 88 → 76 bpm'), findsOneWidget);
+    expect(find.text('Variability: 24 → 39 ms'), findsOneWidget);
+    expect(find.text('Camera readings are approximate.'), findsOneWidget);
+    // She did a before-check, so the "after" questions are already open.
+    await tester.ensureVisible(find.byKey(const Key('distress-true')));
+    await tester.tap(find.byKey(const Key('distress-true')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save completion'));
+    await tester.tap(find.text('Save completion'));
+    await tester.pumpAndSettle();
+    final saved = service.saved.single.measures!;
+    expect(saved.distressReported, true);
+    expect(saved.tensionBefore, 7);
+    expect(saved.tensionAfter, isNull,
+        reason: 'untouched slider is not an answer');
+    expect([saved.hrBefore, saved.hrAfter, saved.physioSource],
+        [88, 76, 'camera']);
+    expect(find.text('Thank you for telling us'), findsOneWidget);
+    expect(find.text('5-4-3-2-1 grounding (eyes open)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text("I'm okay for now"));
+    await tester.tap(find.text("I'm okay for now"));
+    await tester.pumpAndSettle();
+    expect(find.text('Thank you for telling us'), findsNothing);
+  });
+
+  testWidgets(
+      'no before-check: the after questions stay collapsed and nothing extra is saved',
+      (tester) async {
+    final service = _FakeService();
+    await _pump(
+        tester,
+        Builder(
+            builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => showTherapyCompletionSheet(context,
+                        type: 'meditation',
+                        activityId: 'body_scan',
+                        durationSeconds: 300,
+                        isUrdu: false),
+                    child: const Text('Open save sheet'),
+                  ),
+                )),
+        service: service);
+    await tester.tap(find.text('Open save sheet'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('distress-true')), findsNothing);
+    await tester.ensureVisible(find.text('Save completion'));
+    await tester.tap(find.text('Save completion'));
+    await tester.pumpAndSettle();
+    expect(service.saved.single.measures, isNull);
+    expect(find.text('Thank you for telling us'), findsNothing);
+  });
+
+  test('measures: heart readings need a source; ranges match the server', () {
+    const noSource = TherapyMeasures(hrBefore: 80, tensionBefore: 4);
+    expect(noSource.toJson(), {'tension_before': 4},
+        reason: 'heart readings are dropped without their source');
+    const camera =
+        TherapyMeasures(hrBefore: 80, hrvBefore: 30, physioSource: 'camera');
+    expect(TherapyMeasures.validJson(camera.toJson()), isTrue);
+    for (final bad in [
+      {'tension_before': 11},
+      {'hr_before': 80},
+      {'physio_source': 'band'},
+      {'hr_before': 80, 'physio_source': 'guess'},
+      {'distress_reported': 'yes'},
+      {'raw_frames': []},
+    ]) {
+      expect(TherapyMeasures.validJson(bad), isFalse, reason: '$bad');
+    }
+    final session = TherapySession.fromJson({
+      'id': '1',
+      'activity_type': 'breathing',
+      'activity_id': 'cyclic_sighing',
+      'duration_seconds': 300,
+      'completed': true,
+      'completed_at': '2026-11-17T10:00:00Z',
+      'measures': {
+        'tension_before': 7,
+        'tension_after': 3,
+        'distress_reported': false
+      },
+    });
+    expect(session.measures!.tensionChange, -4);
+    expect(needsSupport(session), isFalse);
+    expect(
+        needsSupport(TherapySession.fromJson({
+          'completed': true,
+          'measures': {'tension_before': 2, 'tension_after': 6},
+        })),
+        isTrue,
+        reason: 'tension rose by 3 or more');
+  });
+
+  testWidgets(
+      'calming sigh shows its top-up breath and a collapsed before-check',
+      (tester) async {
+    await _pump(
+        tester,
+        BreathingExerciseScreen(
+            patternId: 'cyclic_sighing', audio: _BreathingAudio()));
+    await tester.pumpAndSettle();
+    expect(find.text('Calming Sigh'), findsOneWidget);
+    expect(find.text('Top-up breath 1s'), findsOneWidget);
+    expect(find.text('Exhale 6s'), findsOneWidget);
+    expect(find.text('Before you start (optional)'), findsOneWidget);
+    expect(find.byKey(const Key('heart-before')), findsNothing,
+        reason: 'collapsed until she opens it');
+    await tester.tap(find.text('Before you start (optional)'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('heart-before')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('hub presents partial history and nonclinical mood summary',
       (tester) async {
     await _smallPhone(tester);
@@ -401,6 +543,7 @@ class _FakeService extends TherapyService {
     bool completed = true,
     String? clientRequestId,
     DateTime? clientCompletedAt,
+    TherapyMeasures? measures,
   }) async {
     final session = TherapySession(
       id: 'test-${saved.length}',
@@ -410,6 +553,7 @@ class _FakeService extends TherapyService {
       moodBefore: moodBefore,
       moodAfter: moodAfter,
       breathingParticipation: breathingParticipation,
+      measures: measures,
       completed: completed,
       completedAt: DateTime.now(),
     );

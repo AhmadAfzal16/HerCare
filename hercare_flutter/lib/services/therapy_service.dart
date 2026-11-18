@@ -175,6 +175,7 @@ class TherapyService {
             moodAfter: payload['mood_after'] as int?,
             breathingParticipation:
                 payload['breathing_participation'] as String?,
+            measures: TherapyMeasures.fromJson(payload['measures']),
             completed: payload['completed'] as bool,
             completedAt:
                 DateTime.parse(payload['client_completed_at'] as String),
@@ -196,11 +197,15 @@ class TherapyService {
     bool completed = true,
     String? clientRequestId,
     DateTime? clientCompletedAt,
+    TherapyMeasures? measures,
   }) async {
     final generation = _generation, origin = _origin;
     _check(generation, origin);
     final key = _queueKey(origin);
+    final measureJson = measures?.toJson();
     final payload = <String, dynamic>{
+      if (measureJson != null && measureJson.isNotEmpty)
+        'measures': measureJson,
       'activity_type': type,
       'activity_id': activityId,
       'duration_seconds': durationSeconds.clamp(1, 7200),
@@ -249,6 +254,7 @@ class TherapyService {
         moodBefore: moodBefore,
         moodAfter: moodAfter,
         breathingParticipation: breathingParticipation,
+        measures: TherapyMeasures.fromJson(payload['measures']),
         completed: completed,
         completedAt: recordedAt,
         isSynced: false,
@@ -525,10 +531,17 @@ class TherapyService {
       'mood_before',
       'mood_after',
       'breathing_participation',
+      'measures',
       'completed',
       'client_request_id',
       'client_completed_at',
     };
+    final measures = payload['measures'];
+    if (measures != null &&
+        (!TherapyMeasures.validJson(measures) ||
+            !{'breathing', 'meditation'}.contains(payload['activity_type']))) {
+      throw const FormatException('Invalid practice measures.');
+    }
     final duration = payload['duration_seconds'];
     if (payload.keys.any((key) => !fields.contains(key)) ||
         !{'breathing', 'meditation', 'cbt', 'game'}
