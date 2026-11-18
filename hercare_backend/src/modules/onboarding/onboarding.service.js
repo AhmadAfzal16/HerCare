@@ -1,5 +1,6 @@
 const { withTransaction } = require('../../config/database');
 const { AppError } = require('../../middleware/error_handler');
+const { ensureSchedule } = require('../screening/screening.schedule');
 
 async function completeOnboarding(userId, data) {
   return withTransaction(async (client) => {
@@ -72,8 +73,39 @@ async function completeOnboarding(userId, data) {
       'UPDATE users SET onboarding_complete = TRUE, updated_at = NOW() WHERE id = $1',
       [userId],
     );
+    await ensureSchedule(userId, client);
     return rows[0];
   });
 }
 
-module.exports = { completeOnboarding };
+async function getConsent(userId) {
+  return withTransaction(async (client) => {
+    const { rows } = await client.query(`SELECT od.consent_tier1, od.consent_tier2, od.consent_tier3
+      FROM onboarding_data od JOIN users u ON u.id=od.user_id
+      WHERE u.id=$1 AND u.role='mother' AND u.is_active AND u.onboarding_complete`, [userId]);
+    if (!rows[0]) throw new AppError('Privacy settings are unavailable for this account.', 403);
+    return rows[0];
+  });
+}
+
+async function updateConsent(userId, data) {
+  const keys = Object.keys(data || {});
+  if (keys.length !== 1 || !['consent_tier2', 'consent_tier3'].includes(keys[0]) ||
+      typeof data[keys[0]] !== 'boolean') {
+    throw new AppError('Choose one optional sharing permission to update.', 422);
+  }
+  // The identifier is selected exclusively from the fixed allow-list above.
+  // Partial updates cannot overwrite another device's unrelated choice or any
+  // clinical profile field. Research consent is separate and never changed here.
+  return withTransaction(async (client) => {
+    const { rows } = await client.query(`UPDATE onboarding_data od
+      SET ${keys[0]}=$2, updated_at=NOW() FROM users u
+      WHERE u.id=od.user_id AND u.id=$1 AND u.role='mother' AND u.is_active
+        AND u.onboarding_complete
+      RETURNING od.consent_tier1, od.consent_tier2, od.consent_tier3`, [userId, data[keys[0]]]);
+    if (!rows[0]) throw new AppError('Privacy settings are unavailable for this account.', 403);
+    return rows[0];
+  });
+}
+
+module.exports = { completeOnboarding, getConsent, updateConsent };

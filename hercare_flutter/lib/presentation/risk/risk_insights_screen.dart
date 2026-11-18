@@ -7,6 +7,8 @@ import '../../core/theme/theme_ext.dart';
 import '../../data/models/risk_models.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/risk_provider.dart';
+import 'm4_report_panel.dart';
+import 'recovery_panel.dart';
 
 class RiskInsightsScreen extends StatefulWidget {
   const RiskInsightsScreen({super.key});
@@ -22,7 +24,9 @@ class _RiskInsightsScreenState extends State<RiskInsightsScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<RiskProvider>().initialize(),
+      (_) {
+        if (mounted) context.read<RiskProvider>().initialize();
+      },
     );
   }
 
@@ -47,6 +51,21 @@ class _RiskInsightsScreenState extends State<RiskInsightsScreen>
       backgroundColor: context.hcBg,
       appBar: AppBar(
         title: Text(isUrdu ? 'خطرے کی بصیرت' : 'Risk insights'),
+        actions: [
+          IconButton(
+            tooltip: isUrdu ? 'رپورٹ تازہ کریں' : 'Refresh reports',
+            onPressed:
+                provider.loading || provider.working || provider.savingDetails
+                    ? null
+                    : provider.refreshReports,
+            icon: provider.working
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: SafeArea(
         child: provider.loading
@@ -57,6 +76,12 @@ class _RiskInsightsScreenState extends State<RiskInsightsScreen>
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                   children: [
+                    M4ReportPanel(
+                      key: ValueKey(('m4', provider.accountId)),
+                      provider: provider,
+                      isUrdu: isUrdu,
+                    ),
+                    const SizedBox(height: 16),
                     _PrivacyCard(provider: provider, isUrdu: isUrdu),
                     const SizedBox(height: 14),
                     if (provider.status?.consentTier3 == true &&
@@ -99,29 +124,14 @@ class _RiskInsightsScreenState extends State<RiskInsightsScreen>
                       _ErrorCard(message: provider.error!),
                     ],
                     const SizedBox(height: 16),
-                    _PredictionCard(
-                      prediction: provider.latest,
+                    RecoveryPanel(
+                      key: ValueKey(('recovery', provider.accountId)),
+                      provider: provider,
                       isUrdu: isUrdu,
+                      collapseSummary: true,
                     ),
+                    _ResearchBaselineCard(provider: provider, isUrdu: isUrdu),
                     const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: provider.working
-                          ? null
-                          : () => provider.syncAndPredict(),
-                      icon: provider.working
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.auto_graph_rounded),
-                      label: Text(
-                        isUrdu ? 'بصیرت تازہ کریں' : 'Refresh risk insight',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     Text(
                       isUrdu
                           ? 'HerCare تشخیص نہیں کرتا۔ خطرے کی بصیرت اسکریننگ اور پیشہ ورانہ طبی جائزے کا متبادل نہیں ہے۔'
@@ -137,6 +147,37 @@ class _RiskInsightsScreenState extends State<RiskInsightsScreen>
       ),
     );
   }
+}
+
+class _ResearchBaselineCard extends StatelessWidget {
+  const _ResearchBaselineCard({required this.provider, required this.isUrdu});
+  final RiskProvider provider;
+  final bool isUrdu;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: ExpansionTile(
+          title: Text(isUrdu ? 'تحقیقی بنیادی ماڈل' : 'Research baseline'),
+          subtitle: Text(isUrdu
+              ? 'ایک وقت کے ڈیٹا پر مبنی ماڈل'
+              : 'Cross-sectional research model'),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          children: [
+            if (provider.latest != null)
+              _PredictionCard(prediction: provider.latest!, isUrdu: isUrdu),
+            if (provider.baselineError != null)
+              _ErrorCard(message: provider.baselineError!),
+            OutlinedButton(
+              onPressed: provider.savingDetails || provider.working
+                  ? null
+                  : provider.generateBaseline,
+              child: Text(provider.generatingBaseline
+                  ? (isUrdu ? 'ماڈل چل رہا ہے…' : 'Running baseline…')
+                  : (isUrdu ? 'بنیادی ماڈل چلائیں' : 'Run research baseline')),
+            ),
+          ],
+        ),
+      );
 }
 
 class _PrivacyCard extends StatelessWidget {
@@ -164,7 +205,9 @@ class _PrivacyCard extends StatelessWidget {
                 ),
                 Switch(
                   value: provider.status?.consentTier3 ?? false,
-                  onChanged: provider.working ? null : provider.setConsent,
+                  onChanged: provider.working || provider.savingDetails
+                      ? null
+                      : provider.setConsent,
                 ),
               ],
             ),
@@ -234,32 +277,12 @@ class _PermissionCard extends StatelessWidget {
 
 class _PredictionCard extends StatelessWidget {
   const _PredictionCard({required this.prediction, required this.isUrdu});
-  final RiskPrediction? prediction;
+  final RiskPrediction prediction;
   final bool isUrdu;
 
   @override
   Widget build(BuildContext context) {
     final value = prediction;
-    if (value == null) {
-      return Container(
-        padding: const EdgeInsets.all(22),
-        decoration: _decoration(context),
-        child: Column(
-          children: [
-            const Icon(Icons.insights_rounded,
-                size: 42, color: AppColors.primary),
-            const SizedBox(height: 12),
-            Text(
-              isUrdu
-                  ? 'ابھی تک خطرے کی بصیرت موجود نہیں۔'
-                  : 'No risk insight has been generated yet.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyLarge,
-            ),
-          ],
-        ),
-      );
-    }
     final color = _riskColor(value.riskLevel);
     return Container(
       padding: const EdgeInsets.all(20),
@@ -269,21 +292,9 @@ class _PredictionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                _riskLabel(value.riskLevel, isUrdu),
-                style: AppTextStyles.headlineSmall.copyWith(color: color),
-              ),
-              Chip(
-                label: Text(value.isClinicalForecast
-                    ? (isUrdu ? '14 دن کی پیش گوئی' : '14-day forecast')
-                    : (isUrdu ? 'تحقیقی بنیادی ماڈل' : 'Research baseline')),
-              ),
-            ],
+          Text(
+            _riskLabel(value.riskLevel, isUrdu),
+            style: AppTextStyles.headlineSmall.copyWith(color: color),
           ),
           const SizedBox(height: 14),
           _MetricRow(
@@ -291,8 +302,8 @@ class _PredictionCard extends StatelessWidget {
             value: '${(value.depressionProbability * 100).round()}%',
           ),
           _MetricRow(
-            label: isUrdu ? 'اعتماد' : 'Confidence',
-            value: '${(value.confidence * 100).round()}%',
+            label: isUrdu ? 'طبی اعتماد' : 'Clinical confidence',
+            value: isUrdu ? 'تصدیق نہیں ہوئی' : 'Not established',
           ),
           _MetricRow(
             label: isUrdu ? 'ڈیٹا مکمل' : 'Data completeness',
@@ -308,7 +319,10 @@ class _PredictionCard extends StatelessWidget {
           ],
           if (value.contributors.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(isUrdu ? 'اہم اشارے' : 'Leading signals',
+            Text(
+                isUrdu
+                    ? 'ریکارڈ شدہ اشارے، ماڈل کی وجوہات نہیں'
+                    : 'Recorded signals—not model explanations',
                 style: AppTextStyles.titleSmall),
             const SizedBox(height: 8),
             ...value.contributors.map(
@@ -338,10 +352,11 @@ class _MetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 4,
           children: [
-            Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
-            const SizedBox(width: 12),
+            Text(label, style: AppTextStyles.bodyMedium),
             Text(value,
                 style: AppTextStyles.labelLarge
                     .copyWith(fontWeight: FontWeight.w700)),

@@ -16,6 +16,7 @@ const notificationRoutes = require('./modules/notifications/notification.routes'
 const { errorHandler } = require('./middleware/error_handler');
 const { query } = require('./config/database');
 const logger = require('./utils/logger');
+const { requestPath } = require('./utils/request_path');
 
 const app = express();
 
@@ -48,7 +49,11 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: [
+    'X-Guardian-Account-Id', 'X-Screening-Account-Id', 'X-Privacy-Account-Id', 'X-Risk-Account-Id',
+    'Content-Type', 'Authorization', 'X-Journal-Language',
+    'X-Client-Request-Id', 'X-Checkin-Id', 'X-Crisis-Account-Id', 'X-Sleep-Account-Id', 'X-Mood-Account-Id', 'X-Therapy-Account-Id', 'X-Notification-Account-Id', 'X-Chat-Account-Id', 'X-Community-Account-Id', 'X-Content-Account-Id',
+  ],
 }));
 
 // ─── Body Parsing ──────────────────────────────────────────────────────────
@@ -57,13 +62,17 @@ app.use(express.urlencoded({ extended: false, limit: '32kb' }));
 
 // ─── HTTP Logging ──────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined', {
+  morgan.token('safe-path', requestPath);
+  app.use(morgan(':method :safe-path :status :res[content-length] :response-time ms', {
     stream: { write: (msg) => logger.http(msg.trim()) },
   }));
 }
 
 // ─── Global Rate Limiter ───────────────────────────────────────────────────
 const globalLimiter = rateLimit({
+  // Chat has independent pre-auth IP and authenticated per-user quotas. Polling
+  // must not consume the shared allowance for screenings or other care modules.
+  skip: (req) => /^\/api\/v1\/chat(?:\/|$)/.test(req.path),
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200,
   standardHeaders: true,
@@ -96,13 +105,15 @@ app.use(`${API_PREFIX}/onboarding`, onboardingRoutes);
 app.use(`${API_PREFIX}/mood`, moodRoutes);
 app.use(`${API_PREFIX}/screening`, screeningRoutes);
 app.use(`${API_PREFIX}/risk`, riskRoutes);
+app.use(`${API_PREFIX}/research`, require('./modules/research/research.routes'));
 app.use(`${API_PREFIX}/chat`, chatRoutes);
+app.use(`${API_PREFIX}/chatbot`, require('./modules/chatbot/chatbot.routes'));
+app.use(`${API_PREFIX}/crisis`, require('./modules/crisis/crisis.routes'));
 app.use(`${API_PREFIX}/therapy`, therapyRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 app.use(`${API_PREFIX}/sleep`, require('./modules/sleep/sleep.routes'));
 app.use(`${API_PREFIX}/community`, require('./modules/community/community.routes'));
-// Future modules mount here:
-// app.use(`${API_PREFIX}/chatbot`,   chatbotRoutes);  // Phase 2
+app.use(`${API_PREFIX}/content`, require('./modules/content/content.routes'));
 
 // ─── 404 ───────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

@@ -1,4 +1,4 @@
-const { body, param, query, validationResult } = require('express-validator');
+const { body, header, param, query, validationResult } = require('express-validator');
 
 const dateRule = (location, field) => location(field)
   .matches(/^\d{4}-\d{2}-\d{2}$/)
@@ -10,9 +10,9 @@ const dateRule = (location, field) => location(field)
 const checkinValidation = [
   dateRule(param, 'entryDate'),
   body('mood_rating').isInt({ min: 1, max: 5 }).toInt(),
-  body('energy_level').isInt({ min: 1, max: 5 }).toInt(),
-  body('sleep_quality').isInt({ min: 1, max: 5 }).toInt(),
-  body('social_support').isInt({ min: 1, max: 5 }).toInt(),
+  body('energy_level').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).toInt(),
+  body('sleep_quality').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).toInt(),
+  body('social_support').optional({ values: 'null' }).isInt({ min: 1, max: 5 }).toInt(),
   body('client_request_id').isUUID(),
 ];
 
@@ -57,6 +57,15 @@ const voiceInitializeValidation = [
   body('client_request_id').isUUID(),
 ];
 
+const privateVoiceValidation = [
+  header('content-type').isIn(['audio/wav', 'audio/mp4', 'audio/mpeg']),
+  header('x-journal-language').isIn(['en', 'ur']),
+  header('x-client-request-id').isUUID(),
+  header('x-checkin-id').optional().isUUID(),
+  body().custom((value) => Buffer.isBuffer(value)
+    && value.length >= 1 && value.length <= 4194304),
+];
+
 function validate(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -82,5 +91,6 @@ module.exports = {
   journalSearchValidation,
   journalIdValidation,
   voiceInitializeValidation,
+  privateVoiceValidation,
   validate,
 };

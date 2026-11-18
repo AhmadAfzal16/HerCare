@@ -15,6 +15,14 @@ class ScreeningService {
   static const _activeDraftKey = 'active_screening_draft_v1';
   final ApiService _api;
   final LocalStorageService _storage;
+  String? _accountId;
+  void bindAccount(String? id) => _accountId = id;
+  Options get _options => Options(headers: {
+        if (_accountId != null) 'X-Screening-Account-Id': _accountId,
+      });
+  String get _draftKey => _accountId == null
+      ? _activeDraftKey
+      : 'screening_draft_v2:${Uri.encodeComponent(_api.client.options.baseUrl)}:$_accountId';
 
   static String requestId() {
     final random = Random.secure();
@@ -28,9 +36,12 @@ class ScreeningService {
         '${value.substring(20)}';
   }
 
-  Future<ScreeningInstrument> getInstrument(String type) async {
+  Future<ScreeningInstrument> getInstrument(String type,
+      {String? version}) async {
     try {
-      final response = await _api.get('/screening/instruments/$type');
+      final response = await _api.client.get('/screening/instruments/$type',
+          options: _options,
+          queryParameters: version == null ? null : {'version': version});
       return ScreeningInstrument.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -39,12 +50,28 @@ class ScreeningService {
     }
   }
 
+  Future<List<ScheduledScreening>> getSchedule() async {
+    try {
+      final response =
+          await _api.client.get('/screening/schedule', options: _options);
+      return (response.data['data'] as List<dynamic>)
+          .map((value) =>
+              ScheduledScreening.fromJson(value as Map<String, dynamic>))
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw Exception(_isOffline(error)
+          ? 'Could not refresh your tests. Check your connection and retry.'
+          : 'Could not load your test schedule. Please retry.');
+    }
+  }
+
   Future<ScreeningAssessment> start({
     required String instrumentType,
     required String language,
   }) async {
     try {
-      final response = await _api.post('/screening/assessments', data: {
+      final response = await _api.client
+          .post('/screening/assessments', options: _options, data: {
         'instrument_type': instrumentType,
         'language': language,
         'client_request_id': requestId(),
@@ -59,7 +86,8 @@ class ScreeningService {
 
   Future<ScreeningAssessment> getAssessment(String id) async {
     try {
-      final response = await _api.get('/screening/assessments/$id');
+      final response = await _api.client
+          .get('/screening/assessments/$id', options: _options);
       return ScreeningAssessment.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -70,10 +98,10 @@ class ScreeningService {
 
   Future<void> saveDraft(String assessmentId, Map<int, int> answers) async {
     final payload = _answerPayload(answers);
-    await saveLocalDraft(assessmentId, answers);
     try {
       await _api.client.put(
         '/screening/assessments/$assessmentId/draft',
+        options: _options,
         data: {'answers': payload},
       );
     } on DioException catch (error) {
@@ -85,12 +113,14 @@ class ScreeningService {
     String assessmentId,
     Map<int, int> answers,
   ) async {
+    final draftKey = _draftKey;
     try {
-      final response = await _api.post(
+      final response = await _api.client.post(
         '/screening/assessments/$assessmentId/submit',
+        options: _options,
         data: {'answers': _answerPayload(answers)},
       );
-      await clearLocalDraft();
+      await _storage.deleteSecureString(draftKey);
       return ScreeningAssessment.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -101,8 +131,9 @@ class ScreeningService {
 
   Future<ScreeningAssessment?> getLatest({String type = 'epds'}) async {
     try {
-      final response = await _api.get(
+      final response = await _api.client.get(
         '/screening/assessments/latest',
+        options: _options,
         queryParameters: {'instrument': type},
       );
       final data = response.data['data'];
@@ -119,8 +150,9 @@ class ScreeningService {
     int limit = 20,
   }) async {
     try {
-      final response = await _api.get(
+      final response = await _api.client.get(
         '/screening/assessments/history',
+        options: _options,
         queryParameters: {'instrument': type, 'limit': limit},
       );
       return (response.data['data'] as List<dynamic>)
@@ -135,8 +167,9 @@ class ScreeningService {
 
   Future<ScreeningReminder> getReminder({String type = 'epds'}) async {
     try {
-      final response = await _api.get(
+      final response = await _api.client.get(
         '/screening/reminder',
+        options: _options,
         queryParameters: {'instrument': type},
       );
       return ScreeningReminder.fromJson(
@@ -149,7 +182,7 @@ class ScreeningService {
 
   Future<void> saveLocalDraft(String id, Map<int, int> answers) =>
       _storage.setSecureString(
-        _activeDraftKey,
+        _draftKey,
         jsonEncode({
           'assessment_id': id,
           'answers': answers.map((key, value) => MapEntry('$key', value)),
@@ -157,7 +190,8 @@ class ScreeningService {
       );
 
   Future<({String id, Map<int, int> answers})?> readLocalDraft() async {
-    final raw = await _storage.getSecureString(_activeDraftKey);
+    final key = _draftKey;
+    final raw = await _storage.getSecureString(key);
     if (raw == null) return null;
     try {
       final data = jsonDecode(raw) as Map<String, dynamic>;
@@ -166,13 +200,12 @@ class ScreeningService {
       );
       return (id: data['assessment_id'] as String, answers: answers);
     } catch (_) {
-      await clearLocalDraft();
+      await _storage.deleteSecureString(key);
       return null;
     }
   }
 
-  Future<void> clearLocalDraft() =>
-      _storage.deleteSecureString(_activeDraftKey);
+  Future<void> clearLocalDraft() => _storage.deleteSecureString(_draftKey);
 
   List<Map<String, int>> _answerPayload(Map<int, int> answers) =>
       answers.entries

@@ -113,10 +113,38 @@ async function completeVoiceJournal(req, res, next) {
     );
     return res.json({
       success: true,
-      message: 'Voice journal transcribed securely.',
+      message: 'Private voice transcript requested. Review it before confirming.',
       data,
       crisis_detected: data.contains_danger,
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function savePrivateVoiceJournal(req, res, next) {
+  try {
+    const data = await moodService.savePrivateVoiceJournal(req.user.userId, req.body, {
+      contentType: req.headers['content-type'],
+      language: req.headers['x-journal-language'],
+      clientRequestId: req.headers['x-client-request-id'],
+      checkinId: req.headers['x-checkin-id'],
+    });
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function getPrivateVoiceAudio(req, res, next) {
+  try {
+    const result = await moodService.getPrivateVoiceAudio(
+      req.user.userId, req.params.journalId,
+    );
+    res.set('Cache-Control', 'private, no-store');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.type(result.contentType);
+    return res.send(result.audio);
   } catch (error) {
     return next(error);
   }
@@ -133,4 +161,6 @@ module.exports = {
   deleteJournal,
   initializeVoiceJournal,
   completeVoiceJournal,
+  savePrivateVoiceJournal,
+  getPrivateVoiceAudio,
 };

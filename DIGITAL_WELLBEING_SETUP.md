@@ -9,7 +9,9 @@
    rechecks permission and refreshes automatically. **Manage usage access** opens
    the same settings for revocation.
 5. Use **Log / correct sleep** to select both bedtime and wake-up dates/times,
-   minutes awake, awakenings, and sleep quality. Save with a working API connection.
+   using the correct dates/times. Quality, awakenings and awake-minute corrections
+   are in optional details. Skipped quality/awakenings stay unknown. Save with a
+   working API connection; the same-date record can be corrected later.
 6. Where Android supplies a completed overnight screen-off interval of at least
    two hours, **Review and correct times** prefills a proposed interval. Review it
    before saving. It is not measured sleep and is never automatically saved.
@@ -33,13 +35,27 @@
   date. Retrying the same date replaces the record instead of creating duplicates.
   Actual sleep minutes subtract the explicitly entered awake minutes.
 - Guardian reports receive average self-reported hours only, subject to tier-2
-  consent and existing guardian authorization. Recent recorded sleep quality
-  also feeds the therapy recommendation service.
+  consent and existing guardian authorization. Detailed sleep/mood insight cards
+  are mother-only. Fresh recorded patterns also feed the existing M9 activities;
+  unresolved crisis concerns take priority through M10.
+- The screen now includes 7/14/30-calendar-day comparisons, bounded within-person
+  sleep/mood associations and observed short/variable sleep patterns. It reuses
+  ordinary saved check-ins, without another questionnaire. Missing/stale records
+  are not filled in or described as depression/recovery. See
+  `M8_IMPLEMENTATION_AND_DEPLOYMENT.md` for the exact rules and limits.
+- An encrypted, account/API-bound native read cache lasts up to seven days. Offline
+  copies show their saved date and are not live safety assessments. Logout and
+  server access denial clear the cache. No web plaintext fallback or offline
+  sleep-save queue is added. A bounded 30-second server measurement cache reduces
+  repeat queries without caching authorization or current crisis state.
 
 ## Deployment
 
 - Run backend migrations before starting the new API. Migration
-  `009_sleep_records.sql` adds the sleep table without changing applied migrations.
+  `009_sleep_records.sql` added the sleep table; NEW
+  `019_optional_sleep_details.sql` makes quality/awakenings optional without
+  changing existing records or any already-applied migration. Migration019 is
+  applied locally; use the normal runner for each deployment database.
 - Restart the Node backend after deploying the code; endpoints are authenticated
   `GET /api/v1/sleep` and `PUT /api/v1/sleep`, restricted to active mother accounts
   with tier-1 consent. Production must use HTTPS as configured by the existing app.
@@ -48,13 +64,15 @@
 
 ## Verification and boundaries
 
-- Android debug APK compiled and installed on the connected development phone.
-  Android reported HerCare usage access as allowed. This does not itself prove
-  every OEM's event totals match its Digital Wellbeing app.
+- The earlier Android connection foundation was compiled/installed on the
+  development phone. That historical check does not verify the current M8 update
+  or every OEM's totals. This update was tested headlessly; the app was not
+  launched, built or installed, as requested.
 - Added validation tests for overnight dates/timezones, malformed inputs, future
   intervals, and missing summary data.
-- Added English/Urdu 320x480, 150%-text layout tests for permission-denied and
-  permission-granted states, sleep form navigation, and invalid save handling.
+- English/Urdu 320x480 tests cover 150% permission states and 200% trends, saved
+  history, optional editor, actual save and M9/M10 navigation. They detected no
+  layout overflow in these tested configurations.
 - Database integration test verifies private-account reads, same-date replacement,
   aggregate guardian reports, and guardian denial using rolled-back fixtures.
   Run with `RUN_SLEEP_DB_TEST=1` and the development database environment.
@@ -62,7 +80,7 @@
   bedtime alarm, offline sleep queue, continuous background sync, or iOS usage
   integration is claimed. Missing network access produces an explicit save error
   and preserves form inputs while the form remains open.
-- This completes the requested Android connection and sleep recording foundation,
-  not every M8 scope item: longitudinal sleep/mood correlations and worsening-trend
-  analysis remain separate work. Do not infer a diagnosis from phone usage or
-  estimated inactivity.
+- M8 scope-core software is now implemented, including recorded pattern/trend
+  analysis and sleep/mood associations. This is not automatic sleep measurement
+  or a clinically validated mental-health outcome. Production device acceptance,
+  clinical wording and Urdu translation review are still required.

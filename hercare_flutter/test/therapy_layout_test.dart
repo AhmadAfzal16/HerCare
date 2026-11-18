@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hercare/data/models/therapy_models.dart';
 import 'package:hercare/presentation/therapy/breathing_exercise_screen.dart';
+import 'package:hercare/presentation/therapy/meditation_screen.dart';
 import 'package:hercare/presentation/therapy/therapy_game_screen.dart';
 import 'package:hercare/presentation/therapy/therapy_hub_screen.dart';
 import 'package:hercare/providers/language_provider.dart';
@@ -46,6 +47,33 @@ void main() {
     ));
     await tester.pump();
     expect(find.text('4-7-8 Breathing'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('meditation asks for comfortable posture before timing',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 480));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(
+            create: (_) => TherapyProvider(service: _FakeTherapyService())),
+      ],
+      child: const MaterialApp(home: MeditationScreen(activityId: 'body_scan')),
+    ));
+    await tester.pump();
+    expect(find.text('Comfortable posture 1 of 3'), findsOneWidget);
+    expect(find.text('Start / Resume'), findsNothing);
+    for (var step = 0; step < 2; step += 1) {
+      await tester.ensureVisible(find.text('Yes, next step'));
+      await tester.tap(find.text('Yes, next step'));
+      await tester.pump();
+    }
+    await tester.ensureVisible(find.text('Yes, begin'));
+    await tester.tap(find.text('Yes, begin'));
+    await tester.pump();
+    expect(find.text('Start / Resume'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

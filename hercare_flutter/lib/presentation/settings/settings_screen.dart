@@ -39,28 +39,31 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           physics: const BouncingScrollPhysics(),
           children: [
-
             // ── Account Section ──────────────────────────────────────────────
             _SectionHeader(title: isUrdu ? 'اکاؤنٹ' : 'Account'),
             _SettingsTile(
               icon: Icons.person_outline_rounded,
               iconColor: AppColors.primary,
               title: isUrdu ? 'پروفائل' : 'Profile',
-              subtitle: isUrdu ? 'اپنی معلومات دیکھیں' : 'View your information',
+              subtitle:
+                  isUrdu ? 'اپنی معلومات دیکھیں' : 'View your information',
               onTap: () => context.push(AppRoutes.profile),
             ),
             _SettingsTile(
               icon: Icons.shield_outlined,
               iconColor: AppColors.primary,
               title: isUrdu ? 'میرا ڈیٹا اور پرائیویسی' : 'My Data & Privacy',
-              subtitle: isUrdu ? 'رضامندی اور ڈیٹا کا انتظام' : 'Manage consent & data',
+              subtitle: isUrdu
+                  ? 'رضامندی اور ڈیٹا کا انتظام'
+                  : 'Manage consent & data',
               onTap: () => context.push(AppRoutes.privacy),
             ),
             _SettingsTile(
               icon: Icons.family_restroom_rounded,
               iconColor: AppColors.primary,
               title: isUrdu ? 'سرپرست اور فیملی' : 'Guardian & Family',
-              subtitle: isUrdu ? 'رسائی کا انتظام کریں' : 'Manage guardian access',
+              subtitle:
+                  isUrdu ? 'رسائی کا انتظام کریں' : 'Manage guardian access',
               onTap: () => context.push(AppRoutes.guardianLink),
             ),
 
@@ -69,6 +72,17 @@ class SettingsScreen extends StatelessWidget {
             // ── Preferences Section ──────────────────────────────────────────
             _SectionHeader(title: isUrdu ? 'ترجیحات' : 'Preferences'),
             _LanguageTile(isUrdu: isUrdu, languageProvider: languageProvider),
+            _SettingsTile(
+              icon: Icons.library_music_outlined,
+              iconColor: AppColors.primary,
+              title: isUrdu
+                  ? 'آپ کے لیے مواد اور ترجیحات'
+                  : 'For You & content preferences',
+              subtitle: isUrdu
+                  ? 'مذہبی مواد، موسیقی اور محفوظ مضامین'
+                  : 'Islamic content, music and saved reading',
+              onTap: () => context.push(AppRoutes.content),
+            ),
             _SettingsTile(
               icon: Icons.notifications_none_rounded,
               iconColor: AppColors.secondary,
@@ -86,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.help_outline_rounded,
               iconColor: AppColors.accent,
               title: isUrdu ? 'مدد اور تعاون' : 'Help & Support',
-              subtitle: isUrdu ? 'سوالات اور جوابات' : 'FAQs and contact',
+              subtitle: isUrdu ? 'ایپ استعمال کرنے میں مدد' : 'Using HerCare',
               onTap: () => context.push(AppRoutes.helpSupport),
             ),
             _SettingsTile(
@@ -96,23 +110,17 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'HerCare v1.0.0',
               onTap: () => _showAboutDialog(context, isUrdu),
             ),
-            _SettingsTile(
-              icon: Icons.star_outline_rounded,
-              iconColor: AppColors.warning,
-              title: isUrdu ? 'ایپ کو ریٹ کریں' : 'Rate This App',
-              subtitle: isUrdu ? 'ہمیں بہتر بنانے میں مدد کریں' : 'Help us improve',
-              onTap: () {},
-            ),
-
             const SizedBox(height: 8),
 
             // ── Danger Zone ──────────────────────────────────────────────────
-            _SectionHeader(title: isUrdu ? 'خطرے کا علاقہ' : 'Danger Zone'),
+            _SectionHeader(title: isUrdu ? 'سیشن' : 'Session'),
             _SettingsTile(
               icon: Icons.logout_rounded,
               iconColor: AppColors.error,
               title: isUrdu ? 'لاگ آؤٹ' : 'Log Out',
-              subtitle: isUrdu ? 'اپنے سیشن سے باہر نکلیں' : 'Sign out of your session',
+              subtitle: isUrdu
+                  ? 'اپنے سیشن سے باہر نکلیں'
+                  : 'Sign out of your session',
               titleColor: AppColors.error,
               onTap: () async {
                 final confirmed = await _showConfirmDialog(
@@ -130,25 +138,6 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            _SettingsTile(
-              icon: Icons.delete_forever_rounded,
-              iconColor: AppColors.error,
-              title: isUrdu ? 'اکاؤنٹ حذف کریں' : 'Delete Account',
-              subtitle: isUrdu ? 'یہ عمل واپس نہیں ہو سکتا' : 'This action is irreversible',
-              titleColor: AppColors.error,
-              onTap: () async {
-                await _showConfirmDialog(
-                  context,
-                  title: isUrdu ? 'اکاؤنٹ حذف کریں' : 'Delete Account',
-                  message: isUrdu
-                      ? 'تمام ڈیٹا مستقل طور پر حذف ہو جائے گا۔'
-                      : 'All your data will be permanently deleted.',
-                  confirmLabel: isUrdu ? 'حذف کریں' : 'Delete',
-                  isDestructive: true,
-                );
-              },
-            ),
-
             const SizedBox(height: 32),
 
             // ── App version footer ───────────────────────────────────────────
@@ -209,7 +198,8 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel',
+            child: Text(
+                context.read<LanguageProvider>().isUrdu ? 'منسوخ' : 'Cancel',
                 style: TextStyle(color: context.hcTextSecondary)),
           ),
           TextButton(
@@ -254,7 +244,6 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color? titleColor;
-  final Widget? trailing;
   final VoidCallback? onTap;
 
   const _SettingsTile({
@@ -264,7 +253,7 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     this.titleColor,
     this.onTap,
-  }) : trailing = null;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -322,9 +311,8 @@ class _SettingsTile extends StatelessWidget {
                   ),
                 ),
                 // Trailing
-                trailing ??
-                    Icon(Icons.chevron_right_rounded,
-                        color: context.hcTextHint, size: 20),
+                Icon(Icons.chevron_right_rounded,
+                    color: context.hcTextHint, size: 20),
               ],
             ),
           ),
@@ -338,107 +326,34 @@ class _SettingsTile extends StatelessWidget {
 class _LanguageTile extends StatelessWidget {
   final bool isUrdu;
   final LanguageProvider languageProvider;
-
   const _LanguageTile({required this.isUrdu, required this.languageProvider});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: context.hcSurface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.language_rounded,
-                  color: AppColors.primary, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(isUrdu ? 'زبان' : 'Language',
-                      style: AppTextStyles.titleSmall.copyWith(fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text(isUrdu ? 'ایپ کی زبان تبدیل کریں' : 'Switch app language',
-                      style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
-                ],
-              ),
-            ),
-            // Toggle pill
-            Container(
-              decoration: BoxDecoration(
-                color: context.hcSurfaceVariant,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _LangPill(
-                    label: 'EN',
-                    active: !isUrdu,
-                    onTap: () { if (isUrdu) languageProvider.toggleLocale(); },
-                  ),
-                  _LangPill(
-                    label: 'اردو',
-                    active: isUrdu,
-                    onTap: () { if (!isUrdu) languageProvider.toggleLocale(); },
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) => Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(isUrdu ? 'زبان' : 'Language', style: AppTextStyles.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(spacing: 12, runSpacing: 8, children: [
+              ChoiceChip(
+                  label: const Text('English'),
+                  selected: !isUrdu,
+                  onSelected: (_) {
+                    if (isUrdu) languageProvider.toggleLocale();
+                  }),
+              ChoiceChip(
+                  label: const Text('اردو'),
+                  selected: isUrdu,
+                  onSelected: (_) {
+                    if (!isUrdu) languageProvider.toggleLocale();
+                  }),
+            ]),
+          ]),
         ),
-      ),
-    );
-  }
-}
-
-class _LangPill extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _LangPill({required this.label, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: active ? Colors.white : context.hcTextSecondary,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
+      );
 }
 
 // ── Dark / Light Mode Toggle Tile ─────────────────────────────────────────────
@@ -492,7 +407,9 @@ class _ThemeModeTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isUrdu ? 'رات کے وقت کے لیے' : 'Easier on the eyes at night',
+                    isUrdu
+                        ? 'رات کے وقت کے لیے'
+                        : 'Easier on the eyes at night',
                     style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
                   ),
                 ],

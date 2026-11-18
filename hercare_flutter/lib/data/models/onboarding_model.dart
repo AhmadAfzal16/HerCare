@@ -41,7 +41,7 @@ class OnboardingData {
 
   // Step 4 – Consent
   bool consentTier1 = true; // Required; always true
-  bool consentTier2 = true; // Default opt-in (recommended)
+  bool consentTier2 = false; // Optional sharing requires a deliberate choice.
   bool consentTier3 = false; // Default opt-out (optional)
 
   /// Serializes to a flat JSON map for:
@@ -122,7 +122,7 @@ class OnboardingData {
         : null;
 
     data.consentTier1 = (json['consent_tier1'] as bool?) ?? true;
-    data.consentTier2 = (json['consent_tier2'] as bool?) ?? true;
+    data.consentTier2 = (json['consent_tier2'] as bool?) ?? false;
     data.consentTier3 = (json['consent_tier3'] as bool?) ?? false;
 
     return data;

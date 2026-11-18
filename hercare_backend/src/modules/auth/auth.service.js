@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('node:crypto');
 const { query, withTransaction } = require('../../config/database');
 const {
   signAccessToken,
@@ -10,6 +10,9 @@ const { AppError } = require('../../middleware/error_handler');
 const logger = require('../../utils/logger');
 
 const BCRYPT_ROUNDS = 12; // Recommended: 10–14
+// Valid cost-12 hash of a discarded random value. Unknown accounts still incur
+// the normal comparison cost; an invalid sample hash returns immediately.
+const DUMMY_PASSWORD_HASH = '$2a$12$Fn7Ffpu1WY8FYdBMF4d9EeWdA1G9eEg20VubJ.XAvoUceyKpyFkMe';
 
 /**
  * Register a new user (mother or guardian).
@@ -100,13 +103,12 @@ const login = async ({ phone, password }) => {
     [phone],
   );
 
-  // Constant-time response even if user not found (prevent enumeration)
+  // Match password-comparison work even when the phone is not registered.
   const user = rows[0];
-  const dummyHash = '$2a$12$invalidHashForTimingConsistency000000000000000000000';
 
   const isMatch = await bcrypt.compare(
     password,
-    user ? user.password_hash : dummyHash,
+    user ? user.password_hash : DUMMY_PASSWORD_HASH,
   );
 
   if (!user || !isMatch) {

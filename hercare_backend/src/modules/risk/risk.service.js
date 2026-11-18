@@ -2,6 +2,7 @@ const { query, withTransaction } = require('../../config/database');
 const { AppError } = require('../../middleware/error_handler');
 const guardianService = require('../guardian/guardian.service');
 const modelClient = require('./risk.client');
+const modelContext = require('./risk.context');
 
 function asNumber(value) {
   return value === null || value === undefined ? null : Number(value);
@@ -18,13 +19,18 @@ function summarizeMood(rows) {
       mood_days: 0,
     };
   }
-  const average = (field) => rows.reduce((sum, row) => sum + Number(row[field]), 0) / rows.length;
+  const average = (field) => {
+    const values = rows.map((row) => asNumber(row[field])).filter((value) => value !== null);
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  };
   const moods = rows.map((row) => Number(row.mood_rating));
-  const meanX = (moods.length - 1) / 2;
+  const dates = rows.map((row, index) => row.entry_date
+    ? new Date(row.entry_date).getTime() / 86400000 : index);
+  const meanX = dates.reduce((sum, value) => sum + value, 0) / dates.length;
   const meanY = moods.reduce((sum, value) => sum + value, 0) / moods.length;
-  const denominator = moods.reduce((sum, _value, index) => sum + ((index - meanX) ** 2), 0);
-  const slope = denominator === 0 ? 0 : moods.reduce(
-    (sum, value, index) => sum + ((index - meanX) * (value - meanY)), 0,
+  const denominator = dates.reduce((sum, value) => sum + ((value - meanX) ** 2), 0);
+  const slope = denominator === 0 ? null : moods.reduce(
+    (sum, value, index) => sum + ((dates[index] - meanX) * (value - meanY)), 0,
   ) / denominator;
   return {
     average_mood: average('mood_rating'),
@@ -37,7 +43,9 @@ function summarizeMood(rows) {
 }
 
 function summarizeTelemetry(rows) {
-  const totals = rows.reduce((summary, row) => ({
+  const permitted = rows.filter((row) => row.notification_access === true);
+  const usage = rows.filter((row) => row.usage_access === true);
+  const totals = permitted.reduce((summary, row) => ({
     messages: summary.messages + Number(row.message_notifications),
     negative: summary.negative + Number(row.negative_notifications),
     distress: summary.distress + Number(row.distress_notifications),
@@ -48,31 +56,27 @@ function summarizeTelemetry(rows) {
   }), {
     messages: 0, negative: 0, distress: 0, abuse: 0, screen: 0, social: 0, lateNight: 0,
   });
-  const days = rows.length;
-  const ratio = (value) => (totals.messages ? value / totals.messages : 0);
+  const days = usage.length;
+  const ratio = (value) => (totals.messages ? value / totals.messages : null);
+  const usageMean = (field) => days ? usage.reduce((sum, row) => sum + Number(row[field]), 0) / days : null;
   return {
     negative_notification_ratio: ratio(totals.negative),
     distress_notification_ratio: ratio(totals.distress),
     abuse_notification_ratio: ratio(totals.abuse),
-    average_screen_minutes: days ? totals.screen / days : null,
-    average_social_minutes: days ? totals.social / days : null,
-    average_late_night_minutes: days ? totals.lateNight / days : null,
-    telemetry_days: days,
+    average_screen_minutes: usageMean('screen_time_minutes'),
+    average_social_minutes: usageMean('social_minutes'),
+    average_late_night_minutes: usageMean('late_night_minutes'),
+    telemetry_days: rows.filter((row) => row.usage_access || row.notification_access).length,
   };
 }
 
-function financialStrain(incomeRange) {
-  if (!incomeRange) return null;
-  const numbers = String(incomeRange).match(/\d+/g);
-  if (!numbers?.length) return null;
-  return Number(numbers[0]) < 50000 ? 1 : 0;
+function financialStrain(affordable) {
+  return typeof affordable === 'boolean' ? (affordable ? 0 : 1) : null;
 }
 
-function supportQuality(primarySupport) {
-  if (primarySupport === 'none') return 0;
-  if (primarySupport === 'mother_in_law') return 0.5;
-  if (primarySupport) return 1;
-  return null;
+function supportQuality(relationship) {
+  const mapping = { poor: 0, moderate: 0.5, good: 1 };
+  return Object.hasOwn(mapping, relationship) ? mapping[relationship] : null;
 }
 
 function telemetryDateAgeDays(localDate, timezoneOffsetMinutes, now = new Date()) {
@@ -106,7 +110,7 @@ async function saveTelemetry(motherId, data) {
       || data.abuse_notifications > data.message_notifications) {
     throw new AppError('Telemetry counters are inconsistent.', 422);
   }
-  return withTransaction(async (client) => {
+  const saved = await withTransaction(async (client) => {
     await assertTelemetryConsent(client, motherId);
     const duplicate = await client.query(
       'SELECT * FROM device_telemetry_daily WHERE mother_id = $1 AND client_request_id = $2',
@@ -131,10 +135,12 @@ async function saveTelemetry(motherId, data) {
     );
     return rows[0];
   });
+  require('../sleep/sleep.service').invalidate(motherId);
+  return saved;
 }
 
 async function buildFeatures(motherId) {
-  const [profileResult, screeningResult, moodResult, telemetryResult] = await Promise.all([
+  const [profileResult, screeningResult, moodResult, telemetryResult, context] = await Promise.all([
     query('SELECT * FROM onboarding_data WHERE user_id = $1', [motherId]),
     query(
       `SELECT DISTINCT ON (instrument_type)
@@ -151,10 +157,12 @@ async function buildFeatures(motherId) {
       [motherId],
     ),
     query(
-      `SELECT * FROM device_telemetry_daily
-       WHERE mother_id = $1 AND local_date >= CURRENT_DATE - 13 ORDER BY local_date`,
+      `SELECT d.* FROM device_telemetry_daily d
+       JOIN onboarding_data o ON o.user_id = d.mother_id AND o.consent_tier3
+       WHERE d.mother_id = $1 AND d.local_date >= CURRENT_DATE - 13 ORDER BY d.local_date`,
       [motherId],
     ),
+    modelContext.getContext(motherId),
   ]);
   const profile = profileResult.rows[0];
   if (!profile) throw new AppError('Complete onboarding before generating risk insights.', 409);
@@ -162,23 +170,22 @@ async function buildFeatures(motherId) {
     screeningResult.rows.map((row) => [row.instrument_type, row]),
   );
   const mood = summarizeMood(moodResult.rows);
-  const telemetry = summarizeTelemetry(telemetryResult.rows);
+  const telemetry = summarizeTelemetry(profile.consent_tier3 === true ? telemetryResult.rows : []);
   const safetyPositive = Object.values(screenings).some((row) => row.self_harm_positive);
   return {
     age: asNumber(profile.age),
-    parity: asNumber(profile.parity),
+    // Legacy artifact calls this parity, but trained on living-child count.
+    parity: asNumber(context.number_of_children),
     education_level: profile.education_level,
     household_type: profile.household_type,
-    financial_strain: financialStrain(profile.income_range),
-    support_quality: supportQuality(profile.primary_support),
-    cesarean: profile.delivery_method === 'cesarean' ? 1 : 0,
-    baby_female: profile.baby_gender === 'female' ? 1 : 0,
-    obstetric_complications: [
-      profile.has_preeclampsia,
-      profile.has_postpartum_hemorrhage,
-      profile.has_preterm_birth,
-      profile.has_gestational_diabetes,
-    ].filter(Boolean).length,
+    financial_strain: financialStrain(context.basic_needs_affordable),
+    support_quality: supportQuality(context.mother_in_law_relationship),
+    cesarean: profile.delivery_method === null
+      ? null : (profile.delivery_method === 'cesarean' ? 1 : 0),
+    baby_female: profile.baby_gender === null
+      ? null : (profile.baby_gender === 'female' ? 1 : 0),
+    // Existing optional onboarding defaults do not confirm absence of disease.
+    obstetric_complications: null,
     latest_epds_score: asNumber(screenings.epds?.total_score),
     latest_phq9_score: asNumber(screenings.phq9?.total_score),
     safety_positive: safetyPositive,
@@ -196,11 +203,16 @@ function publicPrediction(row) {
     horizon_days: row.horizon_days === null ? null : Number(row.horizon_days),
     depression_probability: Number(row.depression_probability),
     risk_level: row.risk_level,
-    confidence: Number(row.confidence),
+    confidence: row.input_summary?.confidence_type === 'calibrated' ? Number(row.confidence) : null,
+    confidence_type: row.input_summary?.confidence_type || 'not_estimated',
+    validation_status: row.input_summary?.validation_status || 'research_only',
+    feature_contract_version: row.input_summary?.feature_contract_version || 'legacy-unverified',
+    explanation_type: 'observed_context_not_model_attribution',
     data_completeness: Number(row.data_completeness),
     contributors: row.contributors,
     generated_at: row.generated_at,
-    is_clinical_forecast: row.model_scope === 'two_week_trajectory',
+    is_clinical_forecast: row.model_scope === 'two_week_trajectory'
+      && row.input_summary?.validation_status === 'externally_validated_and_approved',
   };
 }
 
@@ -249,13 +261,16 @@ async function generatePrediction(motherId) {
       result.horizon_days,
       result.depression_probability,
       result.risk_level,
-      result.confidence,
+      result.confidence ?? 0,
       result.data_completeness,
       JSON.stringify({
         mood_days: features.mood_days,
         telemetry_days: features.telemetry_days,
         has_epds: features.latest_epds_score !== null,
         has_phq9: features.latest_phq9_score !== null,
+        confidence_type: result.confidence_type || 'not_estimated',
+        validation_status: result.validation_status || 'research_only',
+        feature_contract_version: result.feature_contract_version || 'peri-dep-exact-v1',
       }),
       JSON.stringify(result.contributors || []),
     ],
@@ -264,13 +279,13 @@ async function generatePrediction(motherId) {
   if (prediction.is_clinical_forecast
       && ['high', 'severe'].includes(prediction.risk_level)) {
     const reportId = await updateReports(motherId, prediction);
-    await query(
+    const event = await query(
       `INSERT INTO crisis_events (mother_id, source_type, source_id, severity)
        VALUES ($1, 'ml_prediction', $2, $3)
-       ON CONFLICT (source_type, source_id) DO NOTHING`,
+       ON CONFLICT (source_type, source_id) DO NOTHING RETURNING id`,
       [motherId, prediction.id, prediction.risk_level],
     );
-    await guardianService.notifyGuardian(motherId, prediction.risk_level, reportId);
+    if (event.rows[0]) await guardianService.notifyGuardian(motherId, prediction.risk_level, reportId, event.rows[0].id);
   }
   return prediction;
 }

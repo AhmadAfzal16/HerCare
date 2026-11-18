@@ -9,6 +9,10 @@ class CommunityPost {
         status = data['status'] as String,
         mine = data['is_mine'] == true,
         expert = data['expert_answer'] == true,
+        sessionClosed = data['session_closed'] == true,
+        canPublish = data['can_publish'] != false,
+        publicationBlockedReason =
+            data['publication_blocked_reason'] as String?,
         parentId = data['parent_id'] as String?,
         sessionId = data['session_id'] as String?,
         createdAt = DateTime.parse(data['created_at'] as String),
@@ -20,8 +24,8 @@ class CommunityPost {
             Map<String, dynamic>.from(data['moderation'] as Map? ?? {}),
         reports = List<String>.from(data['reports'] as List? ?? []);
   final String id, authorId, alias, title, body, topic, status;
-  final String? parentId, sessionId;
-  final bool mine, expert;
+  final String? parentId, sessionId, publicationBlockedReason;
+  final bool mine, expert, sessionClosed, canPublish;
   final DateTime createdAt;
   final int version, comments;
   final Map<String, dynamic> reactions, moderation;

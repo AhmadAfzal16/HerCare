@@ -6,6 +6,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../data/models/therapy_models.dart';
 import '../../providers/language_provider.dart';
+import 'activity_clock.dart';
 import 'therapy_completion_sheet.dart';
 
 class CbtExerciseScreen extends StatefulWidget {
@@ -15,12 +16,45 @@ class CbtExerciseScreen extends StatefulWidget {
   State<CbtExerciseScreen> createState() => _CbtExerciseScreenState();
 }
 
-class _CbtExerciseScreenState extends State<CbtExerciseScreen> {
+class _CbtExerciseScreenState extends State<CbtExerciseScreen>
+    with WidgetsBindingObserver {
   final _controllers = List.generate(4, (_) => TextEditingController());
-  final _startedAt = DateTime.now();
+  final _clock = ActiveTherapyClock();
   int _groundingStep = 0;
+  bool _saving = false;
+  bool _foreground = true;
+  bool _routeActive = true;
 
   bool get _isGrounding => widget.activityId == 'grounding_54321';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _clock.resume();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _routeActive = TickerMode.valuesOf(context).enabled &&
+        (ModalRoute.of(context)?.isCurrent ?? true);
+    if (_foreground && _routeActive && !_saving) {
+      _clock.resume();
+    } else {
+      _clock.pause();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (!_foreground) {
+      _clock.pause();
+    } else if (!_saving && _routeActive) {
+      _clock.resume();
+    }
+  }
 
   List<(String, String)> _prompts(bool isUrdu) {
     final values = switch (widget.activityId) {
@@ -73,24 +107,34 @@ class _CbtExerciseScreenState extends State<CbtExerciseScreen> {
     return values;
   }
 
-  Future<void> _finish() async {
+  Future<void> _finish({bool completed = true}) async {
+    if (_saving) return;
     FocusScope.of(context).unfocus();
+    _clock.pause();
+    setState(() => _saving = true);
     final isUrdu = context.read<LanguageProvider>().isUrdu;
-    final elapsed = DateTime.now().difference(_startedAt).inSeconds;
     final session = await showTherapyCompletionSheet(
       context,
       type: 'cbt',
       activityId: widget.activityId,
-      durationSeconds: elapsed.clamp(1, 7200),
+      durationSeconds: _clock.recordedSeconds,
+      completed: completed,
       isUrdu: isUrdu,
     );
-    if (!mounted || session == null) return;
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (session == null) {
+      if (_foreground && _routeActive) _clock.resume();
+      return;
+    }
     // Worksheet text is intentionally discarded when leaving this screen.
     Navigator.pop(context);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clock.pause();
     for (final value in _controllers) {
       value.dispose();
     }
@@ -131,38 +175,63 @@ class _CbtExerciseScreenState extends State<CbtExerciseScreen> {
             ]),
           ),
           const SizedBox(height: 18),
+          if (!_isGrounding) ...[
+            Text(
+                isUrdu
+                    ? 'لکھنا ضروری نہیں۔ آپ صرف دل میں جواب سوچ سکتی ہیں۔'
+                    : 'Typing is optional. You can think through the answers instead.',
+                style: AppTextStyles.bodySmall),
+            const SizedBox(height: 14),
+          ],
           if (_isGrounding)
             _GroundingExercise(
               isUrdu: isUrdu,
               step: _groundingStep,
               onNext: () {
-                if (_groundingStep < 4) setState(() => _groundingStep += 1);
+                if (_groundingStep < 5) setState(() => _groundingStep += 1);
               },
             )
           else ...[
             ..._prompts(isUrdu).asMap().entries.map((entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: TextField(
-                    controller: _controllers[entry.key],
-                    minLines: 2,
-                    maxLines: 5,
-                    maxLength: 500,
-                    decoration: InputDecoration(
-                      labelText: isUrdu ? entry.value.$2 : entry.value.$1,
-                      alignLabelWithHint: true,
-                      filled: true,
-                      fillColor: context.hcSurface,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(isUrdu ? entry.value.$2 : entry.value.$1,
+                          style: AppTextStyles.titleSmall),
+                      const SizedBox(height: 8),
+                      TextField(
+                        key: ValueKey('cbt-answer-${entry.key}'),
+                        controller: _controllers[entry.key],
+                        enableIMEPersonalizedLearning: false,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        minLines: 2,
+                        maxLines: 5,
+                        maxLength: 500,
+                        decoration: InputDecoration(
+                          hintText: isUrdu ? 'اختیاری جواب' : 'Optional answer',
+                          filled: true,
+                          fillColor: context.hcSurface,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                      ),
+                    ],
                   ),
                 )),
           ],
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: _finish,
+            onPressed: _saving || (_isGrounding && _groundingStep < 5)
+                ? null
+                : () => _finish(),
             icon: const Icon(Icons.check_circle_outline_rounded),
             label: Text(isUrdu ? 'مشق مکمل کریں' : 'Complete exercise'),
+          ),
+          TextButton(
+            onPressed: _saving ? null : () => _finish(completed: false),
+            child: Text(isUrdu ? 'پہلے روکیں' : 'Stop early'),
           ),
           const SizedBox(height: 12),
           Text(
@@ -205,6 +274,15 @@ class _GroundingExercise extends StatelessWidget {
   ];
   @override
   Widget build(BuildContext context) {
+    if (step >= values.length) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+            isUrdu ? 'پانچوں حواس کی مشق مکمل۔' : 'All five senses explored.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.titleLarge),
+      );
+    }
     final current = values[step];
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -234,11 +312,12 @@ class _GroundingExercise extends StatelessWidget {
         Text(isUrdu ? current.$2 : current.$1,
             textAlign: TextAlign.center, style: AppTextStyles.titleLarge),
         const SizedBox(height: 26),
-        if (step < 4)
-          OutlinedButton.icon(
-              onPressed: onNext,
-              icon: const Icon(Icons.arrow_forward_rounded),
-              label: Text(isUrdu ? 'اگلا' : 'Next sense')),
+        OutlinedButton.icon(
+            onPressed: onNext,
+            icon: const Icon(Icons.arrow_forward_rounded),
+            label: Text(step == 4
+                ? (isUrdu ? 'میں نے محسوس کیا' : 'I noticed it')
+                : (isUrdu ? 'اگلا' : 'Next sense'))),
       ]),
     );
   }

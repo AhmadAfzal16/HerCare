@@ -1,14 +1,13 @@
 import 'package:flutter/foundation.dart';
-
 import '../data/models/mood_models.dart';
 import '../services/mood_service.dart';
 
 class MoodProvider extends ChangeNotifier {
   MoodProvider({MoodService? service}) : _service = service ?? MoodService();
-
   final MoodService _service;
-  int _activeRequests = 0;
-  int _searchGeneration = 0;
+  String? _accountId;
+  bool _bound = false, _disposed = false;
+  int _generation = 0, _activeRequests = 0, _searchGeneration = 0;
   String? _error;
   MoodCheckin? _today;
   MoodSummary? _summary;
@@ -22,146 +21,190 @@ class MoodProvider extends ChangeNotifier {
   List<MoodCheckin> get history => List.unmodifiable(_history);
   List<JournalEntry> get journals => List.unmodifiable(_journals);
 
+  void bindAccount(String? id) {
+    if (_bound && _accountId == id) return;
+    _bound = true;
+    _accountId = id;
+    _generation++;
+    _searchGeneration++;
+    _activeRequests = 0;
+    _today = null;
+    _summary = null;
+    _error = null;
+    _history = const [];
+    _journals = const [];
+    _service.bindAccount(id);
+    notifyListeners();
+  }
+
+  bool _same(int generation) =>
+      !_disposed &&
+      generation == _generation &&
+      (!_bound || _accountId != null);
+  int _start() {
+    final generation = _generation;
+    if (!_same(generation)) return generation;
+    _activeRequests++;
+    _error = null;
+    notifyListeners();
+    return generation;
+  }
+
+  void _finish(int generation) {
+    if (!_same(generation)) return;
+    _activeRequests = (_activeRequests - 1).clamp(0, 1000);
+    notifyListeners();
+  }
+
   Future<void> load({bool includeJournals = false}) async {
-    _start();
+    final generation = _start();
+    if (!_same(generation)) return;
     try {
       await _service.syncPending();
+      if (!_same(generation)) return;
       final values = await Future.wait([
         _service.getToday(DateTime.now()),
         _service.getHistory(limit: 30),
         _service.getSummary(),
-        if (includeJournals) _service.getJournals(),
+        if (includeJournals) _service.getJournals()
       ]);
+      if (!_same(generation)) return;
       _today = values[0] as MoodCheckin?;
       _history = values[1] as List<MoodCheckin>;
       _summary = values[2] as MoodSummary;
       if (includeJournals) _journals = values[3] as List<JournalEntry>;
     } catch (error) {
-      _error = _message(error);
+      if (_same(generation)) _error = _message(error);
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
-  Future<bool> saveCheckin({
-    required int moodRating,
-    required int energyLevel,
-    required int sleepQuality,
-    required int socialSupport,
-  }) async {
-    _start();
+  Future<bool> saveCheckin(
+      {required int moodRating,
+      int? energyLevel,
+      int? sleepQuality,
+      int? socialSupport}) async {
+    final generation = _start();
+    if (!_same(generation)) return false;
     try {
-      _today = await _service.saveCheckin(
-        date: DateTime.now(),
-        moodRating: moodRating,
-        energyLevel: energyLevel,
-        sleepQuality: sleepQuality,
-        socialSupport: socialSupport,
-      );
+      final entry = await _service.saveCheckin(
+          date: DateTime.now(),
+          moodRating: moodRating,
+          energyLevel: energyLevel,
+          sleepQuality: sleepQuality,
+          socialSupport: socialSupport);
+      if (!_same(generation)) return false;
+      _today = entry;
       _history = [
-        _today!,
-        ..._history.where(
-          (entry) =>
-              MoodService.dateKey(entry.entryDate) !=
-              MoodService.dateKey(DateTime.now()),
-        ),
+        entry,
+        ..._history.where((value) =>
+            MoodService.dateKey(value.entryDate) !=
+            MoodService.dateKey(entry.entryDate))
       ];
-      if (_today!.isSynced) {
+      if (entry.isSynced) {
         try {
-          _summary = await _service.getSummary();
+          final summary = await _service.getSummary();
+          if (_same(generation)) _summary = summary;
         } catch (_) {
-          // The check-in is already saved; a summary failure is not a save failure.
-          _summary = null;
+          if (_same(generation)) _summary = null;
         }
       }
-      return true;
+      return _same(generation);
     } catch (error) {
-      _error = _message(error);
+      if (_same(generation)) _error = _message(error);
       return false;
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
   Future<JournalEntry?> saveJournal(String content) async {
-    _start();
+    final generation = _start();
+    if (!_same(generation)) return null;
     try {
-      final entry =
-          await _service.createJournal(content, checkinId: _today?.id);
-      _journals = [entry, ..._journals];
+      final entry = await _service.createJournal(content,
+          checkinId: _today?.isSynced == true ? _today?.id : null);
+      if (!_same(generation)) return null;
+      _journals = [entry, ..._journals.where((value) => value.id != entry.id)];
       return entry;
     } catch (error) {
-      _error = _message(error);
+      if (_same(generation)) _error = _message(error);
       return null;
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
-  Future<JournalEntry?> saveVoiceJournal({
-    required String path,
-    required String language,
-  }) async {
-    _start();
+  Future<JournalEntry?> saveVoiceJournal(
+      {required String path,
+      required String language,
+      String? clientRequestId}) async {
+    final generation = _start();
+    if (!_same(generation)) return null;
     try {
       final entry = await _service.uploadVoiceJournal(
-        path: path,
-        language: language,
-        checkinId: _today?.id,
-      );
-      _journals = [entry, ..._journals];
+          path: path,
+          language: language,
+          checkinId: _today?.isSynced == true ? _today?.id : null,
+          clientRequestId: clientRequestId);
+      if (!_same(generation)) return null;
+      _journals = [entry, ..._journals.where((value) => value.id != entry.id)];
       return entry;
     } catch (error) {
-      _error = _message(error);
+      if (_same(generation)) _error = _message(error);
       return null;
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
+  Future<Uint8List> loadVoiceAudio(String id) => _service.getVoiceAudio(id);
   Future<void> searchJournals(String query) async {
-    final generation = ++_searchGeneration;
-    _start();
+    final search = ++_searchGeneration;
+    final generation = _start();
+    if (!_same(generation)) return;
     try {
-      final journals = query.trim().isEmpty
+      final entries = query.trim().isEmpty
           ? await _service.getJournals()
           : await _service.searchJournals(query.trim());
-      if (generation == _searchGeneration) _journals = journals;
+      if (_same(generation) && search == _searchGeneration) _journals = entries;
     } catch (error) {
-      if (generation == _searchGeneration) _error = _message(error);
+      if (_same(generation) && search == _searchGeneration) {
+        _error = _message(error);
+      }
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
   Future<bool> deleteJournal(String id) async {
-    _start();
+    final generation = _start();
+    if (!_same(generation)) return false;
     try {
       await _service.deleteJournal(id);
+      if (!_same(generation)) return false;
       _journals = _journals.where((entry) => entry.id != id).toList();
       return true;
     } catch (error) {
-      _error = _message(error);
+      if (_same(generation)) _error = _message(error);
       return false;
     } finally {
-      _finish();
+      _finish(generation);
     }
   }
 
   void clearError() {
+    if (_disposed) return;
     _error = null;
     notifyListeners();
   }
 
-  void _start() {
-    _activeRequests++;
-    _error = null;
-    notifyListeners();
-  }
-
-  void _finish() {
-    _activeRequests--;
-    notifyListeners();
+  @override
+  void dispose() {
+    _disposed = true;
+    _generation++;
+    super.dispose();
   }
 
   String _message(Object error) =>

@@ -8,7 +8,7 @@ import '../../../providers/mood_provider.dart';
 import '../../../core/routing/app_router.dart';
 import 'package:provider/provider.dart';
 
-/// Gradient hero card — mood check-in + postpartum day badge.
+/// Daily mood entry point. The selection is carried into the check-in form.
 class MoodHeroCard extends StatefulWidget {
   const MoodHeroCard({super.key});
 
@@ -17,17 +17,15 @@ class MoodHeroCard extends StatefulWidget {
 }
 
 class _MoodHeroCardState extends State<MoodHeroCard> {
-  static const _moods = ['😔', '😐', '🙂', '😊', '😍'];
+  static const _moods = ['😔', '😟', '😐', '🙂', '😊'];
   static const _moodLabelsEn = ['Very low', 'Low', 'Okay', 'Good', 'Great'];
   static const _moodLabelsUr = ['بہت کم', 'کم', 'ٹھیک ہے', 'اچھا', 'بہترین'];
-
-  // Placeholder — will come from onboarding_data / backend in Phase 2
-  static const int _dayPostpartum = 47;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final provider = context.read<MoodProvider>();
       if (provider.today == null && !provider.isLoading) provider.load();
     });
@@ -85,7 +83,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
               crossAxisAlignment:
                   isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                // Day badge
+                // A birth date is not collected, so do not invent a day count.
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -94,9 +92,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isUrdu
-                        ? 'زچگی کے بعد $_dayPostpartum واں دن'
-                        : 'Day $_dayPostpartum Postpartum',
+                    isUrdu ? 'روزانہ موڈ' : 'Daily mood',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,

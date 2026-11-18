@@ -7,10 +7,6 @@ import '../../../data/models/onboarding_model.dart';
 
 /// Step 3: Family & Social Support
 /// Collects: household type, monthly income range, primary support person.
-///
-/// Clinical basis: Sajjad et al. (2024) — 71% of PPD-positive women live in
-/// joint families. 48% relied on husbands as primary informal support.
-/// Income range (PKR 26k–50k) most common in PPD-positive cohort.
 class FamilySupportStep extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final OnboardingData data;
@@ -62,9 +58,6 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
               en: 'Household Type',
               ur: 'گھرانے کی نوعیت',
               isUrdu: widget.isUrdu,
-              footnote: widget.isUrdu
-                  ? '71٪ PPD مثبت خواتین مشترکہ خاندانوں میں رہتی ہیں'
-                  : '71% of PPD-positive women live in joint families',
             ),
             _TileSelector<HouseholdType>(
               isUrdu: widget.isUrdu,
@@ -88,11 +81,6 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
                 ),
               ],
               onChanged: (v) => setState(() => widget.data.householdType = v),
-              validator: (_) => widget.data.householdType == null
-                  ? (widget.isUrdu
-                      ? 'خاندان کی نوعیت منتخب کریں'
-                      : 'Select household type')
-                  : null,
             ),
 
             const SizedBox(height: 20),
@@ -118,22 +106,22 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
                 textDirection:
                     widget.isUrdu ? TextDirection.rtl : TextDirection.ltr,
               ),
-              items: (widget.isUrdu ? _incomeOptionsUr : _incomeOptionsEn)
-                  .map((e) => DropdownMenuItem(
-                        value: e,
+              initialValue: widget.data.incomeRange,
+              items: List.generate(
+                  _incomeOptionsEn.length,
+                  (index) => DropdownMenuItem(
+                        value: _incomeOptionsEn[index],
                         child: Text(
-                          e,
+                          widget.isUrdu
+                              ? _incomeOptionsUr[index]
+                              : _incomeOptionsEn[index],
                           textDirection: widget.isUrdu
                               ? TextDirection.rtl
                               : TextDirection.ltr,
                         ),
-                      ))
-                  .toList(),
+                      )),
               onChanged: (v) => setState(() => widget.data.incomeRange = v),
               onSaved: (v) => widget.data.incomeRange = v,
-              validator: (v) => v == null
-                  ? (widget.isUrdu ? 'آمدنی منتخب کریں' : 'Select income range')
-                  : null,
               autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
 
@@ -144,9 +132,6 @@ class _FamilySupportStepState extends State<FamilySupportStep> {
               en: 'Primary Source of Support',
               ur: 'بنیادی مددگار',
               isUrdu: widget.isUrdu,
-              footnote: widget.isUrdu
-                  ? '48٪ نے شوہر کو بنیادی مدد کا ذریعہ بتایا'
-                  : '48% of women cited husband as primary support',
             ),
             _SupportSelector(
               data: widget.data,
@@ -171,13 +156,11 @@ class _Label extends StatelessWidget {
   final String en;
   final String ur;
   final bool isUrdu;
-  final String? footnote;
 
   const _Label({
     required this.en,
     required this.ur,
     required this.isUrdu,
-    this.footnote,
   });
 
   @override
@@ -198,14 +181,6 @@ class _Label extends StatelessWidget {
                 : AppTextStyles.labelLarge,
             textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
           ),
-          if (footnote != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              footnote!,
-              style: AppTextStyles.bodySmall,
-              textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
-            ),
-          ],
         ],
       ),
     );

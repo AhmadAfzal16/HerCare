@@ -8,6 +8,7 @@ import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../services/push_notification_service.dart';
 
 /// Login Screen
 class LoginScreen extends StatefulWidget {
@@ -42,11 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final user = auth.user;
     if (user?.isGuardian == true) {
-      context.go(AppRoutes.guardianHome);
+      context.go(PushNotificationService.instance.consumePendingRoute(user) ??
+          AppRoutes.guardianHome);
     } else if (user?.onboardingComplete == false) {
       context.go(AppRoutes.onboarding);
     } else {
-      context.go(AppRoutes.home);
+      context.go(PushNotificationService.instance.consumePendingRoute(user) ??
+          AppRoutes.home);
     }
   }
 
@@ -236,6 +239,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: AppTextStyles.bodyMedium
                           .copyWith(color: AppColors.primary),
                     ),
+                  ),
+                ),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.push(AppRoutes.crisis),
+                    icon: const Icon(Icons.health_and_safety_outlined),
+                    label: Text(isUrdu
+                        ? 'فوری مدد — لاگ ان ضروری نہیں'
+                        : 'Get help now — no login needed'),
                   ),
                 ),
               ],

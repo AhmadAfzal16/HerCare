@@ -2,6 +2,15 @@
 __pycache__
 .pytest_cache
 data/raw
+data/processed
+artifacts/experiments
+artifacts/test_runs
+artifacts/chatbot/models
+artifacts/chatbot/runtime
+artifacts/chatbot/downloads
+artifacts/sentiment/public_v1
 tests
 *.pyc
 
+artifacts/voice/
+artifacts/community/

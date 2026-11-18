@@ -1,11 +1,17 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/routing/app_router.dart';
 import '../data/services/api_service.dart';
+import '../data/models/user_model.dart';
+import '../providers/auth_provider.dart';
+import 'push_destination.dart';
+import 'urgent_notification_bridge.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -63,6 +69,42 @@ class PushNotificationService extends ChangeNotifier {
   bool _permissionGranted = false;
   String? _token;
   String? _configurationError;
+  Map<String, dynamic>? _pendingData;
+  final _urgentBridge = UrgentNotificationBridge();
+  final Set<String> _foregroundSeen = {};
+  String? _accountId;
+  int _accountGeneration = 0;
+  Future<void> _registrationTail = Future.value();
+
+  static Map<String, dynamic> _routingData(Map<String, dynamic> data) => {
+        for (final key in [
+          'route',
+          'type',
+          'recipient_id',
+          'alert_id',
+          'urgent'
+        ])
+          if (data[key] is String && (data[key] as String).length <= 100)
+            key: data[key],
+      };
+
+  UserModel? get _currentUser {
+    final auth = AppRouter.router.routerDelegate.navigatorKey.currentContext
+        ?.read<AuthProvider>();
+    return auth?.isAuthenticated == true ? auth!.user : null;
+  }
+
+  void _bindAccount(UserModel? user) {
+    if (_accountId == user?.id) return;
+    _accountId = user?.id;
+    ++_accountGeneration;
+    _messages.clear();
+    _foregroundSeen.clear();
+    if (_pendingData != null && _pendingData!['recipient_id'] != _accountId) {
+      _pendingData = null;
+    }
+    unawaited(_urgentBridge.bindAccount(_accountId));
+  }
 
   bool get isConfigured =>
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) ||
@@ -80,14 +122,16 @@ class PushNotificationService extends ChangeNotifier {
         await Firebase.initializeApp(options: firebaseOptions!);
       }
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      _urgentBridge.onOpened = _openData;
+      await _urgentBridge.initialize();
       _messageSubscription =
           FirebaseMessaging.onMessage.listen(_onForegroundMessage);
       _openedSubscription =
           FirebaseMessaging.onMessageOpenedApp.listen(_openMessage);
       final initial = await FirebaseMessaging.instance.getInitialMessage();
       if (initial != null) {
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _openMessage(initial));
+        // Splash/login consumes this only after restoring the correct account.
+        _pendingData = _routingData(initial.data);
       }
       _initialized = true;
       _configurationError = null;
@@ -99,11 +143,19 @@ class PushNotificationService extends ChangeNotifier {
 
   Future<void> onAuthenticated() async {
     if (!isConfigured) return;
+    final user = _currentUser;
+    _bindAccount(user);
+    final generation = _accountGeneration;
     await initialize();
-    if (!_initialized) return;
+    if (!_initialized || user == null || generation != _accountGeneration) {
+      return;
+    }
     try {
       final settings = await FirebaseMessaging.instance
           .requestPermission(alert: true, badge: true, sound: true);
+      if (generation != _accountGeneration || _currentUser?.id != user.id) {
+        return;
+      }
       _permissionGranted =
           settings.authorizationStatus == AuthorizationStatus.authorized ||
               settings.authorizationStatus == AuthorizationStatus.provisional;
@@ -111,12 +163,25 @@ class PushNotificationService extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      _token = await FirebaseMessaging.instance.getToken(
+      final token = await FirebaseMessaging.instance.getToken(
           vapidKey: kIsWeb && _vapidKey.isNotEmpty ? _vapidKey : null);
+      if (generation != _accountGeneration || _currentUser?.id != user.id) {
+        return;
+      }
+      _token = token;
       if (_token != null) await _register(_token!);
+      if (generation != _accountGeneration || _currentUser?.id != user.id) {
+        return;
+      }
       await _tokenSubscription?.cancel();
+      if (generation != _accountGeneration || _currentUser?.id != user.id) {
+        return;
+      }
       _tokenSubscription =
           FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+        if (generation != _accountGeneration || _currentUser?.id != user.id) {
+          return;
+        }
         _token = token;
         try {
           await _register(token);
@@ -124,6 +189,7 @@ class PushNotificationService extends ChangeNotifier {
       });
       _configurationError = null;
     } catch (_) {
+      if (generation != _accountGeneration) return;
       _configurationError =
           'This device could not be registered for push notifications.';
     }
@@ -131,12 +197,21 @@ class PushNotificationService extends ChangeNotifier {
   }
 
   Future<void> beforeLogout() async {
+    final owner = _accountId;
     final token = _token;
+    ++_accountGeneration;
+    _accountId = null;
+    _foregroundSeen.clear();
+    _pendingData = null;
+    _messages.clear();
+    await _urgentBridge.bindAccount(null);
+    // Do not let an earlier registration finish after token revocation.
+    await _registrationTail;
     if (token != null) {
       try {
-        await ApiService()
-            .client
-            .delete('/notifications/devices', data: {'token': token});
+        await ApiService().client.delete('/notifications/devices',
+            data: {'token': token},
+            options: Options(headers: {'X-Notification-Account-Id': owner}));
       } catch (_) {}
     }
     _token = null;
@@ -146,20 +221,60 @@ class PushNotificationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _register(String token) =>
-      ApiService().post('/notifications/devices', data: {
-        'token': token,
-        'platform': kIsWeb
-            ? 'web'
-            : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android'),
-      });
+  Future<void> _register(String token) {
+    final owner = _accountId;
+    final generation = _accountGeneration;
+    final operation = _registrationTail.then((_) async {
+      if (owner == null ||
+          generation != _accountGeneration ||
+          _currentUser?.id != owner) {
+        return;
+      }
+      await ApiService().client.post('/notifications/devices',
+          data: {
+            'token': token,
+            'platform': kIsWeb
+                ? 'web'
+                : (defaultTargetPlatform == TargetPlatform.iOS
+                    ? 'ios'
+                    : 'android'),
+          },
+          options: Options(headers: {'X-Notification-Account-Id': owner}));
+    });
+    _registrationTail = operation.catchError((Object _) {});
+    return operation;
+  }
 
   void _onForegroundMessage(RemoteMessage message) {
+    final data = _routingData(message.data);
+    final user = _currentUser;
+    if (user == null ||
+        data['recipient_id'] != user.id ||
+        pushDestination(data,
+                userId: user.id,
+                role: user.role,
+                onboardingComplete: user.onboardingComplete) ==
+            null) {
+      return;
+    }
+    _bindAccount(user);
+    final deduplicationId = data['alert_id'] ?? message.messageId;
+    if (deduplicationId != null) {
+      final key = '${user.id}:$deduplicationId';
+      if (!_foregroundSeen.add(key)) return;
+      if (_foregroundSeen.length > 100) {
+        _foregroundSeen.remove(_foregroundSeen.first);
+      }
+    }
+    unawaited(_urgentBridge.show(data, userId: user.id, role: user.role));
+    final guardian = data['type'] == 'guardian_alert';
     final item = ReceivedPush(
-      title: message.notification?.title ?? 'HerCare update',
-      body: message.notification?.body ?? 'Open HerCare to view the update.',
+      title: guardian ? 'HerCare support alert' : 'HerCare check-in reminder',
+      body: guardian
+          ? 'Open HerCare and check in with your linked mother.'
+          : 'Open HerCare to view your scheduled check-in.',
       receivedAt: DateTime.now(),
-      data: Map<String, dynamic>.from(message.data),
+      data: data,
     );
     _messages.insert(0, item);
     if (_messages.length > 50) _messages.removeLast();
@@ -167,15 +282,40 @@ class PushNotificationService extends ChangeNotifier {
     messengerKey.currentState?.showSnackBar(SnackBar(
       content: Text('${item.title}\n${item.body}'),
       behavior: SnackBarBehavior.floating,
-      action:
-          SnackBarAction(label: 'Open', onPressed: () => _openMessage(message)),
+      action: SnackBarAction(label: 'Open', onPressed: () => _openData(data)),
     ));
   }
 
   void _openMessage(RemoteMessage message) {
-    if (message.data['route'] == AppRoutes.notifications) {
-      AppRouter.router.go(AppRoutes.notifications);
+    _openData(Map<String, dynamic>.from(message.data));
+  }
+
+  void _openData(Map<String, dynamic> data) {
+    _pendingData = _routingData(data);
+    final path = AppRouter.router.routeInformationProvider.value.uri.path;
+    if ([
+      AppRoutes.splash,
+      AppRoutes.login,
+      AppRoutes.register,
+      AppRoutes.languageSelection,
+      AppRoutes.onboarding,
+      AppRoutes.accountType
+    ].contains(path)) {
+      return;
     }
+    final route = consumePendingRoute(_currentUser);
+    if (route != null && route != path) AppRouter.router.push(route);
+  }
+
+  String? consumePendingRoute(UserModel? user) {
+    if (user == null || _pendingData == null) return null;
+    final data = _pendingData!;
+    _pendingData = null;
+    if (data['recipient_id'] != user.id) return null;
+    return pushDestination(data,
+        userId: user.id,
+        role: user.role,
+        onboardingComplete: user.onboardingComplete);
   }
 
   @override

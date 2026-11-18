@@ -3,6 +3,7 @@ const { AppError } = require('../../middleware/error_handler');
 const guardianService = require('../guardian/guardian.service');
 const { getInstrument } = require('./screening.instruments');
 const { scoreAnswers } = require('./screening.scoring');
+const { INTERVAL_DAYS } = require('./screening.schedule');
 
 function publicAssessment(row, responses = undefined) {
   if (!row) return null;
@@ -78,8 +79,8 @@ async function getAssessmentWithResponses(db, assessmentId, motherId) {
 }
 
 async function startAssessment(motherId, data) {
-  const instrument = getInstrument(data.instrument_type);
-  if (!instrument) throw new AppError('Unsupported screening instrument.', 422);
+  const instrument = await getInstrument(data.instrument_type);
+  if (!instrument) throw new AppError('Screening questionnaire is unavailable.', 503);
   return withTransaction(async (client) => {
     const duplicate = await client.query(
       `SELECT * FROM screening_assessments
@@ -114,9 +115,17 @@ async function startAssessment(motherId, data) {
 
 async function saveDraft(motherId, assessmentId, answers) {
   return withTransaction(async (client) => {
+    // Serialize draft edits with submission, including edits from another device.
+    await client.query(
+      'SELECT id FROM screening_assessments WHERE id = $1 AND mother_id = $2 FOR UPDATE',
+      [assessmentId, motherId],
+    );
     const current = await getAssessmentWithResponses(client, assessmentId, motherId);
     if (current.status !== 'draft') throw new AppError('Only draft assessments can be edited.', 409);
-    const instrument = getInstrument(current.instrument_type);
+    const instrument = await getInstrument(
+      current.instrument_type, current.instrument_version, client,
+    );
+    if (!instrument) throw new AppError('Screening questionnaire version is unavailable.', 503);
     const responses = validatePartialAnswers(instrument, answers);
     await replaceResponses(client, assessmentId, responses);
     await client.query(
@@ -188,23 +197,26 @@ async function refreshReports(motherId, assessment) {
 }
 
 async function createCrisisAndGuardianAlert(motherId, assessment, reportId) {
-  if (!assessment.self_harm_positive) return;
-  await query(
+  if (!assessment.self_harm_positive && assessment.risk_level !== 'severe') return;
+  const event = await query(
     `INSERT INTO crisis_events (mother_id, source_type, source_id, severity)
-     VALUES ($1, $2, $3, 'severe') ON CONFLICT (source_type, source_id) DO NOTHING`,
-    [motherId, assessment.instrument_type, assessment.id],
+     VALUES ($1, $2, $3, $4) ON CONFLICT (source_type, source_id) DO NOTHING RETURNING id`,
+    [motherId, assessment.instrument_type, assessment.id, assessment.self_harm_positive ? 'severe' : 'high'],
   );
+  if (!event.rows[0]) return;
   await query(
     `INSERT INTO guardian_alerts
-       (mother_id, guardian_id, report_id, alert_type, message)
-     SELECT gl.mother_id, gl.guardian_id, $2, 'crisis',
-       'URGENT: A screening safety response requires immediate support. Please check on her and use the crisis plan.'
+       (mother_id, guardian_id, report_id, crisis_event_id, alert_type, message)
+     SELECT gl.mother_id, gl.guardian_id, $2, $3, 'crisis',
+       $4
      FROM guardian_links gl
      JOIN onboarding_data od ON od.user_id = gl.mother_id
      WHERE gl.mother_id = $1 AND gl.status = 'active'
        AND od.consent_tier2 = TRUE
      ON CONFLICT DO NOTHING`,
-    [motherId, reportId],
+    [motherId, reportId, event.rows[0].id, assessment.self_harm_positive
+      ? 'An urgent screening safety concern needs support. Please check on her and help her reach appropriate care.'
+      : 'A screening result suggests prompt professional review. Please check on her and help her arrange support. This is not a diagnosis.'],
   );
 }
 
@@ -222,7 +234,10 @@ async function submitAssessment(motherId, assessmentId, answers) {
     if (locked.rows[0].status !== 'draft') {
       throw new AppError('This assessment can no longer be submitted.', 409);
     }
-    const instrument = getInstrument(locked.rows[0].instrument_type);
+    const instrument = await getInstrument(
+      locked.rows[0].instrument_type, locked.rows[0].instrument_version, client,
+    );
+    if (!instrument) throw new AppError('Screening questionnaire version is unavailable.', 503);
     const scored = scoreAnswers(instrument, answers);
     await replaceResponses(client, assessmentId, scored.responses);
     const { rows } = await client.query(
@@ -239,17 +254,17 @@ async function submitAssessment(motherId, assessmentId, answers) {
     );
     await client.query(
       `INSERT INTO screening_reminders (mother_id, instrument_type, due_at)
-       VALUES ($1, $2, NOW() + INTERVAL '7 days')
+       VALUES ($1, $2, NOW() + $3 * INTERVAL '1 day')
        ON CONFLICT (mother_id, instrument_type) WHERE status = 'scheduled'
        DO UPDATE SET due_at = EXCLUDED.due_at, updated_at = NOW()`,
-      [motherId, instrument.type],
+      [motherId, instrument.type, INTERVAL_DAYS[instrument.type]],
     );
     return publicAssessment(rows[0]);
   });
 
   const reportId = await refreshReports(motherId, completed);
   await createCrisisAndGuardianAlert(motherId, completed, reportId);
-  await guardianService.notifyGuardian(motherId, completed.risk_level, reportId);
+  if (completed.risk_level !== 'severe') await guardianService.notifyGuardian(motherId, completed.risk_level, reportId);
   return completed;
 }
 
@@ -291,8 +306,8 @@ async function getReminder(motherId, instrumentType = 'epds') {
   };
 }
 
-function instrumentForClient(type) {
-  const instrument = getInstrument(type);
+async function instrumentForClient(type, version) {
+  const instrument = await getInstrument(type, version);
   if (!instrument) throw new AppError('Unsupported screening instrument.', 404);
   return instrument;
 }

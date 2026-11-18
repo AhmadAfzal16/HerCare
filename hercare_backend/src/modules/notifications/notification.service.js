@@ -3,6 +3,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 const { query, withTransaction } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { encryptToken, decryptToken, hashToken } = require('./push_crypto');
+const { queueDueReminders } = require('../screening/screening.schedule');
 
 const INVALID_TOKEN_CODES = new Set([
   'messaging/invalid-registration-token',
@@ -67,6 +68,13 @@ async function unregisterDevice(userId, token) {
 }
 
 function publicPayload(alertType) {
+  if (alertType === 'screening_reminder') {
+    return {
+      title: 'HerCare check-in reminder',
+      body: 'A scheduled check-in is ready. Open Tests when convenient.',
+      priority: 'normal',
+    };
+  }
   if (alertType === 'crisis' || alertType === 'risk_severe') {
     return {
       title: 'Urgent HerCare support alert',
@@ -103,6 +111,22 @@ async function claimBatch(limit) {
 }
 
 async function loadDelivery(outbox) {
+  if (outbox.screening_reminder_id) {
+    const { rows } = await query(
+      `SELECT no.id, no.attempts, 'screening_reminder' AS alert_type,
+         pd.id AS device_id, pd.token_encrypted
+       FROM notification_outbox no
+       JOIN screening_reminders sr ON sr.id = no.screening_reminder_id
+         AND sr.mother_id = no.recipient_id AND sr.status = 'scheduled' AND sr.due_at <= NOW()
+       JOIN users u ON u.id = sr.mother_id AND u.role = 'mother'
+         AND u.is_active = TRUE AND u.onboarding_complete = TRUE
+       JOIN onboarding_data od ON od.user_id = u.id AND od.consent_tier1 = TRUE
+       LEFT JOIN push_devices pd ON pd.user_id = no.recipient_id AND pd.enabled = TRUE
+       WHERE no.id = $1 AND no.status IN ('pending','retry','no_device','sending')
+         AND no.created_at >= NOW() - INTERVAL '48 hours'`, [outbox.id],
+    );
+    return rows;
+  }
   const { rows } = await query(
     `SELECT no.id, no.attempts, ga.id AS alert_id, ga.alert_type,
             pd.id AS device_id, pd.token_encrypted
@@ -111,8 +135,21 @@ async function loadDelivery(outbox) {
      JOIN guardian_links gl ON gl.mother_id = ga.mother_id
        AND gl.guardian_id = ga.guardian_id AND gl.status = 'active'
      JOIN onboarding_data od ON od.user_id = ga.mother_id AND od.consent_tier2 = TRUE
+       AND od.consent_tier1 = TRUE
+     JOIN users mother ON mother.id=ga.mother_id AND mother.is_active AND mother.role='mother'
+     JOIN users guardian ON guardian.id=ga.guardian_id AND guardian.is_active AND guardian.role='guardian'
+     LEFT JOIN crisis_safety_plans plan ON plan.mother_id=ga.mother_id
+     LEFT JOIN crisis_events ce ON ce.id=ga.crisis_event_id AND ce.mother_id=ga.mother_id
      LEFT JOIN push_devices pd ON pd.user_id = no.recipient_id AND pd.enabled = TRUE
-     WHERE no.id = $1`,
+     WHERE no.id = $1 AND no.recipient_id=ga.guardian_id
+       AND no.status IN ('pending','retry','no_device','sending')
+       AND (ga.alert_type NOT IN ('crisis','risk_severe') OR (
+         plan.safe_guardian_link_id=gl.id AND plan.guardian_contact_confirmed
+         AND ga.crisis_guardian_link_id=gl.id
+         AND ce.id IS NOT NULL AND ce.status<>'resolved'
+         AND ce.triggered_at >= NOW()-INTERVAL '24 hours'
+         AND no.created_at >= NOW()-INTERVAL '24 hours'))
+       AND (ga.crisis_event_id IS NULL OR ce.status<>'resolved')`,
     [outbox.id],
   );
   return rows;
@@ -120,17 +157,17 @@ async function loadDelivery(outbox) {
 
 async function finish(id, status, error = null, delayMinutes = 0) {
   await query(
-    `UPDATE notification_outbox SET status = $2, last_error = $3,
-       sent_at = CASE WHEN $2 = 'sent' THEN NOW() ELSE sent_at END,
+    `UPDATE notification_outbox SET status = $2::varchar, last_error = $3,
+       sent_at = CASE WHEN $2::varchar = 'sent' THEN NOW() ELSE sent_at END,
        next_attempt_at = NOW() + ($4 * INTERVAL '1 minute'), updated_at = NOW()
-     WHERE id = $1`,
+     WHERE id = $1 AND status IN ('pending','retry','no_device','sending')`,
     [id, status, error?.slice(0, 300) || null, delayMinutes],
   );
 }
 
 async function deliver(outbox, messaging) {
   const rows = await loadDelivery(outbox);
-  if (!rows.length) return finish(outbox.id, 'cancelled', 'Link inactive or consent unavailable.');
+  if (!rows.length) return finish(outbox.id, 'cancelled', 'Delivery no longer eligible.');
   const devices = rows.filter((row) => row.device_id);
   if (!devices.length) return finish(outbox.id, 'no_device', 'No active device.', 60);
 
@@ -149,18 +186,45 @@ async function deliver(outbox, messaging) {
   }
   if (!tokens.length) return finish(outbox.id, 'no_device', 'No valid active device.', 60);
 
+  // Recheck after decryption/device cleanup, immediately before network delivery.
+  // This cannot recall an already delivered push or guarantee emergency help.
+  const current = await loadDelivery(outbox);
+  const allowedDeviceIds = new Set(current.map((row) => row.device_id).filter(Boolean));
+  const eligibleTokens = tokens.filter((_, index) => allowedDeviceIds.has(deviceIds[index]));
+  const eligibleIds = deviceIds.filter((id) => allowedDeviceIds.has(id));
+  if (!current.length) return finish(outbox.id, 'cancelled', 'Delivery no longer eligible.');
+  if (!eligibleTokens.length) return finish(outbox.id, 'no_device', 'No active eligible device.', 60);
+
   const payload = publicPayload(rows[0].alert_type);
+  const screening = Boolean(outbox.screening_reminder_id);
+  const urgent = !screening && ['crisis', 'risk_severe'].includes(rows[0].alert_type);
   const response = await messaging.sendEachForMulticast({
-    tokens,
+    tokens: eligibleTokens,
     notification: { title: payload.title, body: payload.body },
-    data: { route: '/notifications', alert_id: String(rows[0].alert_id), type: 'guardian_alert' },
+    data: screening
+      ? { route: '/tests', type: 'screening_reminder', recipient_id: String(outbox.recipient_id) }
+      : { route: '/notifications', alert_id: String(rows[0].alert_id), type: 'guardian_alert', recipient_id: String(outbox.recipient_id), urgent: String(urgent) },
     android: {
       priority: payload.priority,
-      notification: { channelId: 'hercare_urgent_alerts', visibility: 'private' },
+      ...(screening ? { ttl: 6 * 60 * 60 * 1000, collapseKey: 'screening_reminder' }
+        : { ttl: 60 * 60 * 1000, collapseKey: 'guardian_support' }),
+      notification: {
+        channelId: screening ? 'hercare_screening_reminders'
+          : urgent ? 'hercare_urgent_v1' : 'hercare_urgent_alerts',
+        visibility: 'private',
+        ...(urgent ? { sound: 'hercare_urgent' } : {}),
+        ...(screening ? { tag: 'screening_reminder' } : {}),
+      },
     },
     apns: {
-      headers: { 'apns-priority': payload.priority === 'high' ? '10' : '5' },
-      payload: { aps: { sound: 'default', 'thread-id': 'guardian-alerts' } },
+      headers: {
+        'apns-priority': payload.priority === 'high' ? '10' : '5',
+        ...(screening ? {
+          'apns-collapse-id': 'screening_reminder',
+          'apns-expiration': String(Math.floor(Date.now() / 1000) + 6 * 60 * 60),
+        } : { 'apns-expiration': String(Math.floor(Date.now() / 1000) + 60 * 60) }),
+      },
+      payload: { aps: { sound: 'default', 'thread-id': screening ? 'screening-reminders' : 'guardian-alerts' } },
     },
   });
 
@@ -169,7 +233,7 @@ async function deliver(outbox, messaging) {
     if (item.success) {
       await query(
         'UPDATE push_devices SET failure_count = 0, last_error_code = NULL, updated_at = NOW() WHERE id = $1',
-        [deviceIds[index]],
+        [eligibleIds[index]],
       );
     } else {
       const code = item.error?.code || 'unknown';
@@ -177,7 +241,7 @@ async function deliver(outbox, messaging) {
         `UPDATE push_devices SET failure_count = failure_count + 1,
            last_error_code = $2, enabled = CASE WHEN $3 THEN FALSE ELSE enabled END,
            updated_at = NOW() WHERE id = $1`,
-        [deviceIds[index], code, INVALID_TOKEN_CODES.has(code)],
+        [eligibleIds[index], code, INVALID_TOKEN_CODES.has(code)],
       );
     }
   }
@@ -191,6 +255,7 @@ async function processPending(limit = 20) {
   processing = true;
   try {
     const app = firebaseApp();
+    await queueDueReminders();
     const batch = await claimBatch(Math.min(Math.max(Number(limit) || 20, 1), 100));
     const messaging = getMessaging(app);
     for (const item of batch) {
@@ -244,4 +309,5 @@ module.exports = {
   startWorker,
   stopWorker,
   status,
+  _private: { publicPayload, loadDelivery, deliver },
 };

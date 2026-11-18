@@ -7,13 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt \
+COPY requirements.txt requirements-voice.txt requirements-community.txt ./
+RUN pip install --no-cache-dir --disable-pip-version-check -r requirements-voice.txt -r requirements-community.txt \
     && useradd --create-home --uid 10001 hercare
 
 COPY app ./app
+COPY knowledge/chatbot ./knowledge/chatbot
 COPY artifacts/peri_dep_baseline.joblib ./artifacts/peri_dep_baseline.joblib
 COPY artifacts/peri_dep_baseline.json ./artifacts/peri_dep_baseline.json
+COPY artifacts/sentiment/public_v2/ ./artifacts/sentiment/public_v2/
+COPY artifacts/chatbot/retrieval_v1/ ./artifacts/chatbot/retrieval_v1/
 
 USER hercare
 EXPOSE 8001

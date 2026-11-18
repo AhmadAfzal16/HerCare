@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -14,16 +18,20 @@ import '../../core/theme/theme_ext.dart';
 import '../../data/models/mood_models.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/mood_provider.dart';
+import '../../services/mood_service.dart';
+import 'voice_transcript_screen.dart';
 
 class MoodJournalScreen extends StatefulWidget {
   const MoodJournalScreen({
     super.key,
     this.initialTab = 0,
     this.initialMood,
+    this.accountId,
   });
 
   final int initialTab;
   final int? initialMood;
+  final String? accountId;
 
   @override
   State<MoodJournalScreen> createState() => _MoodJournalScreenState();
@@ -39,6 +47,7 @@ class _MoodJournalScreenState extends State<MoodJournalScreen>
     _tabs =
         TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<MoodProvider>().load(includeJournals: true);
     });
   }
@@ -75,7 +84,7 @@ class _MoodJournalScreenState extends State<MoodJournalScreen>
           controller: _tabs,
           children: [
             _MoodTab(initialMood: widget.initialMood, isUrdu: isUrdu),
-            _JournalTab(isUrdu: isUrdu),
+            _JournalTab(isUrdu: isUrdu, accountId: widget.accountId),
           ],
         ),
       ),
@@ -94,18 +103,19 @@ class _MoodTab extends StatefulWidget {
 }
 
 class _MoodTabState extends State<_MoodTab> {
-  late int _mood;
-  int _energy = 3;
-  int _sleep = 3;
-  int _support = 3;
+  int? _mood;
+  int? _energy;
+  int? _sleep;
+  int? _support;
   bool _hydrated = false;
+  bool _moodTouched = false;
 
   static const _emojis = ['😔', '😟', '😐', '🙂', '😊'];
 
   @override
   void initState() {
     super.initState();
-    _mood = widget.initialMood?.clamp(1, 5) ?? 3;
+    _mood = widget.initialMood?.clamp(1, 5);
   }
 
   void _hydrate(MoodCheckin? checkin) {
@@ -114,7 +124,9 @@ class _MoodTabState extends State<_MoodTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
-        _mood = checkin.moodRating;
+        if (!_moodTouched && widget.initialMood == null) {
+          _mood = checkin.moodRating;
+        }
         _energy = checkin.energyLevel;
         _sleep = checkin.sleepQuality;
         _support = checkin.socialSupport;
@@ -123,9 +135,11 @@ class _MoodTabState extends State<_MoodTab> {
   }
 
   Future<void> _save() async {
+    final mood = _mood;
+    if (mood == null) return;
     final provider = context.read<MoodProvider>();
     final ok = await provider.saveCheckin(
-      moodRating: _mood,
+      moodRating: mood,
       energyLevel: _energy,
       sleepQuality: _sleep,
       socialSupport: _support,
@@ -173,35 +187,57 @@ class _MoodTabState extends State<_MoodTab> {
           _MoodSelector(
             value: _mood,
             emojis: _emojis,
-            onChanged: (value) => setState(() => _mood = value),
+            onChanged: (value) => setState(() {
+              _mood = value;
+              _moodTouched = true;
+            }),
           ),
           const SizedBox(height: 18),
-          _MetricSlider(
-            icon: Icons.bolt_rounded,
-            label: widget.isUrdu ? 'توانائی' : 'Energy',
-            value: _energy,
-            color: AppColors.warning,
-            onChanged: (value) => setState(() => _energy = value),
-          ),
-          _MetricSlider(
-            icon: Icons.bedtime_rounded,
-            label: widget.isUrdu ? 'نیند کا معیار' : 'Sleep quality',
-            value: _sleep,
-            color: AppColors.primary,
-            onChanged: (value) => setState(() => _sleep = value),
-          ),
-          _MetricSlider(
-            icon: Icons.people_alt_rounded,
-            label: widget.isUrdu ? 'سماجی معاونت' : 'Social support',
-            value: _support,
-            color: AppColors.secondary,
-            onChanged: (value) => setState(() => _support = value),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(widget.isUrdu
+                ? 'مزید تفصیلات (اختیاری)'
+                : 'More details (optional)'),
+            children: [
+              _MetricSlider(
+                icon: Icons.bolt_rounded,
+                label: widget.isUrdu ? 'توانائی' : 'Energy',
+                value: _energy,
+                color: AppColors.warning,
+                onChanged: (value) => setState(() => _energy = value),
+              ),
+              _MetricSlider(
+                icon: Icons.bedtime_rounded,
+                label: widget.isUrdu ? 'نیند کا معیار' : 'Sleep quality',
+                value: _sleep,
+                color: AppColors.primary,
+                onChanged: (value) => setState(() => _sleep = value),
+              ),
+              _MetricSlider(
+                icon: Icons.people_alt_rounded,
+                label: widget.isUrdu ? 'سماجی معاونت' : 'Social support',
+                value: _support,
+                color: AppColors.secondary,
+                onChanged: (value) => setState(() => _support = value),
+              ),
+              if (_energy != null || _sleep != null || _support != null)
+                TextButton(
+                  onPressed: () => setState(() {
+                    _energy = null;
+                    _sleep = null;
+                    _support = null;
+                  }),
+                  child: Text(widget.isUrdu
+                      ? 'اختیاری جوابات صاف کریں'
+                      : 'Clear optional answers'),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 52,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
             child: FilledButton.icon(
-              onPressed: provider.isLoading ? null : _save,
+              onPressed: provider.isLoading || _mood == null ? null : _save,
               icon: provider.isLoading
                   ? const SizedBox.square(
                       dimension: 18,
@@ -233,7 +269,7 @@ class _MoodSelector extends StatelessWidget {
   const _MoodSelector(
       {required this.value, required this.emojis, required this.onChanged});
 
-  final int value;
+  final int? value;
   final List<String> emojis;
   final ValueChanged<int> onChanged;
 
@@ -296,7 +332,7 @@ class _MetricSlider extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final int value;
+  final int? value;
   final Color color;
   final ValueChanged<int> onChanged;
 
@@ -317,17 +353,17 @@ class _MetricSlider extends StatelessWidget {
               Icon(icon, color: color),
               const SizedBox(width: 9),
               Expanded(child: Text(label, style: AppTextStyles.labelLarge)),
-              Text('$value/5',
+              Text(value == null ? '—/5' : '$value/5',
                   style: AppTextStyles.labelLarge.copyWith(color: color)),
             ],
           ),
           Slider(
-            value: value.toDouble(),
+            value: (value ?? 3).toDouble(),
             min: 1,
             max: 5,
             divisions: 4,
             activeColor: color,
-            label: '$value',
+            label: value?.toString(),
             onChanged: (next) => onChanged(next.round()),
           ),
         ],
@@ -385,7 +421,7 @@ class _TrendCard extends StatelessWidget {
                         children: [
                           Flexible(
                             child: FractionallySizedBox(
-                              heightFactor: entry.compositeScore / 5,
+                              heightFactor: entry.moodRating / 5,
                               child: Container(
                                 constraints: const BoxConstraints(minHeight: 8),
                                 decoration: BoxDecoration(
@@ -415,7 +451,8 @@ class _TrendCard extends StatelessWidget {
 }
 
 class _JournalTab extends StatefulWidget {
-  const _JournalTab({required this.isUrdu});
+  const _JournalTab({required this.isUrdu, this.accountId});
+  final String? accountId;
 
   final bool isUrdu;
 
@@ -427,14 +464,45 @@ class _JournalTabState extends State<_JournalTab> {
   final _journalController = TextEditingController();
   final _searchController = TextEditingController();
   final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _playerSubscription;
   Timer? _timer;
   int _seconds = 0;
   bool _recording = false;
+  bool _stopping = false;
+  String? _recordingFilePath;
+  String? _pendingVoicePath;
+  String? _pendingVoiceRequestId;
+  String? _pendingVoiceLanguage;
+  String? _playingId;
+  String? _loadingAudioId;
+
+  @override
+  void initState() {
+    super.initState();
+    _playerSubscription = _player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed && mounted) {
+        setState(() => _playingId = null);
+      }
+    });
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _recorder.dispose();
+    _playerSubscription?.cancel();
+    _player.dispose();
+    if (_stopping) {
+      // _finishRecording owns the recorder until stop has completed.
+    } else if (_recording) {
+      unawaited(_recorder.cancel().whenComplete(_recorder.dispose));
+    } else {
+      unawaited(_recorder.dispose());
+    }
+    final pending = _pendingVoicePath;
+    if (pending != null) {
+      File(pending).delete().catchError((_) => File(pending));
+    }
     _journalController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -444,17 +512,129 @@ class _JournalTabState extends State<_JournalTab> {
     final content = _journalController.text.trim();
     if (content.isEmpty) return;
     final entry = await context.read<MoodProvider>().saveJournal(content);
-    if (!mounted || entry == null) return;
+    if (!mounted) return;
+    if (entry == null) {
+      _showMessage(context.read<MoodProvider>().error ??
+          (widget.isUrdu
+              ? 'جریدہ محفوظ نہیں ہو سکا'
+              : 'Could not save journal'));
+      return;
+    }
     _journalController.clear();
     if (entry.containsDanger) {
       context.push(AppRoutes.crisis);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(entry.isSynced
-                ? 'Private journal saved'
-                : 'Encrypted draft queued offline')),
+      _showMessage(entry.isSynced
+          ? (widget.isUrdu ? 'نجی جریدہ محفوظ ہو گیا' : 'Private journal saved')
+          : (widget.isUrdu
+              ? 'آف لائن اندراج محفوظ ہے'
+              : 'Encrypted draft queued offline'));
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _importTextJournal() async {
+    if (_journalController.text.trim().isNotEmpty) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(
+              widget.isUrdu ? 'موجودہ تحریر بدلیں؟' : 'Replace current draft?'),
+          content: Text(widget.isUrdu
+              ? 'فائل سے متن لانے سے موجودہ غیر محفوظ تحریر بدل جائے گی۔'
+              : 'Importing a file will replace the unsaved text in this box.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(widget.isUrdu ? 'نہیں' : 'Cancel')),
+            FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(widget.isUrdu ? 'بدلیں' : 'Replace')),
+          ],
+        ),
       );
+      if (replace != true || !mounted) return;
+    }
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['txt', 'md'],
+        withData: false,
+      );
+      if (!mounted || result == null) return;
+      final selected = result.files.single;
+      if (selected.size > 32 * 1024 || selected.path == null) {
+        throw Exception('Choose a text file smaller than 32 KB.');
+      }
+      final bytes = await File(selected.path!).readAsBytes();
+      final imported = utf8
+          .decode(bytes, allowMalformed: false)
+          .replaceFirst('\uFEFF', '')
+          .trim();
+      if (imported.isEmpty || imported.length > 5000) {
+        throw Exception('Journal text must be 1–5000 characters.');
+      }
+      _journalController.text = imported;
+      _showMessage(widget.isUrdu
+          ? 'متن درآمد ہو گیا؛ جائزہ لے کر محفوظ کریں'
+          : 'Text imported. Review it, then tap Save privately.');
+    } catch (error) {
+      _showMessage(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      try {
+        await FilePicker.platform.clearTemporaryFiles();
+      } catch (_) {
+        // Picker cache cleanup is not implemented on every platform.
+      }
+    }
+  }
+
+  Future<void> _importVoiceJournal() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['wav', 'm4a', 'mp3'],
+        withData: false,
+      );
+      if (!mounted || result == null) return;
+      final selected = result.files.single;
+      if (selected.path == null ||
+          selected.size < 1 ||
+          selected.size > 4 * 1024 * 1024) {
+        throw Exception('Choose a WAV, M4A, or MP3 file smaller than 4 MB.');
+      }
+      final language = context.read<LanguageProvider>().isUrdu ? 'ur' : 'en';
+      final extension = selected.extension?.toLowerCase();
+      if (!['wav', 'm4a', 'mp3'].contains(extension)) {
+        throw Exception('Choose a WAV, M4A, or MP3 voice note.');
+      }
+      final directory = await getTemporaryDirectory();
+      final id = MoodService.requestId();
+      final targetDirectory = directory.path;
+      final copied = await File(selected.path!)
+          .copy('$targetDirectory/journal-import-$id.$extension');
+      if (!mounted) {
+        await copied.delete();
+        return;
+      }
+      _pendingVoicePath = copied.path;
+      _pendingVoiceRequestId = id;
+      _pendingVoiceLanguage = language;
+      setState(() {});
+      await _uploadPendingVoice();
+    } catch (error) {
+      _showMessage(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      try {
+        await FilePicker.platform.clearTemporaryFiles();
+      } catch (_) {
+        // Picker cache cleanup is not implemented on every platform.
+      }
     }
   }
 
@@ -463,62 +643,153 @@ class _JournalTabState extends State<_JournalTab> {
       await _finishRecording();
       return;
     }
-    if (!await _recorder.hasPermission()) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Microphone permission is required for voice journals.')),
-      );
+    if (_pendingVoicePath != null) {
+      _showMessage(widget.isUrdu
+          ? 'پہلے موجودہ صوتی نوٹ دوبارہ محفوظ کریں یا حذف کریں'
+          : 'Retry or discard the pending voice note first.');
       return;
     }
-    final directory = await getTemporaryDirectory();
-    final path =
-        '${directory.path}/journal-${DateTime.now().millisecondsSinceEpoch}.wav';
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.wav,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
-      path: path,
-    );
-    setState(() {
-      _recording = true;
-      _seconds = 0;
-    });
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _seconds++);
-      if (_seconds >= 60) _finishRecording();
-    });
+    try {
+      if (!await _recorder.hasPermission()) {
+        _showMessage(widget.isUrdu
+            ? 'صوتی نوٹ کے لیے مائیکروفون کی اجازت درکار ہے'
+            : 'Microphone permission is required for voice notes.');
+        return;
+      }
+      final directory = await getTemporaryDirectory();
+      final path =
+          '${directory.path}/journal-${DateTime.now().millisecondsSinceEpoch}.wav';
+      _recordingFilePath = path;
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+        path: path,
+      );
+      if (!mounted) {
+        await _recorder.cancel();
+        _recordingFilePath = null;
+        return;
+      }
+      setState(() {
+        _recording = true;
+        _seconds = 0;
+      });
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted || _stopping) return;
+        setState(() => _seconds++);
+        if (_seconds >= 60) _finishRecording();
+      });
+    } catch (error) {
+      final path = _recordingFilePath;
+      _recordingFilePath = null;
+      if (path != null) {
+        await File(path).delete().catchError((_) => File(path));
+      }
+      _showMessage(error.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   Future<void> _finishRecording() async {
+    if (_stopping || !_recording) return;
+    _stopping = true;
     _timer?.cancel();
-    final path = await _recorder.stop();
-    if (mounted) setState(() => _recording = false);
-    if (path == null || !mounted) return;
-    final language = context.read<LanguageProvider>().isUrdu ? 'ur' : 'en';
+    _timer = null;
+    try {
+      final path = await _recorder.stop();
+      _recordingFilePath = null;
+      if (!mounted) {
+        if (path != null) {
+          await File(path).delete().catchError((_) => File(path));
+        }
+        return;
+      }
+      setState(() => _recording = false);
+      if (path == null) {
+        throw Exception('Recording did not produce a voice note.');
+      }
+      _pendingVoicePath = path;
+      _pendingVoiceRequestId = MoodService.requestId();
+      await _uploadPendingVoice();
+    } catch (error) {
+      final path = _recordingFilePath;
+      _recordingFilePath = null;
+      if (path != null) {
+        await File(path).delete().catchError((_) => File(path));
+      }
+      _showMessage(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      _stopping = false;
+      if (!mounted) unawaited(_recorder.dispose());
+    }
+  }
+
+  Future<void> _uploadPendingVoice() async {
+    final path = _pendingVoicePath;
+    if (path == null) return;
+    final language = _pendingVoiceLanguage ??
+        (context.read<LanguageProvider>().isUrdu ? 'ur' : 'en');
     final entry = await context.read<MoodProvider>().saveVoiceJournal(
           path: path,
           language: language,
+          clientRequestId: _pendingVoiceRequestId,
         );
+    if (!mounted) return;
+    if (entry == null) {
+      _showMessage(context.read<MoodProvider>().error ??
+          (widget.isUrdu
+              ? 'صوتی نوٹ محفوظ نہیں ہو سکا؛ دوبارہ کوشش کریں'
+              : 'Voice note was not saved. Please retry.'));
+      setState(() {});
+      return;
+    }
+    _pendingVoicePath = null;
+    _pendingVoiceRequestId = null;
     await File(path).delete().catchError((_) => File(path));
     if (!mounted) return;
-    if (entry?.containsDanger == true) {
-      context.push(AppRoutes.crisis);
-    } else if (entry == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                context.read<MoodProvider>().error ?? 'Voice journal failed')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Voice journal transcribed and saved privately.')),
-      );
+    setState(() {});
+    _showMessage(widget.isUrdu
+        ? 'نجی صوتی نوٹ محفوظ ہو گیا'
+        : 'Private voice note saved.');
+  }
+
+  Future<void> _discardPendingVoice() async {
+    final path = _pendingVoicePath;
+    if (path == null) return;
+    _pendingVoicePath = null;
+    _pendingVoiceRequestId = null;
+    await File(path).delete().catchError((_) => File(path));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _playVoice(JournalEntry entry) async {
+    if (_playingId == entry.id && _player.playing) {
+      await _player.pause();
+      if (mounted) setState(() => _playingId = null);
+      return;
+    }
+    setState(() => _loadingAudioId = entry.id);
+    try {
+      final bytes = await context.read<MoodProvider>().loadVoiceAudio(entry.id);
+      if (!mounted) return;
+      await _player.stop();
+      await _player.setAudioSource(_PrivateVoiceSource(
+        bytes,
+        entry.voiceContentType ?? 'audio/wav',
+      ));
+      if (!mounted) return;
+      setState(() => _playingId = entry.id);
+      unawaited(_player.play().catchError((Object error) {
+        if (!mounted) return;
+        setState(() => _playingId = null);
+        _showMessage(error.toString().replaceFirst('Exception: ', ''));
+      }));
+    } catch (error) {
+      _showMessage(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _loadingAudioId = null);
     }
   }
 
@@ -590,10 +861,15 @@ class _JournalTabState extends State<_JournalTab> {
               Semantics(
                 button: true,
                 label: _recording
-                    ? 'Stop voice recording'
-                    : 'Start voice recording',
+                    ? (widget.isUrdu
+                        ? 'ریکارڈنگ بند کریں'
+                        : 'Stop voice recording')
+                    : (widget.isUrdu
+                        ? 'صوتی ریکارڈنگ شروع کریں'
+                        : 'Start voice recording'),
                 child: IconButton.filledTonal(
-                  onPressed: provider.isLoading ? null : _toggleRecording,
+                  onPressed:
+                      provider.isLoading || _stopping ? null : _toggleRecording,
                   icon:
                       Icon(_recording ? Icons.stop_rounded : Icons.mic_rounded),
                   color: _recording ? AppColors.error : AppColors.primary,
@@ -605,8 +881,64 @@ class _JournalTabState extends State<_JournalTab> {
             const SizedBox(height: 10),
             LinearProgressIndicator(value: _seconds / 60),
             const SizedBox(height: 4),
-            Text('Recording ${_seconds}s / 60s', textAlign: TextAlign.center),
+            Text(
+                widget.isUrdu
+                    ? 'ریکارڈنگ $_seconds سیکنڈ / 60 سیکنڈ'
+                    : 'Recording ${_seconds}s / 60s',
+                textAlign: TextAlign.center),
           ],
+          if (_pendingVoicePath != null && !_recording) ...[
+            const SizedBox(height: 10),
+            Text(
+                widget.isUrdu
+                    ? 'صوتی نوٹ ابھی اپ لوڈ نہیں ہوا۔ اس صفحے کو چھوڑنے سے پہلے دوبارہ کوشش کریں۔'
+                    : 'Voice note not uploaded. Retry before leaving this page.',
+                style: AppTextStyles.bodySmall),
+            Wrap(spacing: 8, children: [
+              TextButton.icon(
+                onPressed: provider.isLoading ? null : _uploadPendingVoice,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(widget.isUrdu ? 'دوبارہ کوشش' : 'Retry upload'),
+              ),
+              TextButton(
+                onPressed: provider.isLoading ? null : _discardPendingVoice,
+                child: Text(widget.isUrdu ? 'حذف کریں' : 'Discard'),
+              ),
+            ]),
+          ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              TextButton.icon(
+                onPressed: provider.isLoading || _recording
+                    ? null
+                    : _importTextJournal,
+                icon: const Icon(Icons.upload_file_rounded),
+                label: Text(widget.isUrdu
+                    ? 'تحریری فائل لائیں'
+                    : 'Import text journal'),
+              ),
+              TextButton.icon(
+                onPressed: provider.isLoading ||
+                        _recording ||
+                        _pendingVoicePath != null
+                    ? null
+                    : _importVoiceJournal,
+                icon: const Icon(Icons.audio_file_rounded),
+                label: Text(
+                    widget.isUrdu ? 'صوتی فائل لائیں' : 'Import voice note'),
+              ),
+            ],
+          ),
+          Text(
+            widget.isUrdu
+                ? 'تحریر: TXT/MD، ۵۰۰۰ حروف۔ آڈیو: WAV/M4A/MP3، 4 MB۔ اختیاری انگریزی/اردو نقل کے لیے ۶۰ سیکنڈ کی آڈیو؛ تجزیے سے پہلے الفاظ کی تصدیق کریں۔ فوری خطرے میں فوری مدد لیں۔'
+                : 'Text: TXT/MD, up to 5000 characters. Audio: WAV/M4A/MP3, up to 4 MB. Optional English/Urdu transcripts support clips up to 60 seconds. Review your words before analysis; use Immediate Help for urgent danger.',
+            style: AppTextStyles.bodySmall
+                .copyWith(color: context.hcTextSecondary),
+          ),
           const SizedBox(height: 24),
           TextField(
             controller: _searchController,
@@ -637,8 +969,25 @@ class _JournalTabState extends State<_JournalTab> {
           else
             ...provider.journals.map((entry) => _JournalCard(
                   entry: entry,
+                  isUrdu: widget.isUrdu,
+                  isPlaying: _playingId == entry.id,
+                  isLoadingAudio: _loadingAudioId == entry.id,
+                  onPlay: entry.hasAudio ? () => _playVoice(entry) : null,
+                  onTranscribe: entry.hasAudio && entry.content == null
+                      ? () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => VoiceTranscriptScreen(
+                              journalId: entry.id,
+                              accountId: widget.accountId,
+                              onPlay: () => _playVoice(entry))))
+                      : null,
                   onDelete: entry.isSynced
-                      ? () => provider.deleteJournal(entry.id)
+                      ? () async {
+                          if (_playingId == entry.id) {
+                            await _player.stop();
+                            if (mounted) setState(() => _playingId = null);
+                          }
+                          await provider.deleteJournal(entry.id);
+                        }
                       : null,
                 )),
         ],
@@ -648,10 +997,22 @@ class _JournalTabState extends State<_JournalTab> {
 }
 
 class _JournalCard extends StatelessWidget {
-  const _JournalCard({required this.entry, required this.onDelete});
+  const _JournalCard(
+      {required this.entry,
+      required this.onDelete,
+      required this.isUrdu,
+      required this.isPlaying,
+      required this.isLoadingAudio,
+      this.onTranscribe,
+      required this.onPlay});
 
   final JournalEntry entry;
   final VoidCallback? onDelete;
+  final bool isUrdu;
+  final bool isPlaying;
+  final bool isLoadingAudio;
+  final VoidCallback? onPlay;
+  final VoidCallback? onTranscribe;
 
   @override
   Widget build(BuildContext context) {
@@ -696,6 +1057,39 @@ class _JournalCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(entry.content!, style: AppTextStyles.bodyMedium),
           ],
+          if (entry.entryType == 'voice') ...[
+            const SizedBox(height: 6),
+            Text(
+                isUrdu
+                    ? (entry.content == null
+                        ? 'نجی صوتی نوٹ — اختیاری نقل دستیاب'
+                        : 'نجی صوتی نوٹ — تصدیق شدہ نقل')
+                    : entry.content == null
+                        ? 'Private voice note — optional transcript available'
+                        : 'Private voice note — confirmed transcript',
+                style: AppTextStyles.bodySmall),
+            if (onPlay != null)
+              TextButton.icon(
+                onPressed: isLoadingAudio ? null : onPlay,
+                icon: isLoadingAudio
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Icon(isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded),
+                label: Text(isUrdu
+                    ? (isPlaying ? 'روکیں' : 'سنیں')
+                    : (isPlaying ? 'Pause' : 'Play voice note')),
+              ),
+            if (onTranscribe != null)
+              TextButton.icon(
+                  onPressed: onTranscribe,
+                  icon: const Icon(Icons.record_voice_over_outlined),
+                  label: Text(isUrdu
+                      ? 'صوتی نقل بنائیں / دیکھیں'
+                      : 'Transcribe / review')),
+          ],
           if (entry.sentimentLabel != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -706,6 +1100,30 @@ class _JournalCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+// Pinned just_audio version; this source keeps decrypted audio in memory.
+// ignore: experimental_member_use
+class _PrivateVoiceSource extends StreamAudioSource {
+  _PrivateVoiceSource(this.bytes, this.mimeType);
+
+  final Uint8List bytes;
+  final String mimeType;
+
+  @override
+  // ignore: experimental_member_use
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    final from = (start ?? 0).clamp(0, bytes.length);
+    final to = (end ?? bytes.length).clamp(from, bytes.length);
+    // ignore: experimental_member_use
+    return StreamAudioResponse(
+      sourceLength: bytes.length,
+      contentLength: to - from,
+      offset: from,
+      stream: Stream.value(bytes.sublist(from, to)),
+      contentType: mimeType,
     );
   }
 }

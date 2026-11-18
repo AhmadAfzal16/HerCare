@@ -4,17 +4,41 @@ import '../data/models/community_models.dart';
 import '../data/services/api_service.dart';
 
 class CommunityService {
+  CommunityService({Dio? client, this.accountId}) : _client = client;
+  final Dio? _client;
+  final String? accountId;
+
   Future<dynamic> _request(String method, String path,
       {Map<String, dynamic>? data, Map<String, dynamic>? query}) async {
     try {
-      final result = await ApiService().client.request('/community$path',
-          data: data, queryParameters: query, options: Options(method: method));
-      return result.data['data'];
+      final result = await (_client ?? ApiService().client).request(
+          '/community$path',
+          data: data,
+          queryParameters: query,
+          options: Options(method: method, followRedirects: false, headers: {
+            if (accountId != null) 'X-Community-Account-Id': accountId,
+          }));
+      final body = result.data;
+      if (body is! Map || body['success'] != true || body['data'] == null) {
+        throw const CommunityException(
+            'Invalid community response. Please retry.',
+            invalidResponse: true);
+      }
+      return body['data'];
     } on DioException catch (error) {
       final response = error.response?.data;
-      throw CommunityException(response is Map && response['message'] is String
-          ? response['message'] as String
-          : 'Could not connect to the community. Please try again.');
+      throw CommunityException(
+          error.response?.statusCode != null &&
+                  error.response!.statusCode! < 500 &&
+                  response is Map &&
+                  response['message'] is String
+              ? response['message'] as String
+              : 'Could not connect to the community. Please try again.',
+          statusCode: error.response?.statusCode);
+    } on TypeError {
+      throw const CommunityException(
+          'Invalid community response. Please retry.',
+          invalidResponse: true);
     }
   }
 
@@ -29,12 +53,14 @@ class CommunityService {
           {String? topic,
           String? cursor,
           bool mine = false,
+          bool includeReplies = false,
           String? sessionId}) async =>
       CommunityPage(
           Map<String, dynamic>.from(await _request('GET', '/posts', query: {
         if (topic != null) 'topic': topic,
         if (cursor != null) 'cursor': cursor,
         if (mine) 'mine': 'true',
+        if (mine && includeReplies) 'include_replies': 'true',
         if (sessionId != null) 'session_id': sessionId,
       })));
   Future<CommunityPost> detail(String id) async => CommunityPost(
@@ -81,6 +107,11 @@ class CommunityService {
   Future<CommunityPage> queue({String? cursor}) async => CommunityPage(
       Map<String, dynamic>.from(await _request('GET', '/moderation',
           query: {if (cursor != null) 'cursor': cursor})));
+  Future<Map<String, dynamic>> moderationStatus() async =>
+      Map<String, dynamic>.from(await _request('GET', '/moderation/status'));
+  Future<Map<String, dynamic>> members({String? cursor}) async =>
+      Map<String, dynamic>.from(await _request('GET', '/members',
+          query: {if (cursor != null) 'cursor': cursor}));
   Future<void> review(
       CommunityPost post, String decision, String reason) async {
     await _request('PUT', '/moderation/${post.id}', data: {
@@ -106,8 +137,15 @@ class CommunityService {
 }
 
 class CommunityException implements Exception {
-  CommunityException(this.message);
+  const CommunityException(this.message,
+      {this.statusCode, this.invalidResponse = false});
   final String message;
+  final int? statusCode;
+  final bool invalidResponse;
+  bool get accessDenied => statusCode == 401 || statusCode == 403;
+  bool get unavailable => accessDenied || statusCode == 404;
+  bool get deliveryUncertain =>
+      statusCode == null || statusCode! >= 500 || invalidResponse;
   @override
   String toString() => message;
 }

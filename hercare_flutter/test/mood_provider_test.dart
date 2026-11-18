@@ -24,9 +24,9 @@ class _Mood extends MoodService {
           {String? clientRequestId,
           required DateTime date,
           required int moodRating,
-          required int energyLevel,
-          required int sleepQuality,
-          required int socialSupport}) async =>
+          int? energyLevel,
+          int? sleepQuality,
+          int? socialSupport}) async =>
       MoodCheckin(
           id: 'saved',
           entryDate: date,

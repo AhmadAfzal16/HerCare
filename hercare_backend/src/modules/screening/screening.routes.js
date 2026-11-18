@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const { authenticate, authorize } = require('../../middleware/auth');
 const controller = require('./screening.controller');
 const validator = require('./screening.validator');
+const { accountScope } = require('../../middleware/account_scope');
 
 const router = Router();
 const submitLimiter = rateLimit({
@@ -13,7 +14,8 @@ const submitLimiter = rateLimit({
   message: { success: false, message: 'Too many screening requests. Please wait.' },
 });
 
-router.use(authenticate, authorize('mother'));
+router.use(authenticate, authorize('mother'), accountScope('X-Screening-Account-Id'));
+router.get('/schedule', controller.schedule);
 router.get('/instruments/:type', validator.instrumentParam, validator.validate, controller.getInstrument);
 router.post('/assessments', submitLimiter, validator.startValidation, validator.validate, controller.start);
 router.put('/assessments/:assessmentId/draft', validator.draftValidation, validator.validate, controller.saveDraft);

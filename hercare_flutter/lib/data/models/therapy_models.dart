@@ -30,6 +30,7 @@ class TherapySession {
     required this.activityId,
     required this.durationSeconds,
     required this.completed,
+    this.breathingParticipation,
     required this.completedAt,
     this.moodBefore,
     this.moodAfter,
@@ -43,23 +44,26 @@ class TherapySession {
   final int? moodBefore;
   final int? moodAfter;
   final bool completed;
+  final String? breathingParticipation;
   final DateTime completedAt;
   final bool isSynced;
 
-  int? get moodChange =>
-      moodBefore == null || moodAfter == null ? null : moodAfter! - moodBefore!;
+  int? get moodChange => !completed || moodBefore == null || moodAfter == null
+      ? null
+      : moodAfter! - moodBefore!;
 
   factory TherapySession.fromJson(Map<String, dynamic> json) => TherapySession(
         id: json['id']?.toString() ?? '',
         activityType: json['activity_type']?.toString() ?? '',
         activityId: json['activity_id']?.toString() ?? '',
-        durationSeconds: (json['duration_seconds'] as num?)?.toInt() ?? 0,
-        moodBefore: (json['mood_before'] as num?)?.toInt(),
-        moodAfter: (json['mood_after'] as num?)?.toInt(),
-        completed: json['completed'] != false,
+        durationSeconds: _integer(json['duration_seconds'], maximum: 7200) ?? 0,
+        moodBefore: _integer(json['mood_before'], minimum: 1, maximum: 5),
+        moodAfter: _integer(json['mood_after'], minimum: 1, maximum: 5),
+        completed: json['completed'] == true,
+        breathingParticipation: json['breathing_participation'] as String?,
         completedAt:
             DateTime.tryParse(json['completed_at']?.toString() ?? '') ??
-                DateTime.now(),
+                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );
 }
 
@@ -69,24 +73,44 @@ class TherapySummary {
     required this.completedSessions,
     required this.totalSeconds,
     this.averageMoodChange,
+    this.periodDays = 30,
+    this.pairedMoodSessions = 0,
   });
 
   final int totalSessions;
   final int completedSessions;
   final int totalSeconds;
   final double? averageMoodChange;
+  final int periodDays;
+  final int pairedMoodSessions;
 
   factory TherapySummary.fromJson(Map<String, dynamic> json) => TherapySummary(
-        totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
-        completedSessions: (json['completed_sessions'] as num?)?.toInt() ?? 0,
-        totalSeconds: (json['total_seconds'] as num?)?.toInt() ?? 0,
+        totalSessions: _integer(json['total_sessions']) ?? 0,
+        completedSessions: _integer(json['completed_sessions']) ?? 0,
+        totalSeconds: _integer(json['total_seconds']) ?? 0,
         averageMoodChange: _numberOrNull(json['avg_mood_change']),
+        periodDays:
+            _integer(json['period_days'], minimum: 1, maximum: 366) ?? 30,
+        pairedMoodSessions: _integer(json['paired_mood_sessions']) ?? 0,
       );
 
   static double? _numberOrNull(dynamic value) {
     if (value == null) return null;
-    return value is num ? value.toDouble() : double.tryParse('$value');
+    final parsed = value is num ? value.toDouble() : double.tryParse('$value');
+    return parsed != null && parsed.isFinite && parsed.abs() <= 4
+        ? parsed
+        : null;
   }
+}
+
+int? _integer(dynamic value,
+    {int minimum = 0, int maximum = 9007199254740991}) {
+  final parsed = value is num ? value : num.tryParse('$value');
+  if (parsed == null || !parsed.isFinite || parsed != parsed.roundToDouble()) {
+    return null;
+  }
+  if (parsed < minimum || parsed > maximum) return null;
+  return parsed.toInt();
 }
 
 class TherapyActivity {
@@ -214,6 +238,14 @@ abstract final class TherapyCatalog {
         titleUr: 'پرسکون رنگ',
         description: 'Follow a gentle color sequence.',
         descriptionUr: 'نرم رنگوں کی ترتیب مکمل کریں۔',
+        minutes: 2),
+    TherapyActivity(
+        id: 'domestic_puzzle',
+        type: 'game',
+        title: 'A Peaceful Home',
+        titleUr: 'پرسکون گھر',
+        description: 'Match three household items to their places.',
+        descriptionUr: 'گھر کی تین چیزوں کو ان کی جگہ سے ملائیں۔',
         minutes: 2),
   ];
 

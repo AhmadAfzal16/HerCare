@@ -171,3 +171,33 @@ class ScreeningReminder {
             : DateTime.parse(json['due_at'] as String),
       );
 }
+
+class ScheduledScreening {
+  const ScheduledScreening({
+    required this.instrumentType,
+    required this.intervalDays,
+    required this.due,
+    required this.dueAt,
+    this.lastCompletedAt,
+    this.draftId,
+  });
+
+  final String instrumentType;
+  final int intervalDays;
+  final bool due;
+  final DateTime dueAt;
+  final DateTime? lastCompletedAt;
+  final String? draftId;
+
+  factory ScheduledScreening.fromJson(Map<String, dynamic> json) =>
+      ScheduledScreening(
+        instrumentType: json['instrument_type'] as String,
+        intervalDays: _asInt(json['interval_days'], 'interval_days'),
+        due: json['due'] as bool,
+        dueAt: DateTime.parse(json['due_at'] as String),
+        lastCompletedAt: json['last_completed_at'] == null
+            ? null
+            : DateTime.parse(json['last_completed_at'] as String),
+        draftId: json['draft_id'] as String?,
+      );
+}

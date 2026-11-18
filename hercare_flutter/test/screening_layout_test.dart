@@ -61,7 +61,8 @@ void main() {
 
 class _FakeScreeningService extends ScreeningService {
   @override
-  Future<ScreeningInstrument> getInstrument(String type) async =>
+  Future<ScreeningInstrument> getInstrument(String type,
+          {String? version}) async =>
       ScreeningInstrument(
         type: type,
         name: 'Edinburgh Postnatal Depression Scale',

@@ -56,6 +56,24 @@ test('valid mother onboarding payload is accepted', async () => {
   assert.equal(result.value.consent_tier1, true);
 });
 
+test('minimal mother onboarding keeps optional answers absent', async () => {
+  const result = await runValidation({
+    age: 27,
+    months_since_birth: 3,
+    parity: 0,
+    has_preeclampsia: false,
+    has_postpartum_hemorrhage: false,
+    has_preterm_birth: false,
+    has_gestational_diabetes: false,
+    consent_tier1: true,
+    consent_tier2: false,
+    consent_tier3: false,
+  });
+  assert.equal(result.passed, true);
+  assert.equal(result.value.full_name, undefined);
+  assert.equal(result.value.delivery_method, undefined);
+});
+
 test('required basic monitoring consent cannot be declined', async () => {
   const result = await runValidation({
     ...validPayload,

@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "generator": "eSpeak NG 1.52.0; espeakng-loader 0.2.4",
+  "generator_license": "GPL-3.0-or-later (build tool only)",
+  "source_url": "https://github.com/espeak-ng/espeak-ng",
+  "synthetic_voice": true,
+  "human_reviewed": false,
+  "source_sha256": "a5b909f3a76f8dd2ff8aaf3c63f094cac0e56d0c2a4a99cd45433f062e324a82",
+  "clips": [
+    {
+      "file": "en_body_scan_0.m4a",
+      "activity_id": "body_scan",
+      "language": "en",
+      "step": 0,
+      "seconds": 11.676,
+      "sha256": "dbd451b4b4a6c56d388ec9dbb4c7ad12a4312884cd3014010779052a4f74053d",
+      "text_sha256": "695836e705e11dbc95c86f2cf5a2b8bf412014290fe80581d292de1c0eaf7a6d"
+    },
+    {
+      "file": "en_body_scan_1.m4a",
+      "activity_id": "body_scan",
+      "language": "en",
+      "step": 1,
+      "seconds": 12.907,
+      "sha256": "6b3092ef2e3f04209ef81ec70695f0a70f1e9203825a25c05ebb0e6aa3db1164",
+      "text_sha256": "e484102240ab0da9cfd10166a23d3fa0c81bf954d6eecd63ae0a4d34f5ab1a0e"
+    },
+    {
+      "file": "en_body_scan_2.m4a",
+      "activity_id": "body_scan",
+      "language": "en",
+      "step": 2,
+      "seconds": 13.529,
+      "sha256": "73af7e10ae356071e885988957f6277925cf9bc14dd4014dabc516ab982f9967",
+      "text_sha256": "1a00c274e91806747b7559f922033dc9a784f0f36ded2e399adab848d1137952"
+    },
+    {
+      "file": "en_body_scan_3.m4a",
+      "activity_id": "body_scan",
+      "language": "en",
+      "step": 3,
+      "seconds": 11.759,
+      "sha256": "109f5c827dbc5936a37ffcd74c6da048d67e8271b88821b0924abdc980c66c27",
+      "text_sha256": "ddfa9b3b6ee3f2238346915cf6735b832ac2d53579ab331ea0843e026b4689cc"
+    },
+    {
+      "file": "ur_body_scan_0.m4a",
+      "activity_id": "body_scan",
+      "language": "ur",
+      "step": 0,
+      "seconds": 15.456,
+      "sha256": "aaaf908bd5fa155913607a1c2786297cd8237a15dda71397bb11f569b74a2a8b",
+      "text_sha256": "1e0916dbc07e36a09e86be8e671c06b14a660db59008d2a4f3671c5a6e22124d"
+    },
+    {
+      "file": "ur_body_scan_1.m4a",
+      "activity_id": "body_scan",
+      "language": "ur",
+      "step": 1,
+      "seconds": 15.161,
+      "sha256": "9d7dd35d56431a4e728f0cab7766ff5e23dcdf85037fc16beee4099cda04546f",
+      "text_sha256": "fa26deece91c17d4cdbb9afb2216637043f63d4ae6d4e219fc6211d15bb817fa"
+    },
+    {
+      "file": "ur_body_scan_2.m4a",
+      "activity_id": "body_scan",
+      "language": "ur",
+      "step": 2,
+      "seconds": 15.524,
+      "sha256": "519065d9f9c2d9724ecfb438b1d366b73a2ef9ab668213ac665578222878ece3",
+      "text_sha256": "2d979bd5e22463f75fa494260a8c9614848710fc5ca956331d33416956227d1f"
+    },
+    {
+      "file": "ur_body_scan_3.m4a",
+      "activity_id": "body_scan",
+      "language": "ur",
+      "step": 3,
+      "seconds": 14.116,
+      "sha256": "e7ca0400bd83770bda656e30bcc13a17fe597013b9ae2939258ca777787f05d2",
+      "text_sha256": "f27086bbbcc9f264c97a32499fdc65d9bb31e5666944c2a1770622b3574bc078"
+    },
+    {
+      "file": "en_muscle_relaxation_0.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "en",
+      "step": 0,
+      "seconds": 13.576,
+      "sha256": "411476d68b301f92dacff686ab8bd70dc6f7c1ca45a1cafeed5a6f2a1928dc5e",
+      "text_sha256": "b8ad96a45c4b856ad72fda5f2d419cb9e3b224f9205094362f49609940616084"
+    },
+    {
+      "file": "en_muscle_relaxation_1.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "en",
+      "step": 1,
+      "seconds": 12.5,
+      "sha256": "d8f0add4cb9ad6e5e2ab2d6c9ec6ea36a74417479dc2b6c89eb014b9ce542f6a",
+      "text_sha256": "a8d52c3964fe291238cb19b3653c2fa9ee7aca8d3a265063ca52fc58c3767bbe"
+    },
+    {
+      "file": "en_muscle_relaxation_2.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "en",
+      "step": 2,
+      "seconds": 12.472,
+      "sha256": "01b2b9d20dda1a07554f5fa90aadf3ee1fe2797b0b51810e27cd15ca8a7bcadc",
+      "text_sha256": "f977d1f4c666e39873cd5677e390afc3c0d8cdbb4e01db9d65c51519d2846dac"
+    },
+    {
+      "file": "en_muscle_relaxation_3.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "en",
+      "step": 3,
+      "seconds": 12.246,
+      "sha256": "a857b766500681b51246d0d5f2ca64611e785a038c3cdae2c395aa7fdb70516a",
+      "text_sha256": "f907827fffcfb0d1845ac9894bea6f8699aa8057cfdc94c3f89a84f0a4d95bf5"
+    },
+    {
+      "file": "ur_muscle_relaxation_0.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "ur",
+      "step": 0,
+      "seconds": 16.568,
+      "sha256": "3a932c74919fb91366a2a661dad22f97cf0fd06e81e94522c08aed4bce6feab8",
+      "text_sha256": "05bc405e902ba7b154c96cfa5ddd82bdbaefc2e4705e6e7674e10d1cba4e6750"
+    },
+    {
+      "file": "ur_muscle_relaxation_1.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "ur",
+      "step": 1,
+      "seconds": 15.307,
+      "sha256": "3bc4274ef1f24863f5336e8019007e1bd92bb0027f3e5c2a5df2ef9a931a615f",
+      "text_sha256": "48874e255f92a6f07419338ba896d95969aec69432955be1ad25782a1151e115"
+    },
+    {
+      "file": "ur_muscle_relaxation_2.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "ur",
+      "step": 2,
+      "seconds": 14.887,
+      "sha256": "299eeaeebf8b1fa7e869dc1ae86b6288e456f8d2b4e83db7c3be8fd709604950",
+      "text_sha256": "76afa1763e07eab81183bbcdf74493fcb9ad0194f274566abed361073d3a0730"
+    },
+    {
+      "file": "ur_muscle_relaxation_3.m4a",
+      "activity_id": "muscle_relaxation",
+      "language": "ur",
+      "step": 3,
+      "seconds": 13.74,
+      "sha256": "e17fbc93327c6d2feccecef02987dd0fadaf365b5d326e318086a08a1d3b2262",
+      "text_sha256": "7925c4b7a1843a3fccced78d27e86a152636ee1dcac502988f577537727dcf9b"
+    },
+    {
+      "file": "en_mindfulness_0.m4a",
+      "activity_id": "mindfulness",
+      "language": "en",
+      "step": 0,
+      "seconds": 12.344,
+      "sha256": "ea145c968fbdcac4562cb78263f738cdb7327fb225fdde617a4580aaadf0d0db",
+      "text_sha256": "e447d507ea8e688af146f9d78fb4a097b8907061a5cb57ab1c03366058fbce95"
+    },
+    {
+      "file": "en_mindfulness_1.m4a",
+      "activity_id": "mindfulness",
+      "language": "en",
+      "step": 1,
+      "seconds": 11.194,
+      "sha256": "6face1f04220ddf515018fe7691d6e6272907768b7ab1a601e1031a96d2fb1cb",
+      "text_sha256": "f0a13375bf66e24be95c7d1716be6caa4b1d733402f0320485a17719b8150e41"
+    },
+    {
+      "file": "en_mindfulness_2.m4a",
+      "activity_id": "mindfulness",
+      "language": "en",
+      "step": 2,
+      "seconds": 12.612,
+      "sha256": "cab7f46fb120408305431498a59dad5b6ac385cbcf5cbe2b7c24198607e1f77d",
+      "text_sha256": "c18a683ff7ad01709bdb12f9bc1668d7e72435ffbf2c288f00d72c4d8ae68e7f"
+    },
+    {
+      "file": "en_mindfulness_3.m4a",
+      "activity_id": "mindfulness",
+      "language": "en",
+      "step": 3,
+      "seconds": 12.363,
+      "sha256": "34a3e748f434f6653b2b9033d36a565f02876d6f04081057af3d3b878a8f92dc",
+      "text_sha256": "cc60e6c1dcc6aba15fe79d98a366333046d51f315f9a4666ffa59476f148f747"
+    },
+    {
+      "file": "ur_mindfulness_0.m4a",
+      "activity_id": "mindfulness",
+      "language": "ur",
+      "step": 0,
+      "seconds": 15.041,
+      "sha256": "e68685e3dfdad7a215d599b6f6591af18b93eb8f5ed0ebe2a056a2de377eaeed",
+      "text_sha256": "3ad4727bcc8127ccd27c40d886a14ad62697fd08fd8ce54b8a16056059e41e31"
+    },
+    {
+      "file": "ur_mindfulness_1.m4a",
+      "activity_id": "mindfulness",
+      "language": "ur",
+      "step": 1,
+      "seconds": 14.274,
+      "sha256": "8192d8d6d09cc945af964cdef2b652d562a4201ba6bba8926310de46e8de978b",
+      "text_sha256": "1471a5f485c9ae52f79c0687e5073004890084adddff1d8e20c2afa2ec5b0d17"
+    },
+    {
+      "file": "ur_mindfulness_2.m4a",
+      "activity_id": "mindfulness",
+      "language": "ur",
+      "step": 2,
+      "seconds": 14.245,
+      "sha256": "8ada3c5f1b6e2e9f1b332bc4381c552f0d8b6eb26d8c0277d642cebf93d59054",
+      "text_sha256": "0968ad08905fd68ed24de144d98bbef5d297501f1040eefff4d6fa894846e8c2"
+    },
+    {
+      "file": "ur_mindfulness_3.m4a",
+      "activity_id": "mindfulness",
+      "language": "ur",
+      "step": 3,
+      "seconds": 13.326,
+      "sha256": "3ffc7718538d275d23d138203f976f1a8d46cb51b69faf3e3df9de62070289df",
+      "text_sha256": "640b65984161544e9d221a9f8e64d1f5a387ee661eeeefaf3c019eb8ce3e1351"
+    }
+  ]
+}

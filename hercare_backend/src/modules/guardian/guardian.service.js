@@ -375,7 +375,7 @@ async function generateReport(motherId, periodType, anchorDate) {
   return rows[0];
 }
 
-async function notifyGuardian(motherId, riskLevel, reportId = null) {
+async function notifyGuardian(motherId, riskLevel, reportId = null, crisisEventId = null) {
   if (!['high', 'severe'].includes(riskLevel)) return;
   const { rows: links } = await query(
     `SELECT gl.guardian_id FROM guardian_links gl
@@ -390,27 +390,35 @@ async function notifyGuardian(motherId, riskLevel, reportId = null) {
   const message = riskLevel === 'severe'
     ? 'URGENT: A severe risk indicator was detected. Please check on her immediately and use the crisis plan.'
     : 'A high risk indicator was detected. Please check on her and help arrange professional support.';
-  await query(
+  const inserted = await query(
     `INSERT INTO guardian_alerts
-       (mother_id, guardian_id, report_id, alert_type, message)
-     VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
-    [motherId, links[0].guardian_id, reportId, alertType, message],
+       (mother_id, guardian_id, report_id, alert_type, message, crisis_event_id)
+     VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id`,
+    [motherId, links[0].guardian_id, reportId, alertType, message, crisisEventId],
   );
+  if (!inserted.rows.length) return;
   await pushNotifications.processPendingSafely();
   logger.warn(`Guardian risk alert created for guardian ${links[0].guardian_id}`);
 }
+
+const ALERT_ELIGIBILITY = `EXISTS (
+  SELECT 1 FROM guardian_links gl
+  JOIN onboarding_data od ON od.user_id=gl.mother_id AND od.consent_tier1 AND od.consent_tier2
+  JOIN users mother ON mother.id=gl.mother_id AND mother.is_active AND mother.role='mother'
+  JOIN users recipient ON recipient.id=gl.guardian_id AND recipient.is_active AND recipient.role='guardian'
+  LEFT JOIN crisis_safety_plans plan ON plan.mother_id=gl.mother_id
+  LEFT JOIN crisis_events event ON event.id=ga.crisis_event_id AND event.mother_id=ga.mother_id
+  WHERE gl.guardian_id=ga.guardian_id AND gl.mother_id=ga.mother_id AND gl.status='active'
+    AND (ga.alert_type NOT IN ('crisis','risk_severe') OR (
+      plan.guardian_contact_confirmed AND plan.safe_guardian_link_id=gl.id
+      AND ga.crisis_guardian_link_id=gl.id AND event.status<>'resolved'))
+)`;
 
 async function getAlerts(guardianId, limit = 20) {
   const { rows } = await query(
     `SELECT ga.id, ga.alert_type, ga.message, ga.is_read, ga.triggered_at
      FROM guardian_alerts ga
-     WHERE ga.guardian_id = $1 AND EXISTS (
-       SELECT 1 FROM guardian_links gl
-       JOIN onboarding_data od ON od.user_id = gl.mother_id
-       JOIN users u ON u.id = gl.mother_id AND u.is_active = TRUE
-       WHERE gl.guardian_id = ga.guardian_id AND gl.mother_id = ga.mother_id
-         AND gl.status = 'active' AND od.consent_tier2 = TRUE
-     )
+     WHERE ga.guardian_id = $1 AND ${ALERT_ELIGIBILITY}
      ORDER BY ga.triggered_at DESC LIMIT $2`,
     [guardianId, limit],
   );
@@ -422,11 +430,11 @@ async function markAlertsRead(guardianId, alertIds = []) {
   let filter = '';
   if (alertIds.length > 0) {
     params.push(alertIds);
-    filter = ' AND id = ANY($2::uuid[])';
+    filter = ' AND ga.id = ANY($2::uuid[])';
   }
   const { rowCount } = await query(
-    `UPDATE guardian_alerts SET is_read = TRUE
-     WHERE guardian_id = $1 AND is_read = FALSE${filter}`,
+    `UPDATE guardian_alerts ga SET is_read = TRUE
+     WHERE ga.guardian_id = $1 AND ga.is_read = FALSE${filter} AND ${ALERT_ELIGIBILITY}`,
     params,
   );
   return { updated: rowCount };

@@ -15,10 +15,12 @@ class EpdsScreen extends StatefulWidget {
     super.key,
     this.hideBackButton = false,
     this.instrumentType = 'epds',
+    this.assessmentId,
   });
 
   final bool hideBackButton;
   final String instrumentType;
+  final String? assessmentId;
 
   @override
   State<EpdsScreen> createState() => _EpdsScreenState();
@@ -39,6 +41,7 @@ class _EpdsScreenState extends State<EpdsScreen> {
     await context.read<ScreeningProvider>().initialize(
           language: language,
           instrumentType: widget.instrumentType,
+          assessmentId: widget.assessmentId,
         );
     if (!mounted) return;
     final provider = context.read<ScreeningProvider>();
@@ -77,7 +80,7 @@ class _EpdsScreenState extends State<EpdsScreen> {
     final question = instrument.questions[_currentIndex];
     if (!provider.answers.containsKey(question.number)) {
       _showMessage(
-          'Please select the answer that best describes the past seven days.');
+          'Please select the answer that best describes the past ${instrument.timeframeDays} days.');
       return;
     }
     if (_currentIndex < instrument.questions.length - 1) {

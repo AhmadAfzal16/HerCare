@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>HerCare uses the microphone only when you choose to record a private voice journal.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Only when you choose Nearby care, HerCare uses your approximate location once to sort public hospital listings on your phone. Your location is not uploaded or saved. You can select a city without sharing location.</string>
+	<key>NSLocationDefaultAccuracyReduced</key>
+	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

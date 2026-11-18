@@ -6,7 +6,6 @@ const {
   DeleteObjectCommand,
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const speech = require('@google-cloud/speech');
 const { AppError } = require('../../middleware/error_handler');
 
 const MAX_VOICE_BYTES = 4 * 1024 * 1024;
@@ -68,30 +67,6 @@ async function downloadVerifiedAudio(objectKey, expectedBytes) {
   return Buffer.from(await object.Body.transformToByteArray());
 }
 
-async function transcribeAudio(audio, preferredLanguage = 'ur') {
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.GOOGLE_CLOUD_PROJECT) {
-    throw new AppError('Voice transcription is not configured on this deployment.', 503);
-  }
-  const languageCode = preferredLanguage === 'en' ? 'en-US' : 'ur-PK';
-  const alternativeLanguageCodes = preferredLanguage === 'en' ? ['ur-PK'] : ['en-US'];
-  const client = new speech.SpeechClient();
-  const [response] = await client.recognize({
-    audio: { content: audio.toString('base64') },
-    config: {
-      encoding: 'LINEAR16',
-      sampleRateHertz: 16000,
-      audioChannelCount: 1,
-      languageCode,
-      alternativeLanguageCodes,
-      enableAutomaticPunctuation: true,
-      model: 'latest_long',
-    },
-  });
-  return (response.results || [])
-    .map((result) => result.alternatives?.[0]?.transcript || '')
-    .join(' ')
-    .trim();
-}
 
 async function deleteAudio(objectKey) {
   if (!objectKey) return;
@@ -103,6 +78,5 @@ module.exports = {
   MAX_VOICE_BYTES,
   createUploadUrl,
   downloadVerifiedAudio,
-  transcribeAudio,
   deleteAudio,
 };

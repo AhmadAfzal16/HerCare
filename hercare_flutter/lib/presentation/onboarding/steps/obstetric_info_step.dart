@@ -8,14 +8,7 @@ import '../../../data/models/onboarding_model.dart';
 /// Step 2: Obstetric Information
 /// Collects: delivery method, parity, complications, baby gender.
 ///
-/// Clinical basis: PPD risk factors per Kamal et al. (2025) —
-///   - Cesarean (OR = 1.60)
-///   - Preeclampsia (aOR = 2.30)
-///   - Postpartum hemorrhage (aOR = 2.10)
-///   - Preterm birth (aOR = 1.85)
-///   - Female baby (43% vs 14% PPD rate; Jadoon et al., 2020)
-///
-/// These fields are features for the ML risk prediction engine (Phase 1 M4).
+/// Optional profile details, not an individual clinical risk assessment.
 class ObstetricInfoStep extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final OnboardingData data;
@@ -51,8 +44,8 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
             _RadioGroup<DeliveryMethod>(
               isUrdu: widget.isUrdu,
               value: widget.data.deliveryMethod,
-              options: [
-                const _RadioOption(
+              options: const [
+                _RadioOption(
                   value: DeliveryMethod.vaginal,
                   labelEn: 'Vaginal / Natural',
                   labelUr: 'قدرتی ولادت',
@@ -63,17 +56,9 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
                   labelEn: 'Cesarean (C-Section)',
                   labelUr: 'آپریشن (سیزرین)',
                   icon: Icons.local_hospital_rounded,
-                  riskNote: widget.isUrdu
-                      ? 'خطرے کا عنصر (OR = 1.60)'
-                      : 'Risk factor (OR = 1.60)',
                 ),
               ],
               onChanged: (v) => setState(() => widget.data.deliveryMethod = v),
-              validator: (_) => widget.data.deliveryMethod == null
-                  ? (widget.isUrdu
-                      ? 'ولادت کا طریقہ منتخب کریں'
-                      : 'Select delivery method')
-                  : null,
             ),
 
             const SizedBox(height: 20),
@@ -97,15 +82,12 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
             _SectionLabel(
               label: widget.isUrdu ? 'بچے کی جنس' : 'Baby\'s Gender',
               isUrdu: widget.isUrdu,
-              footnote: widget.isUrdu
-                  ? '(تحقیق میں خطرے کا عنصر — جادون ایٹ ال 2020)'
-                  : '(Research-linked risk factor — Jadoon et al., 2020)',
             ),
             _RadioGroup<BabyGender>(
               isUrdu: widget.isUrdu,
               value: widget.data.babyGender,
-              options: [
-                const _RadioOption(
+              options: const [
+                _RadioOption(
                   value: BabyGender.male,
                   labelEn: 'Male',
                   labelUr: 'لڑکا',
@@ -116,17 +98,9 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
                   labelEn: 'Female',
                   labelUr: 'لڑکی',
                   icon: Icons.girl_rounded,
-                  riskNote: widget.isUrdu
-                      ? 'اعلیٰ خطرے کی جنس (43% PPD)'
-                      : 'Higher-risk gender (43% PPD)',
                 ),
               ],
               onChanged: (v) => setState(() => widget.data.babyGender = v),
-              validator: (_) => widget.data.babyGender == null
-                  ? (widget.isUrdu
-                      ? 'بچے کی جنس منتخب کریں'
-                      : 'Select baby\'s gender')
-                  : null,
             ),
 
             const SizedBox(height: 20),
@@ -148,8 +122,7 @@ class _ObstetricInfoStepState extends State<ObstetricInfoStep> {
 
             const SizedBox(height: 24),
 
-            // Clinical note
-            _ClinicalNoteCard(isUrdu: widget.isUrdu),
+            _OptionalDetailsNote(isUrdu: widget.isUrdu),
           ],
         ),
       ),
@@ -210,14 +183,12 @@ class _RadioOption<T> {
   final String labelEn;
   final String labelUr;
   final IconData icon;
-  final String? riskNote;
 
   const _RadioOption({
     required this.value,
     required this.labelEn,
     required this.labelUr,
     required this.icon,
-    this.riskNote,
   });
 }
 
@@ -296,16 +267,6 @@ class _RadioGroup<T> extends FormField<T> {
                                         ? TextDirection.rtl
                                         : TextDirection.ltr,
                                   ),
-                                  if (opt.riskNote != null)
-                                    Text(
-                                      opt.riskNote!,
-                                      style: AppTextStyles.labelSmall.copyWith(
-                                        color: AppColors.warning,
-                                      ),
-                                      textDirection: isUrdu
-                                          ? TextDirection.rtl
-                                          : TextDirection.ltr,
-                                    ),
                                 ],
                               ),
                             ),
@@ -347,8 +308,9 @@ class _ParitySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: List.generate(5, (i) {
         final isSelected = value == i;
         return GestureDetector(
@@ -400,32 +362,24 @@ class _ComplicationCheckboxes extends StatelessWidget {
       _Complication(
         labelEn: 'Preeclampsia / Eclampsia',
         labelUr: 'پری ایکلامپسیا / ایکلامپسیا',
-        riskEn: 'aOR = 2.30',
-        riskUr: 'aOR = 2.30',
         getter: () => data.hasPreeclampsia,
         setter: (v) => data.hasPreeclampsia = v,
       ),
       _Complication(
         labelEn: 'Postpartum Hemorrhage',
         labelUr: 'زچگی کے بعد خون آنا',
-        riskEn: 'aOR = 2.10',
-        riskUr: 'aOR = 2.10',
         getter: () => data.hasPostpartumHemorrhage,
         setter: (v) => data.hasPostpartumHemorrhage = v,
       ),
       _Complication(
         labelEn: 'Preterm Birth (< 37 weeks)',
         labelUr: 'وقت سے پہلے پیدائش (37 ہفتوں سے کم)',
-        riskEn: 'aOR = 1.85',
-        riskUr: 'aOR = 1.85',
         getter: () => data.hasPretermBirth,
         setter: (v) => data.hasPretermBirth = v,
       ),
       _Complication(
         labelEn: 'Gestational Diabetes (GDM)',
         labelUr: 'حمل کی ذیابیطس',
-        riskEn: '',
-        riskUr: '',
         getter: () => data.hasGestationalDiabetes,
         setter: (v) => data.hasGestationalDiabetes = v,
       ),
@@ -446,16 +400,12 @@ class _ComplicationCheckboxes extends StatelessWidget {
 class _Complication {
   final String labelEn;
   final String labelUr;
-  final String riskEn;
-  final String riskUr;
   final bool Function() getter;
   final void Function(bool) setter;
 
   const _Complication({
     required this.labelEn,
     required this.labelUr,
-    required this.riskEn,
-    required this.riskUr,
     required this.getter,
     required this.setter,
   });
@@ -522,14 +472,6 @@ class _ComplicationTile extends StatelessWidget {
                     textDirection:
                         isUrdu ? TextDirection.rtl : TextDirection.ltr,
                   ),
-                  if ((isUrdu ? complication.riskUr : complication.riskEn)
-                      .isNotEmpty)
-                    Text(
-                      isUrdu ? complication.riskUr : complication.riskEn,
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.warning,
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -540,10 +482,10 @@ class _ComplicationTile extends StatelessWidget {
   }
 }
 
-class _ClinicalNoteCard extends StatelessWidget {
+class _OptionalDetailsNote extends StatelessWidget {
   final bool isUrdu;
 
-  const _ClinicalNoteCard({required this.isUrdu});
+  const _OptionalDetailsNote({required this.isUrdu});
 
   @override
   Widget build(BuildContext context) {
@@ -557,14 +499,14 @@ class _ClinicalNoteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          const Icon(Icons.science_outlined,
+          const Icon(Icons.info_outline_rounded,
               size: 18, color: AppColors.secondary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               isUrdu
-                  ? 'یہ معلومات ایک کلینیکل طور پر تصدیق شدہ ML ماڈل کو بہتر بنانے کے لیے استعمال کی جاتی ہیں۔'
-                  : 'This data improves a clinically validated ML model trained on Pakistani maternal cohorts.',
+                  ? 'یہ معلومات اختیاری ہیں۔ اگر آپ کو یقین نہ ہو تو یہ حصہ چھوڑ سکتی ہیں۔'
+                  : 'These details are optional. You can skip this section if you are unsure.',
               style: isUrdu
                   ? AppTextStyles.urduLabel.copyWith(
                       color: AppColors.onSecondaryContainer,

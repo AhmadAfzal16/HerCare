@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/risk_provider.dart';
 import 'widgets/home_header.dart';
 import 'widgets/mood_hero_card.dart';
@@ -12,9 +14,10 @@ import 'widgets/wellbeing_grid.dart';
 import 'widgets/epds_prompt_card.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/guardian_card.dart';
-import 'widgets/daily_verse_card.dart';
+import '../../core/routing/app_router.dart';
+import '../content/content_for_you_card.dart';
 
-import '../epds/epds_screen.dart';
+import '../epds/tests_screen.dart';
 import '../hum_raaz/hum_raaz_screen.dart';
 import '../wellbeing/wellbeing_screen.dart';
 import '../profile/profile_screen.dart';
@@ -28,7 +31,7 @@ import '../community/community_screen.dart';
 ///   3. EPDS Prompt Card    — weekly screening CTA
 ///   4. Quick Actions Row   — breathe, journal, chatbot, crisis
 ///   5. Guardian Card       — connected spouse/guardian status
-///   6. Daily Verse Card    — Quranic ayah + Urdu translation
+///   6. For You feed        — live, reviewed server content and optional verses
 ///
 /// Bottom Nav: Home | Screening | Chat | Wellbeing | Profile
 class HomeScreen extends StatefulWidget {
@@ -57,9 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
 
     final List<Widget> pages = [
-      const _HomeDashboardView(),
-      const EpdsScreen(hideBackButton: true),
-      const HumRaazScreen(),
+      _HomeDashboardView(active: _navIndex == 0),
+      TestsScreen(embedded: true, active: _navIndex == 1),
+      HumRaazScreen(key: ValueKey(context.watch<AuthProvider>().user?.id)),
       const WellbeingScreen(hideBackButton: true),
       const ProfileScreen(),
     ];
@@ -70,7 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _navIndex,
         children: [
           for (var i = 0; i < pages.length; i++)
-            _visitedTabs.contains(i) ? pages[i] : const SizedBox.shrink(),
+            // Dispose private bot state on tab exit; server history is retained.
+            (i == 2 ? _navIndex == 2 : _visitedTabs.contains(i))
+                ? pages[i]
+                : const SizedBox.shrink(),
         ],
       ),
       bottomNavigationBar: _BottomNav(
@@ -86,7 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _HomeDashboardView extends StatelessWidget {
-  const _HomeDashboardView();
+  const _HomeDashboardView({required this.active});
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -96,20 +103,24 @@ class _HomeDashboardView extends StatelessWidget {
       body: ListView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 24),
-        children: const [
-          MoodHeroCard(),
-          SizedBox(height: 24),
-          WellbeingGrid(),
-          SizedBox(height: 24),
-          EpdsPromptCard(),
-          SizedBox(height: 24),
-          QuickActionsRow(),
-          SizedBox(height: 24),
-          GuardianCard(),
-          SizedBox(height: 24),
-          CommunityEntryCard(),
-          SizedBox(height: 24),
-          DailyVerseCard(),
+        children: [
+          const MoodHeroCard(),
+          const SizedBox(height: 24),
+          const WellbeingGrid(),
+          const SizedBox(height: 24),
+          const EpdsPromptCard(),
+          const SizedBox(height: 24),
+          const QuickActionsRow(),
+          const SizedBox(height: 24),
+          const GuardianCard(),
+          const SizedBox(height: 24),
+          const CommunityEntryCard(),
+          const SizedBox(height: 24),
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ContentForYouCard(
+                  active: active,
+                  onOpen: () => context.push(AppRoutes.content))),
         ],
       ),
     );
@@ -139,7 +150,7 @@ class _BottomNav extends StatelessWidget {
       ),
       _NavItem(
         icon: Icons.assignment_outlined,
-        labelEn: 'EPDS',
+        labelEn: 'Tests',
         labelUr: 'جانچ',
       ),
       _NavItem(
@@ -179,11 +190,11 @@ class _BottomNav extends StatelessWidget {
             children: List.generate(items.length, (i) {
               final selected = currentIndex == i;
               final item = items[i];
-              return GestureDetector(
+              return Expanded(
+                  child: GestureDetector(
                 onTap: () => onTap(i),
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
-                  width: 64,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -233,7 +244,7 @@ class _BottomNav extends StatelessWidget {
                     ],
                   ),
                 ),
-              );
+              ));
             }),
           ),
         ),

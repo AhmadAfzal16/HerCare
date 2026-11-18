@@ -132,6 +132,13 @@ class EpdsResultScreen extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             FilledButton.icon(
+              onPressed: () => context.go(AppRoutes.tests),
+              icon: const Icon(Icons.checklist_rounded),
+              label:
+                  Text(isUrdu ? 'باقی جانچیں دیکھیں' : 'View remaining tests'),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
               onPressed: () => context.go(AppRoutes.home),
               icon: const Icon(Icons.home_outlined),
               label: Text(isUrdu ? 'ہوم پر واپس جائیں' : 'Back to home'),

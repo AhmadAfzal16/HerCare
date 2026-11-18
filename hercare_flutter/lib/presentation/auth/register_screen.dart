@@ -275,6 +275,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.push(AppRoutes.crisis),
+                    icon: const Icon(Icons.health_and_safety_outlined),
+                    label: Text(isUrdu
+                        ? 'فوری مدد — اکاؤنٹ ضروری نہیں'
+                        : 'Get help now — no account needed'),
+                  ),
+                ),
               ],
             ),
           ),

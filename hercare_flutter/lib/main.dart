@@ -15,7 +15,10 @@ import 'providers/screening_provider.dart';
 import 'providers/risk_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/therapy_provider.dart';
+import 'providers/content_provider.dart';
 import 'services/push_notification_service.dart';
+import 'presentation/auth/session_connection_banner.dart';
+import 'presentation/shared/app_language_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,12 +54,83 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => GuardianProvider()),
-        ChangeNotifierProvider(create: (_) => MoodProvider()),
-        ChangeNotifierProvider(create: (_) => ScreeningProvider()),
-        ChangeNotifierProvider(create: (_) => RiskProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => TherapyProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, GuardianProvider>(
+          create: (_) => GuardianProvider(),
+          update: (_, auth, guardian) => guardian!
+            ..bindAccount(auth.isAuthenticated &&
+                    (auth.user?.isMother == true ||
+                        auth.user?.isGuardian == true)
+                ? auth.user?.id
+                : null),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, MoodProvider>(
+          create: (_) => MoodProvider(),
+          update: (_, auth, mood) => mood!
+            ..bindAccount(auth.isAuthenticated && auth.user?.isMother == true
+                ? auth.user?.id
+                : null),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ScreeningProvider>(
+          create: (_) => ScreeningProvider(),
+          update: (_, auth, screening) => screening!
+            ..bindAccount(auth.isAuthenticated && auth.user?.isMother == true
+                ? auth.user?.id
+                : null),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, RiskProvider>(
+          create: (_) => RiskProvider(),
+          update: (_, auth, risk) => risk!
+            ..bindAccount(auth.isAuthenticated &&
+                    auth.user?.isMother == true &&
+                    auth.user?.onboardingComplete == true
+                ? auth.user?.id
+                : null),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (_) => ChatProvider(),
+          update: (_, auth, chat) => chat!
+            ..bindAccount(
+                auth.isAuthenticated &&
+                        auth.user?.onboardingComplete == true &&
+                        (auth.user?.isMother == true ||
+                            auth.user?.isGuardian == true)
+                    ? auth.user?.id
+                    : null,
+                role: auth.user?.role),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, TherapyProvider>(
+          create: (_) => TherapyProvider(),
+          update: (_, auth, therapy) => therapy!
+            ..bindAccount(auth.isAuthenticated && auth.user?.isMother == true
+                ? auth.user?.id
+                : null),
+        ),
+        ChangeNotifierProxyProvider4<AuthProvider, MoodProvider,
+            TherapyProvider, ScreeningProvider, ContentProvider>(
+          create: (_) => ContentProvider(),
+          update: (_, auth, mood, therapy, screening, content) => content!
+            ..bindAccount(
+                auth.isAuthenticated &&
+                        auth.user?.onboardingComplete == true &&
+                        (auth.user?.isMother == true ||
+                            auth.user?.isGuardian == true)
+                    ? auth.user?.id
+                    : null,
+                role: auth.user?.role ?? '')
+            // Opaque change marker only; the server reads its own authorized
+            // records. No scores, journals or chat are sent with a feed request.
+            ..observeCareRevision([
+              mood.today?.id,
+              mood.today?.moodRating,
+              mood.today?.sleepQuality,
+              mood.today?.isSynced,
+              therapy.history.firstOrNull?.id,
+              therapy.history.firstOrNull?.isSynced,
+              screening.latest?.id,
+              screening.latest?.status,
+              screening.latest?.updatedAt.toIso8601String(),
+            ].join('|')),
+        ),
         ChangeNotifierProvider.value(value: PushNotificationService.instance),
       ],
       child: const HerCareApp(),
@@ -84,6 +158,9 @@ class HerCareApp extends StatelessWidget {
 
       // Routing
       routerConfig: AppRouter.router,
+      builder: (context, child) => AppLanguageBar(
+        child: SessionConnectionBanner(child: child ?? const SizedBox.shrink()),
+      ),
 
       // Localization
       locale: languageProvider.locale,
