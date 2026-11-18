@@ -40,6 +40,10 @@ kotlin {
     }
 }
 
+dependencies {
+    implementation("com.google.mlkit:pose-detection:18.0.0-beta5")
+}
+
 flutter {
     source = "../.."
 }

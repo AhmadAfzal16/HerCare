@@ -1,8 +1,19 @@
 const screeningService = require('./screening.service');
+const scheduleService = require('./screening.schedule');
+
+async function schedule(req, res, next) {
+  try {
+    const data = await scheduleService.getSchedule(req.user.userId);
+    res.set('Cache-Control', 'no-store');
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+}
 
 async function getInstrument(req, res, next) {
   try {
-    return res.json({ success: true, data: screeningService.instrumentForClient(req.params.type) });
+    const data = await screeningService.instrumentForClient(req.params.type, req.query.version);
+    res.set('Cache-Control', 'no-store');
+    return res.json({ success: true, data });
   } catch (error) { return next(error); }
 }
 
@@ -70,4 +81,4 @@ async function reminder(req, res, next) {
   } catch (error) { return next(error); }
 }
 
-module.exports = { getInstrument, start, saveDraft, submit, getOne, latest, history, reminder };
+module.exports = { getInstrument, start, saveDraft, submit, getOne, latest, history, reminder, schedule };

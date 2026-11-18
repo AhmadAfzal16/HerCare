@@ -11,6 +11,18 @@ class RiskService {
 
   static const _channel = MethodChannel('com.hercare/telemetry');
   final ApiService _api;
+  String? _accountId;
+  int _generation = 0;
+
+  void bindAccount(String? id) {
+    if (_accountId == id) return;
+    _accountId = id;
+    _generation++;
+  }
+
+  Options get _options => Options(followRedirects: false, headers: {
+        if (_accountId != null) 'X-Risk-Account-Id': _accountId,
+      });
 
   Future<TelemetryPermissions> permissions() async {
     try {
@@ -67,7 +79,7 @@ class RiskService {
 
   Future<RiskStatus> getStatus() async {
     try {
-      final response = await _api.get('/risk/status');
+      final response = await _api.client.get('/risk/status', options: _options);
       return RiskStatus.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -81,8 +93,8 @@ class RiskService {
       final response = await _api.client.patch(
         '/risk/consent',
         data: {'enabled': enabled},
+        options: _options,
       );
-      await setMonitoringEnabled(enabled);
       return RiskStatus.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -92,15 +104,19 @@ class RiskService {
   }
 
   Future<TelemetrySnapshot> collectAndSync() async {
+    final generation = _generation;
+    final options = _options;
     try {
       final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
         'collectTelemetry',
       );
       if (raw == null) throw Exception('Telemetry is unavailable.');
+      if (generation != _generation) throw StateError('Account changed.');
       final snapshot = TelemetrySnapshot.fromMap(raw);
-      await _api.post(
+      await _api.client.post(
         '/risk/telemetry',
         data: snapshot.toApiJson(_requestId()),
+        options: options,
       );
       return snapshot;
     } on DioException catch (error) {
@@ -114,7 +130,8 @@ class RiskService {
 
   Future<RiskPrediction> generatePrediction() async {
     try {
-      final response = await _api.post('/risk/predictions');
+      final response =
+          await _api.client.post('/risk/predictions', options: _options);
       return RiskPrediction.fromJson(
         response.data['data'] as Map<String, dynamic>,
       );
@@ -125,7 +142,8 @@ class RiskService {
 
   Future<RiskPrediction?> latest() async {
     try {
-      final response = await _api.get('/risk/predictions/latest');
+      final response =
+          await _api.client.get('/risk/predictions/latest', options: _options);
       final data = response.data['data'];
       return data is Map<String, dynamic>
           ? RiskPrediction.fromJson(data)
@@ -134,6 +152,57 @@ class RiskService {
       throw _error(error);
     }
   }
+
+  Future<Map<String, dynamic>> recovery() async =>
+      (await _api.client.get('/risk/recovery', options: _options)).data['data']
+          as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> modelContext() async =>
+      (await _api.client.get('/risk/context', options: _options)).data['data']
+          as Map<String, dynamic>;
+
+  Future<void> saveModelContext(Map<String, dynamic> values) async {
+    await _api.client.put('/risk/context', data: values, options: _options);
+  }
+
+  Future<Map<String, dynamic>> m4Reports() => _m4Request('GET', '');
+
+  Future<Map<String, dynamic>> saveM4Checkin(
+    Map<String, int?> values, {
+    required String date,
+  }) =>
+      _m4Request('PUT', '/context-checkin', data: {...values, 'date': date});
+
+  Future<Map<String, dynamic>> setM4TextConsent(bool enabled) =>
+      _m4Request('PUT', '/text-consent', data: {'enabled': enabled});
+
+  Future<Map<String, dynamic>> _m4Request(String method, String path,
+      {Map<String, dynamic>? data}) async {
+    final options = _options..method = method;
+    try {
+      final response = await _api.client
+          .request('/risk/m4$path', data: data, options: options);
+      final body = response.data;
+      if (body is! Map || body['success'] != true || body['data'] is! Map) {
+        throw const FormatException('Invalid M4 response.');
+      }
+      return Map<String, dynamic>.from(body['data'] as Map);
+    } on DioException catch (error) {
+      throw _error(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> researchConsent() async =>
+      (await _api.get('/research/consent')).data['data']
+          as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> setResearchConsent(bool enabled) async =>
+      (await _api.client.put('/research/consent', data: {
+        'enabled': enabled,
+        'policy_version': 'research-aggregate-v1',
+        'timezone': 'Asia/Karachi',
+      }))
+          .data['data'] as Map<String, dynamic>;
 
   String _requestId() {
     final random = Random.secure();

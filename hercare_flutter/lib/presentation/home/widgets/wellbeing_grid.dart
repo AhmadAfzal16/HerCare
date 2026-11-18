@@ -8,6 +8,8 @@ import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 import '../../../providers/mood_provider.dart';
+import '../../../providers/screening_provider.dart';
+import 'package:intl/intl.dart';
 import '../../wellbeing/wellbeing_screen.dart';
 
 /// 2×2 grid of wellbeing stat cards:
@@ -19,6 +21,9 @@ class WellbeingGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
     final todayMood = context.watch<MoodProvider>().today?.moodRating;
+    final screening = context.watch<ScreeningProvider>();
+    final latest = screening.latest;
+    final completed = latest?.completedAt;
     const moodEmojis = ['😔', '😟', '😐', '🙂', '😊'];
 
     return Padding(
@@ -30,10 +35,11 @@ class WellbeingGrid extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              Expanded(
+                  child: Text(
                 isUrdu ? 'آپ کی صحت' : 'Your Wellbeing',
                 style: AppTextStyles.titleSmall.copyWith(fontSize: 16),
-              ),
+              )),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -61,62 +67,72 @@ class WellbeingGrid extends StatelessWidget {
           const SizedBox(height: 12),
 
           // 2x2 grid
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: isUrdu ? 0.95 : 1.05,
-            children: [
-              _WellbeingCard(
-                icon: Icons.bar_chart_rounded,
-                iconBg: AppColors.primaryContainer,
-                iconColor: AppColors.primary,
-                title: isUrdu ? 'EPDS اسکور' : 'EPDS Score',
-                value: '8 / 30',
-                chipLabel: isUrdu ? 'کم خطرہ' : 'Mild risk',
-                chipColor: AppColors.success,
-                timestamp: isUrdu ? '2 دن پہلے' : '2 days ago',
-              ),
-              _WellbeingCard(
-                icon: Icons.sentiment_satisfied_alt_rounded,
-                iconBg: AppColors.secondaryContainer,
-                iconColor: AppColors.secondary,
-                title: isUrdu ? 'آج کا موڈ' : 'Mood Today',
-                value: todayMood == null ? '—' : moodEmojis[todayMood - 1],
-                valueIsEmoji: true,
-                chipLabel: todayMood == null
-                    ? (isUrdu ? 'اندراج کریں' : 'Check in')
-                    : (isUrdu ? 'آج محفوظ' : 'Saved today'),
-                chipColor: AppColors.secondary,
-                timestamp: todayMood == null ? '' : (isUrdu ? 'آج' : 'Today'),
-                onTap: () => context.push(AppRoutes.mood),
-              ),
-              _WellbeingCard(
-                icon: Icons.bedtime_rounded,
-                iconBg: const Color(0xFFCFFAFE),
-                iconColor: AppColors.accent,
-                title: isUrdu ? 'آخری نیند' : 'Last Sleep',
-                value: '—',
-                chipLabel: isUrdu ? 'نیند دیکھیں' : 'View sleep',
-                chipColor: AppColors.warning,
-                timestamp: '',
-                onTap: () => context.push(AppRoutes.digitalWellbeing),
-              ),
-              _WellbeingCard(
-                icon: Icons.chat_bubble_outline_rounded,
-                iconBg: AppColors.successContainer,
-                iconColor: AppColors.success,
-                title: isUrdu ? 'ہم راز' : 'Hum-Raaz',
-                value: isUrdu ? 'AI چیٹ' : 'AI Chat',
-                valueIsText: true,
-                chipLabel: isUrdu ? '24/7 دستیاب' : 'Available 24/7',
-                chipColor: AppColors.success,
-                timestamp: '',
-              ),
-            ],
-          ),
+          LayoutBuilder(builder: (context, constraints) {
+            final columns = MediaQuery.textScalerOf(context).scale(16) > 21 ||
+                    constraints.maxWidth < 270
+                ? 1
+                : 2;
+            final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+            return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _WellbeingCard(
+                    icon: Icons.bar_chart_rounded,
+                    iconBg: AppColors.primaryContainer,
+                    iconColor: AppColors.primary,
+                    title: isUrdu ? 'EPDS اسکور' : 'EPDS Score',
+                    value: latest?.totalScore == null
+                        ? '—'
+                        : '${latest!.totalScore} / 30',
+                    chipLabel: isUrdu ? 'میری جانچیں' : 'My tests',
+                    chipColor: AppColors.primary,
+                    timestamp: completed == null
+                        ? ''
+                        : DateFormat.yMMMd(isUrdu ? 'ur' : 'en')
+                            .format(completed.toLocal()),
+                    onTap: () => context.push(AppRoutes.tests),
+                  ),
+                  _WellbeingCard(
+                    icon: Icons.sentiment_satisfied_alt_rounded,
+                    iconBg: AppColors.secondaryContainer,
+                    iconColor: AppColors.secondary,
+                    title: isUrdu ? 'آج کا موڈ' : 'Mood Today',
+                    value: todayMood == null ? '—' : moodEmojis[todayMood - 1],
+                    valueIsEmoji: true,
+                    chipLabel: todayMood == null
+                        ? (isUrdu ? 'اندراج کریں' : 'Check in')
+                        : (isUrdu ? 'آج محفوظ' : 'Saved today'),
+                    chipColor: AppColors.secondary,
+                    timestamp:
+                        todayMood == null ? '' : (isUrdu ? 'آج' : 'Today'),
+                    onTap: () => context.push(AppRoutes.mood),
+                  ),
+                  _WellbeingCard(
+                    icon: Icons.bedtime_rounded,
+                    iconBg: const Color(0xFFCFFAFE),
+                    iconColor: AppColors.accent,
+                    title: isUrdu ? 'آخری نیند' : 'Last Sleep',
+                    value: '—',
+                    chipLabel: isUrdu ? 'نیند دیکھیں' : 'View sleep',
+                    chipColor: AppColors.warning,
+                    timestamp: '',
+                    onTap: () => context.push(AppRoutes.digitalWellbeing),
+                  ),
+                  _WellbeingCard(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    iconBg: AppColors.successContainer,
+                    iconColor: AppColors.success,
+                    title: isUrdu ? 'سرپرست کی چیٹ' : 'Guardian chat',
+                    value: isUrdu ? 'محفوظ چیٹ' : 'Secure chat',
+                    valueIsText: true,
+                    chipLabel: isUrdu ? 'چیٹ کھولیں' : 'Open chat',
+                    chipColor: AppColors.success,
+                    timestamp: '',
+                    onTap: () => context.push(AppRoutes.secureChat),
+                  ),
+                ].map((card) => SizedBox(width: width, child: card)).toList());
+          }),
         ],
       ),
     );

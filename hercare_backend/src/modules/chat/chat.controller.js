@@ -1,4 +1,5 @@
 const service = require('./chat.service');
+const policy = require('./chat.policy');
 
 async function status(req, res, next) {
   try { return res.json({ success: true, data: await service.getStatus(req.user.userId, req.user.role) }); }
@@ -19,10 +20,17 @@ async function send(req, res, next) {
   } catch (error) { return next(error); }
 }
 
+async function page(req, res, next) {
+  try {
+    const data = await service.listMessagePage(req.user.userId, req.user.role, policy.pageQuery(req.query));
+    return res.json({ success: true, data });
+  } catch (error) { return next(error); }
+}
+
 async function read(req, res, next) {
-  try { return res.json({ success: true, data: await service.markRead(req.user.userId, req.user.role) }); }
+  try { return res.json({ success: true, data: await service.markRead(req.user.userId, req.user.role, req.body) }); }
   catch (error) { return next(error); }
 }
 
-module.exports = { status, messages, send, read };
+module.exports = { status, messages, page, send, read };
 

@@ -110,6 +110,10 @@ class _AuthInterceptor extends Interceptor {
         err.requestOptions.headers['Authorization'] = 'Bearer $newAccess';
         final retryResponse = await _dio.fetch(err.requestOptions);
         handler.resolve(retryResponse);
+      } on DioException catch (refreshError) {
+        // Preserve network/server failures from refresh; the original 401 only
+        // says the access token expired, not that the stored session was revoked.
+        handler.next(refreshError);
       } catch (_) {
         // Transient failures must not erase the user's session/offline work.
         handler.next(err);

@@ -49,6 +49,43 @@ function decryptJournal(payload) {
   ]).toString('utf8');
 }
 
+function encryptVoice(audio, motherId, journalId) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  cipher.setAAD(Buffer.from(`voice:v1:${motherId}:${journalId}`));
+  const ciphertext = Buffer.concat([cipher.update(audio), cipher.final()]);
+  return Buffer.concat([Buffer.from([1]), iv, cipher.getAuthTag(), ciphertext]);
+}
+
+function encryptTranscript(text, motherId, journalId) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  cipher.setAAD(Buffer.from('transcript:v1:' + motherId + ':' + journalId));
+  const ciphertext = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  return ['t1', iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), ciphertext.toString('base64url')].join('.');
+}
+function decryptTranscript(payload, motherId, journalId) {
+  const [version, iv, tag, ciphertext, extra] = payload.split('.');
+  if (version !== 't1' || !iv || !tag || !ciphertext || extra) throw new Error('Invalid transcript ciphertext');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'));
+  decipher.setAAD(Buffer.from('transcript:v1:' + motherId + ':' + journalId));
+  decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+  return Buffer.concat([decipher.update(Buffer.from(ciphertext, 'base64url')), decipher.final()]).toString('utf8');
+}
+function transcriptFingerprint(text, motherId, journalId) {
+  return crypto.createHmac('sha256', key).update('confirmation:v1:' + motherId + ':' + journalId + ':' + text).digest('hex');
+}
+
+function decryptVoice(payload, motherId, journalId) {
+  if (!Buffer.isBuffer(payload) || payload.length < 30 || payload[0] !== 1) {
+    throw new Error('Unsupported encrypted voice format.');
+  }
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, payload.subarray(1, 13));
+  decipher.setAAD(Buffer.from(`voice:v1:${motherId}:${journalId}`));
+  decipher.setAuthTag(payload.subarray(13, 29));
+  return Buffer.concat([decipher.update(payload.subarray(29)), decipher.final()]);
+}
+
 function tokenize(value) {
   return [...new Set(value
     .normalize('NFKC')
@@ -69,5 +106,10 @@ function buildBlindIndexes(value) {
 module.exports = {
   encryptJournal,
   decryptJournal,
+  encryptVoice,
+  decryptVoice,
   buildBlindIndexes,
+  encryptTranscript,
+  decryptTranscript,
+  transcriptFingerprint,
 };

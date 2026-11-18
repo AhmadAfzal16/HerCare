@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
 import '../../data/models/community_models.dart';
 
 const communityTopics = {
@@ -83,6 +85,7 @@ class CommunityPostCard extends StatelessWidget {
               if (post.expert)
                 Text(tr('• Expert response', '• ماہر کا جواب'),
                     style: TextStyle(color: colors.primary)),
+              if (post.parentId != null) Text(tr('• Reply', '• جواب')),
               if (post.status != 'published')
                 Text(post.status == 'pending'
                     ? tr('• Awaiting review', '• جائزے کا منتظر')
@@ -127,6 +130,85 @@ class CommunityPostCard extends StatelessWidget {
           ]),
         ));
   }
+}
+
+class CommunityReasonDialog extends StatefulWidget {
+  const CommunityReasonDialog({super.key, required this.title});
+  final String title;
+  @override
+  State<CommunityReasonDialog> createState() => _CommunityReasonDialogState();
+}
+
+class _CommunityReasonDialogState extends State<CommunityReasonDialog> {
+  final _reason = TextEditingController();
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ur = context.watch<LanguageProvider>().isUrdu;
+    return CommunityDialog(
+        title: Text(widget.title),
+        content: SingleChildScrollView(
+            child: TextField(
+                controller: _reason,
+                minLines: 2,
+                maxLines: 5,
+                maxLength: 500,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                    labelText: ur
+                        ? 'وجہ (کم از کم تین حروف)'
+                        : 'Reason (at least 3 characters)'))),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(ur ? 'منسوخ' : 'Cancel')),
+          FilledButton(
+              onPressed: _reason.text.trim().length < 3
+                  ? null
+                  : () => Navigator.pop(context, _reason.text.trim()),
+              child: Text(ur ? 'تصدیق' : 'Confirm')),
+        ]);
+  }
+}
+
+/// Title, inputs and actions all scroll when a keyboard or large font leaves
+/// little height. Scrolling only AlertDialog.content cannot protect its header.
+class CommunityDialog extends StatelessWidget {
+  const CommunityDialog(
+      {super.key,
+      required this.title,
+      required this.content,
+      required this.actions});
+  final Widget title, content;
+  final List<Widget> actions;
+  @override
+  Widget build(BuildContext context) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 450),
+          child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DefaultTextStyle(
+                        style: Theme.of(context).textTheme.headlineSmall!,
+                        child: title),
+                    const SizedBox(height: 16),
+                    content,
+                    const SizedBox(height: 16),
+                    Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: actions),
+                  ]))));
 }
 
 class CommunityNotice extends StatelessWidget {

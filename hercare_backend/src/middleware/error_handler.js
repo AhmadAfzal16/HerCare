@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { requestPath } = require('../utils/request_path');
 
 const SENSITIVE_FIELDS = new Set([
   'password',
@@ -18,6 +19,12 @@ const SENSITIVE_FIELDS = new Set([
   'message',
   'preview',
   'package_name',
+  'latitude',
+  'longitude',
+  'location',
+  'consent_tier1',
+  'consent_tier2',
+  'consent_tier3',
 ]);
 
 function redactSensitive(value) {
@@ -36,10 +43,21 @@ function redactSensitive(value) {
  * Security: never expose stack traces in production responses.
  */
 const errorHandler = (err, req, res, _next) => {
-  // Log the full error internally
-  logger.error(`[${req.method} ${req.url}] ${err.message}`, {
-    stack: err.stack,
-    body: redactSensitive(req.body),
+  const path = requestPath(req);
+  const privateCrisis = /^\/api\/v1\/(?:crisis|sleep|mood|therapy|chat)(?:\/|$)/.test(path);
+  const privateCommunity = /^\/api\/v1\/community(?:\/|$)/.test(path);
+  const privateContent = /^\/api\/v1\/content(?:\/|$)/.test(path);
+  const privateEditorial = privateCommunity || privateContent;
+  const privateMonitoring = /^\/api\/v1\/risk\/m4(?:\/|$)/.test(path);
+  const suppressDetails = privateEditorial || privateMonitoring;
+  // Community parser/database errors can echo submitted text in their message
+  // or stack. Never retain these, or the body, in diagnostic logs.
+  logger.error(`[${req.method} ${path}] ${suppressDetails ? 'Private request failed' : err.message}`, {
+    ...(suppressDetails ? { statusCode: err.statusCode || err.status || 500 } : { stack: err.stack }),
+    body: privateMonitoring ? '[REDACTED MONITORING REQUEST]'
+      : privateContent ? '[REDACTED CONTENT REQUEST]'
+      : privateCommunity ? '[REDACTED COMMUNITY REQUEST]'
+      : privateCrisis ? '[REDACTED CRISIS REQUEST]' : redactSensitive(req.body),
   });
 
   // Determine status code
@@ -52,18 +70,18 @@ const errorHandler = (err, req, res, _next) => {
     success: false,
     message: isOperational
       ? err.message
-      : process.env.NODE_ENV === 'production'
+      : privateMonitoring || process.env.NODE_ENV === 'production'
         ? 'An internal error occurred. Please try again.'
         : err.message,
   };
 
   // Include validation errors if present
-  if (err.errors) {
+  if (err.errors && !privateMonitoring) {
     response.errors = err.errors;
   }
 
   // Only expose stack in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' && !privateMonitoring) {
     response.stack = err.stack;
   }
 

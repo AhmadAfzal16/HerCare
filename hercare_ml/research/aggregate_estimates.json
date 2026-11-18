@@ -1,0 +1,20 @@
+{
+  "data_kind": "published_aggregate_evidence_not_participant_training_rows",
+  "reviewed_on": "2026-10-08",
+  "clinical_coefficients": false,
+  "estimates": [
+    {"source_ref":"R13","source_url":"https://doi.org/10.7759/cureus.86156","location":"Abstract results and adjusted association table","parameter":"preeclampsia_eclampsia","measure":"adjusted_odds_ratio","value":2.30,"ci95_low":1.45,"ci95_high":3.64,"outcome":"PPD or postpartum psychosis within six months","cases":220,"controls":440},
+    {"source_ref":"R13","source_url":"https://doi.org/10.7759/cureus.86156","location":"Abstract results and adjusted association table","parameter":"postpartum_hemorrhage","measure":"adjusted_odds_ratio","value":2.10,"ci95_low":1.30,"ci95_high":3.38,"outcome":"PPD or postpartum psychosis within six months","cases":220,"controls":440},
+    {"source_ref":"R13","source_url":"https://doi.org/10.7759/cureus.86156","location":"Abstract results and adjusted association table","parameter":"preterm_birth","measure":"adjusted_odds_ratio","value":1.85,"ci95_low":1.20,"ci95_high":2.85,"outcome":"PPD or postpartum psychosis within six months","cases":220,"controls":440},
+    {"source_ref":"R13","source_url":"https://doi.org/10.7759/cureus.86156","location":"Abstract results and adjusted association table","parameter":"gestational_diabetes","measure":"adjusted_odds_ratio","value":1.55,"ci95_low":1.00,"ci95_high":2.40,"outcome":"PPD or postpartum psychosis within six months","cases":220,"controls":440},
+    {"source_ref":"R17","source_url":"https://www.jmir.org/2015/7/e175/","location":"Abstract results","parameter":"phone_usage_duration","measure":"pearson_r","value":0.54,"p_value":0.011,"outcome":"PHQ-9 symptom severity","analyzable_participants":28,"population":"General adult community, not a postpartum cohort"},
+    {"source_ref":"R17","source_url":"https://www.jmir.org/2015/7/e175/","location":"Abstract results","parameter":"phone_usage_frequency","measure":"pearson_r","value":0.52,"p_value":0.015,"outcome":"PHQ-9 symptom severity","analyzable_participants":28,"population":"General adult community, not a postpartum cohort"},
+    {"source_ref":"R7","source_url":"https://www.nature.com/articles/s41598-021-86368-y","location":"Combined dataset performance/Figure 2","parameter":"extremely_randomized_trees_combined_dataset","measure":"auroc","value":0.81,"accuracy":0.73,"sensitivity":0.72,"specificity":0.75,"outcome":"Depressive symptoms six weeks postpartum","analyzed_combined_records":2385,"population":"Swedish BASIC cohort","note":"Published study performance, not HerCare performance or individual training labels"}
+  ],
+  "limits": [
+    "Selected parameter-relevant estimates, not an exhaustive transcription of every table in every paper.",
+    "No individual row can be reconstructed from these statistics; joint distributions and original participant outcomes are unknown.",
+    "Do not use these rows as ML training samples, manufacture recovery labels, or combine odds ratios as model weights.",
+    "Publications support candidate-feature reasoning; weights and intervention effects need appropriate original data and independent validation."
+  ]
+}

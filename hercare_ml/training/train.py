@@ -1,4 +1,9 @@
-"""Reproducible HerCare model training.
+"""Legacy recipe reproducing the checked-in HerCare baseline artifact.
+
+For new PERI_DEP experiments use training.curated_train, which audits source
+semantics, duplicates, labels, missingness and group-aware evaluation. Preserve
+this recipe so the original artifact remains reproducible, not as a validated
+recovery-training procedure.
 
 The public PERI_DEP data is cross-sectional. It can train the baseline model,
 but it cannot truthfully train a two-week trajectory target. The trajectory
@@ -196,17 +201,13 @@ def build_pipeline(feature_names: list[str]) -> Pipeline:
 
 
 def train(input_path: pathlib.Path, output_path: pathlib.Path, task: str) -> dict:
+    if task != 'baseline':
+        raise ValueError('Legacy trajectory training is disabled. Use training.forecast_train with verified dated follow-up data and participant-held-out validation.')
     frame = pd.read_csv(input_path, encoding="utf-8-sig")
-    if task == "baseline":
-        features, target = prepare_peri_dep(frame)
-        feature_names = BASELINE_FEATURES
-        scope = "cross_sectional_baseline"
-        horizon_days = None
-    else:
-        features, target = prepare_trajectory(frame)
-        feature_names = TRAJECTORY_FEATURES
-        scope = "two_week_trajectory"
-        horizon_days = 14
+    features, target = prepare_peri_dep(frame)
+    feature_names = BASELINE_FEATURES
+    scope = "cross_sectional_baseline"
+    horizon_days = None
 
     x_train, x_test, y_train, y_test = train_test_split(
         features,
@@ -259,7 +260,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
-    parser.add_argument("--task", choices=["baseline", "trajectory"], required=True)
+    parser.add_argument("--task", choices=["baseline"], required=True)
     args = parser.parse_args()
     metadata = train(args.input, args.output, args.task)
     print(json.dumps(metadata, indent=2))

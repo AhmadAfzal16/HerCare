@@ -1,0 +1,111 @@
+{
+  "version": "pk-crisis-2026-10-11-v1",
+  "verified_on": "2026-10-11",
+  "notice": "Pakistan contact sources were checked on 11 October 2026. No test calls were made. Availability, response times and successful calls or notification delivery are not guaranteed. Counselling lines are not emergency dispatch. Carrier charges may apply.",
+  "notice_ur": "پاکستان کے رابطوں کے ذرائع 11 اکتوبر 2026 کو دیکھے گئے۔ آزمائشی کال نہیں کی گئی۔ دستیابی، جواب کے وقت، کامیاب کال یا اطلاع پہنچنے کی ضمانت نہیں۔ مشاورتی لائنیں ہنگامی امداد کا متبادل نہیں۔ فون کمپنی کے چارجز لاگو ہو سکتے ہیں۔",
+  "regions": [
+    {
+      "id": "unspecified",
+      "name": "Choose your area",
+      "name_ur": "اپنا علاقہ منتخب کریں",
+      "emergency_number": null,
+      "source_url": null,
+      "coverage_notice": "If your area is not listed, contact local emergency services or go to an emergency department. Do not wait to complete a form.",
+      "coverage_notice_ur": "اگر آپ کا علاقہ فہرست میں نہیں تو مقامی ہنگامی خدمات سے رابطہ کریں یا ہسپتال کی ایمرجنسی جائیں۔ فارم مکمل کرنے کا انتظار نہ کریں۔"
+    },
+    {
+      "id": "punjab",
+      "name": "Punjab",
+      "name_ur": "پنجاب",
+      "emergency_number": "1122",
+      "source_url": "https://www.rescue.gov.pk/introduction.aspx",
+      "coverage_notice": "Punjab Rescue 1122. Local access and response time are not guaranteed by HerCare.",
+      "coverage_notice_ur": "پنجاب ریسکیو 1122۔ مقامی دستیابی اور جواب کے وقت کی ہر کیئر ضمانت نہیں دیتا۔"
+    },
+    {
+      "id": "khyber_pakhtunkhwa",
+      "name": "Khyber Pakhtunkhwa",
+      "name_ur": "خیبر پختونخوا",
+      "emergency_number": "1122",
+      "source_url": "https://rescuekp.gov.pk/contact",
+      "coverage_notice": "Khyber Pakhtunkhwa Rescue 1122. Local availability may vary.",
+      "coverage_notice_ur": "خیبر پختونخوا ریسکیو 1122۔ مقامی دستیابی مختلف ہو سکتی ہے۔"
+    },
+    {
+      "id": "sindh",
+      "name": "Sindh",
+      "name_ur": "سندھ",
+      "emergency_number": "1122",
+      "source_url": "https://sers.gos.pk/contact-us/",
+      "coverage_notice": "Sindh Emergency Rescue Service. Ambulance availability in every locality is not guaranteed.",
+      "coverage_notice_ur": "سندھ ایمرجنسی ریسکیو سروس۔ ہر مقام پر ایمبولینس کی دستیابی کی ضمانت نہیں۔"
+    },
+    {
+      "id": "islamabad",
+      "name": "Islamabad",
+      "name_ur": "اسلام آباد",
+      "emergency_number": "1122",
+      "source_url": "https://www.cda.gov.pk/frequentlyAskedQuestions",
+      "coverage_notice": "Islamabad CDA emergency services. This is not a nationwide coverage statement.",
+      "coverage_notice_ur": "اسلام آباد سی ڈی اے کی ہنگامی خدمات۔ یہ پورے ملک میں دستیابی کا دعویٰ نہیں۔"
+    },
+    {
+      "id": "other",
+      "name": "Other area or outside Pakistan",
+      "name_ur": "دوسرا علاقہ یا پاکستان سے باہر",
+      "emergency_number": null,
+      "source_url": null,
+      "coverage_notice": "Use the local emergency number where you are. HerCare has not verified a number for this area.",
+      "coverage_notice_ur": "جہاں آپ موجود ہیں وہاں کا مقامی ہنگامی نمبر استعمال کریں۔ ہر کیئر نے اس علاقے کا نمبر تصدیق نہیں کیا۔"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "rozan",
+      "name": "Rozan Counselling",
+      "name_ur": "روزن مشاورت",
+      "phone": "+923041111741",
+      "type": "counselling",
+      "hours_en": "Monday–Friday 09:30–17:00 Pakistan time; Ramadan 09:30–15:00.",
+      "hours_ur": "پیر تا جمعہ پاکستان کے وقت کے مطابق 09:30 تا 17:00؛ رمضان میں 09:30 تا 15:00۔",
+      "source_url": "https://rozan.org/rozan-counseling-helpline/",
+      "verified_on": "2026-10-11",
+      "verification_status": "provider_source_checked",
+      "caution": "Emotional and violence-related support, not emergency dispatch. Regular call charges apply. HerCare cannot confirm the line is staffed now.",
+      "caution_ur": "جذباتی اور تشدد سے متعلق مدد، ہنگامی امداد نہیں۔ معمول کے کال چارجز لاگو ہیں۔ ہر کیئر اس وقت عملے کی دستیابی کی تصدیق نہیں کر سکتا۔"
+    },
+    {
+      "id": "taskeen",
+      "name": "Taskeen Mental Health Support",
+      "name_ur": "تسکین ذہنی صحت کی مدد",
+      "phone": "+923168275336",
+      "type": "counselling",
+      "hours_en": "Monday–Saturday 11:00–23:00 Pakistan time.",
+      "hours_ur": "پیر تا ہفتہ پاکستان کے وقت کے مطابق 11:00 تا 23:00۔",
+      "source_url": "https://taskeen.org/seek-help/",
+      "verified_on": "2026-10-11",
+      "verification_status": "provider_source_checked",
+      "caution": "Telephonic support, not emergency dispatch or a formal diagnosis. The provider describes support as free; carrier charges may still apply.",
+      "caution_ur": "فون پر مدد، ہنگامی امداد یا باقاعدہ تشخیص نہیں۔ ادارے کے مطابق مدد مفت ہے؛ فون کمپنی کے چارجز پھر بھی لاگو ہو سکتے ہیں۔"
+    },
+    {
+      "id": "umang",
+      "name": "Umang — listing needs rechecking",
+      "name_ur": "امنگ — رابطہ دوبارہ جانچنا ضروری ہے",
+      "phone": "+923117786264",
+      "type": "counselling",
+      "hours_en": "Hours and current availability unconfirmed.",
+      "hours_ur": "اوقات اور موجودہ دستیابی کی تصدیق نہیں۔",
+      "source_url": "https://www.umang.com.pk/testimonials-page/anf/",
+      "verified_on": "2026-10-11",
+      "verification_status": "limited_provider_listing",
+      "caution": "Number found on a provider-owned listing; other provider pages were unavailable. The service excludes active suicide attempts. Do not wait for this line in an emergency: seek emergency services or an emergency department.",
+      "caution_ur": "نمبر ادارے کی اپنی فہرست پر ملا؛ دوسری ویب صفحات دستیاب نہیں تھے۔ ادارہ جاری خودکشی کی کوشش کے دوران مدد فراہم نہیں کرتا۔ ہنگامی حالت میں اس لائن کا انتظار نہ کریں: ہنگامی خدمات یا ہسپتال کی ایمرجنسی سے مدد لیں۔"
+    }
+  ],
+  "guidance_sources": [
+    "https://www.who.int/news-room/questions-and-answers/item/suicide",
+    "https://www.nimh.nih.gov/research/research-conducted-at-nimh/asq-toolkit-materials/adult-outpatient/adult-outpatient-brief-suicide-safety-assessment-guide",
+    "https://www.nhs.uk/mental-health/conditions/post-partum-psychosis/"
+  ]
+}

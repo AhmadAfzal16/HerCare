@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/services/local_storage_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/push_notification_service.dart';
 
 /// Splash Screen
 /// Displays brand logo + animated tagline for [AppConstants.splashDuration],
@@ -32,6 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final Animation<double> _logoOpacity;
   late final Animation<double> _taglineOpacity;
   late final Animation<Offset> _taglineSlide;
+  String? _sessionError;
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
+    if (_sessionError != null) setState(() => _sessionError = null);
     final storage = LocalStorageService();
     final language = await storage.getString(AppConstants.languageKey);
     final token = await storage.getSecureString(AppConstants.accessTokenKey);
@@ -104,20 +107,41 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
 
       final user = auth.user;
+      if (auth.status == AuthStatus.error) {
+        setState(() => _sessionError = auth.errorMessage);
+        return;
+      }
       if (user == null) {
         context.go(AppRoutes.login);
       } else if (user.isGuardian) {
-        context.go(AppRoutes.guardianHome);
+        context.go(PushNotificationService.instance.consumePendingRoute(user) ??
+            AppRoutes.guardianHome);
       } else if (!user.onboardingComplete) {
         context.go(AppRoutes.onboarding);
       } else {
-        context.go(AppRoutes.home);
+        context.go(PushNotificationService.instance.consumePendingRoute(user) ??
+            AppRoutes.home);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_sessionError != null) {
+      return Scaffold(
+          body: SafeArea(
+              child: ListView(padding: const EdgeInsets.all(24), children: [
+        const Icon(Icons.cloud_off_outlined, size: 48),
+        const SizedBox(height: 20),
+        Text(_sessionError!),
+        const SizedBox(height: 16),
+        FilledButton(
+            onPressed: _navigate, child: const Text('Retry / دوبارہ کوشش')),
+        TextButton(
+            onPressed: () => context.go(AppRoutes.login),
+            child: const Text('Go to sign in / لاگ ان')),
+      ])));
+    }
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

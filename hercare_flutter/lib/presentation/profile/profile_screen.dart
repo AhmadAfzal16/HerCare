@@ -63,66 +63,18 @@ class ProfileScreen extends StatelessWidget {
               Text(
                 (user.role).toUpperCase(),
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(color: context.hcTextSecondary),
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: context.hcTextSecondary),
               ),
             ],
             const SizedBox(height: 32),
 
             // ─── Settings List ───────────────────────────────────────────────
-            
-            // Language Toggle
+
             _SettingsTile(
-              icon: Icons.language_rounded,
-              title: isUrdu ? 'زبان کی ترجیحات' : 'Language Preferences',
-              trailing: Container(
-                decoration: BoxDecoration(
-                  color: context.hcSurfaceVariant,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (isUrdu) languageProvider.toggleLocale();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: !isUrdu ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'English',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: !isUrdu ? Colors.white : AppColors.textSecondary,
-                            fontWeight: !isUrdu ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        if (!isUrdu) languageProvider.toggleLocale();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isUrdu ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Urdu',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: isUrdu ? Colors.white : AppColors.textSecondary,
-                            fontWeight: isUrdu ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              icon: Icons.settings_outlined,
+              title: isUrdu ? 'ترتیبات' : 'Settings',
+              onTap: () => context.push(AppRoutes.settings),
             ),
             const SizedBox(height: 16),
 
@@ -150,6 +102,7 @@ class ProfileScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.help_outline_rounded,
               title: isUrdu ? 'مدد اور تعاون' : 'Help & Support',
+              onTap: () => context.push(AppRoutes.helpSupport),
             ),
             const SizedBox(height: 32),
 
@@ -182,13 +135,11 @@ class ProfileScreen extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Widget? trailing;
   final VoidCallback? onTap;
 
   const _SettingsTile({
     required this.icon,
     required this.title,
-    this.trailing,
     this.onTap,
   });
 
@@ -223,8 +174,8 @@ class _SettingsTile extends StatelessWidget {
                     style: AppTextStyles.titleSmall.copyWith(fontSize: 15),
                   ),
                 ),
-                if (trailing != null) trailing!
-                else Icon(Icons.chevron_right_rounded, color: context.hcTextSecondary),
+                Icon(Icons.chevron_right_rounded,
+                    color: context.hcTextSecondary),
               ],
             ),
           ),

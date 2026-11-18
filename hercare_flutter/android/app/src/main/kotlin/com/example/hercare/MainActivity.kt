@@ -22,11 +22,29 @@ import kotlin.math.max
 class MainActivity : FlutterActivity() {
     private val wellbeingExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val channelName = "com.hercare/telemetry"
+    private val urgentNotifications by lazy { UrgentNotifications(this) }
+    private var notificationChannel: MethodChannel? = null
+    private var pendingUrgentOpen: Map<String, String>? = null
+    private var careLocation: CareLocationBridge? = null
+    private var posture: PostureBridge? = null
+    private var breathingBand: BreathingBandBridge? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
+        UrgentNotifications.createChannel(this)
+        pendingUrgentOpen = UrgentNotifications.takeOpened(intent)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    "hercare_screening_reminders",
+                    "Scheduled check-in reminders",
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    description = "Reminders for your scheduled HerCare tests"
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
+                },
+            )
             manager.createNotificationChannel(
                 NotificationChannel(
                     "hercare_urgent_alerts",
@@ -43,6 +61,30 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        careLocation = CareLocationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
+        posture = PostureBridge(flutterEngine.dartExecutor.binaryMessenger)
+        breathingBand = BreathingBandBridge(this, flutterEngine.dartExecutor.binaryMessenger)
+        notificationChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger, "com.hercare/notifications",
+        ).apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "bindAccount" -> {
+                        urgentNotifications.bindAccount(call.argument<String>("account_id"))
+                        result.success(null)
+                    }
+                    "showUrgent" -> result.success(
+                        urgentNotifications.show(call.arguments as? Map<*, *> ?: emptyMap<String, String>()),
+                    )
+                    "consumeInitialNotification" -> {
+                        val opened = pendingUrgentOpen ?: UrgentNotifications.takeOpened(intent)
+                        pendingUrgentOpen = null
+                        result.success(opened)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -84,6 +126,34 @@ class MainActivity : FlutterActivity() {
             }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val opened = UrgentNotifications.takeOpened(intent) ?: return
+        pendingUrgentOpen = opened
+        notificationChannel?.invokeMethod("notificationOpened", opened, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                if (pendingUrgentOpen == opened) pendingUrgentOpen = null
+            }
+            override fun error(code: String, message: String?, details: Any?) {}
+            override fun notImplemented() {}
+        })
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        careLocation?.onRequestPermissionsResult(requestCode, grantResults)
+        breathingBand?.onPermissionResult(requestCode)
+    }
+
+    override fun onStop() {
+        careLocation?.cancel()
+        breathingBand?.stop()
+        super.onStop()
+    }
+
     private fun hasNotificationAccess(): Boolean {
         val component = ComponentName(this, NotificationRiskService::class.java)
         val enabled = Settings.Secure.getString(
@@ -106,6 +176,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        careLocation?.dispose()
+        posture?.dispose()
+        breathingBand?.dispose()
         wellbeingExecutor.shutdown()
         super.onDestroy()
     }

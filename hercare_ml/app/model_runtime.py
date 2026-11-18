@@ -13,12 +13,16 @@ import pandas as pd
 class Prediction:
     depression_probability: float
     risk_level: str
-    confidence: float
+    confidence: float | None
     data_completeness: float
     model_version: str
     model_scope: str
     horizon_days: int | None
     contributors: list[dict[str, Any]]
+    confidence_type: str = 'not_estimated'
+    validation_status: str = 'research_only'
+    feature_contract_version: str = 'peri-dep-exact-v1'
+    explanation_type: str = 'observed_context_not_model_attribution'
 
 
 def risk_level(probability: float, safety_positive: bool = False) -> str:
@@ -48,7 +52,10 @@ class ModelRuntime:
         )
         completeness = present / len(self.feature_names)
         probability = float(self.pipeline.predict_proba(pd.DataFrame([values]))[0, 1])
-        confidence = min(0.99, 0.5 + abs(probability - 0.5)) * completeness
+        if not math.isfinite(probability) or not 0 <= probability <= 1:
+            raise ValueError('Model returned an invalid probability')
+        # Distance from 0.5 is not a confidence interval or clinical validation.
+        confidence = None
         contributors = self._contributors(features)
         return Prediction(
             depression_probability=probability,

@@ -19,7 +19,7 @@ import 'steps/consent_step.dart';
 import 'widgets/step_indicator.dart';
 import 'widgets/onboarding_nav_buttons.dart';
 
-/// 4-step Onboarding Wizard
+/// Two required steps, with birth/family details available on request.
 ///
 /// Steps:
 ///   0 – Personal Info     (M1 – Abdul Haadi)
@@ -39,7 +39,7 @@ class OnboardingWizard extends StatefulWidget {
 }
 
 class _OnboardingWizardState extends State<OnboardingWizard> {
-  final PageController _pageController = PageController();
+  final ScrollController _pageScroll = ScrollController();
   final OnboardingData _data = OnboardingData();
 
   // Form keys for each step — validated on Next press
@@ -49,11 +49,12 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   );
 
   int _currentStep = 0;
+  int _consentBackStep = 0;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageScroll.dispose();
     super.dispose();
   }
 
@@ -72,24 +73,32 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       return;
     }
 
-    setState(() => _currentStep++);
-    _pageController.animateToPage(
-      _currentStep,
-      duration: AppConstants.animNormal,
-      curve: Curves.easeInOutCubic,
-    );
+    _goToStep(_currentStep == 0 ? 3 : _currentStep + 1);
+  }
+
+  void _goToStep(int step) {
+    if (step == 3) _consentBackStep = _currentStep;
+    setState(() => _currentStep = step);
+    if (_pageScroll.hasClients) _pageScroll.jumpTo(0);
+  }
+
+  void _addOptionalDetails() {
+    final form = _formKeys[0].currentState;
+    if (!(form?.validate() ?? false)) return;
+    form?.save();
+    _goToStep(1);
+  }
+
+  void _skipOptionalDetails() {
+    _formKeys[_currentStep].currentState?.save();
+    _goToStep(3);
   }
 
   void _previousStep() {
     if (_currentStep == 0) {
       return;
     }
-    setState(() => _currentStep--);
-    _pageController.animateToPage(
-      _currentStep,
-      duration: AppConstants.animNormal,
-      curve: Curves.easeInOutCubic,
-    );
+    _goToStep(_currentStep == 3 ? _consentBackStep : _currentStep - 1);
   }
 
   Future<void> _completeOnboarding() async {
@@ -136,71 +145,62 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
     final stepColor = AppColors.onboardingStepColors[_currentStep];
 
+    final step = switch (_currentStep) {
+      0 => PersonalInfoStep(formKey: _formKeys[0], data: _data, isUrdu: isUrdu),
+      1 =>
+        ObstetricInfoStep(formKey: _formKeys[1], data: _data, isUrdu: isUrdu),
+      2 =>
+        FamilySupportStep(formKey: _formKeys[2], data: _data, isUrdu: isUrdu),
+      _ => ConsentStep(
+          formKey: _formKeys[3],
+          data: _data,
+          isUrdu: isUrdu,
+          onChanged: () => setState(() {})),
+    };
     return Scaffold(
       backgroundColor: context.hcBg,
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────────
+          child: Column(children: [
+        Expanded(
+            child: SingleChildScrollView(
+          controller: _pageScroll,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(children: [
             _buildHeader(isUrdu, stepColor),
-
-            // ── Step Indicator ────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: OnboardingStepIndicator(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: OnboardingStepIndicator(
+                    currentStep: _currentStep == 0 ? 0 : 1,
+                    totalSteps: 2,
+                    activeColor: stepColor)),
+            if (_currentStep < 3)
+              TextButton(
+                  onPressed: _isSubmitting
+                      ? null
+                      : (_currentStep == 0
+                          ? _addOptionalDetails
+                          : _skipOptionalDetails),
+                  child: Text(_currentStep == 0
+                      ? (isUrdu
+                          ? 'مزید صحت اور خاندان کی معلومات دیں (اختیاری)'
+                          : 'Add health and family details (optional)')
+                      : (isUrdu
+                          ? 'باقی اختیاری سوالات چھوڑ دیں'
+                          : 'Skip remaining optional questions'))),
+            KeyedSubtree(key: ValueKey(_currentStep), child: step),
+          ]),
+        )),
+        Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: OnboardingNavButtons(
                 currentStep: _currentStep,
                 totalSteps: AppConstants.totalOnboardingSteps,
-                activeColor: stepColor,
-              ),
-            ),
-
-            // ── Page Content ──────────────────────────────────────────
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics:
-                    const NeverScrollableScrollPhysics(), // programmatic only
-                children: [
-                  PersonalInfoStep(
-                    formKey: _formKeys[0],
-                    data: _data,
-                    isUrdu: isUrdu,
-                  ),
-                  ObstetricInfoStep(
-                    formKey: _formKeys[1],
-                    data: _data,
-                    isUrdu: isUrdu,
-                  ),
-                  FamilySupportStep(
-                    formKey: _formKeys[2],
-                    data: _data,
-                    isUrdu: isUrdu,
-                  ),
-                  ConsentStep(
-                    formKey: _formKeys[3],
-                    data: _data,
-                    isUrdu: isUrdu,
-                    onChanged: () => setState(() {}),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Navigation Buttons ────────────────────────────────────
-            OnboardingNavButtons(
-              currentStep: _currentStep,
-              totalSteps: AppConstants.totalOnboardingSteps,
-              stepColor: stepColor,
-              isSubmitting: _isSubmitting,
-              isUrdu: isUrdu,
-              onNext: _nextStep,
-              onBack: _previousStep,
-            ),
-
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+                stepColor: stepColor,
+                isSubmitting: _isSubmitting,
+                isUrdu: isUrdu,
+                onNext: _nextStep,
+                onBack: _previousStep)),
+      ])),
     );
   }
 
@@ -213,17 +213,11 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     ];
     const stepSubtitles = [
       [
-        'Help us personalize your experience.',
-        'آپ کے تجربے کو ذاتی بنانے میں ہماری مدد کریں۔'
+        'Only two quick answers are needed to continue.',
+        'جاری رکھنے کے لیے صرف دو مختصر جواب درکار ہیں۔'
       ],
-      [
-        'Clinical data improves risk accuracy.',
-        'طبی معلومات آپ کا خطرہ درست طریقے سے جانچنے میں مدد کرتی ہیں۔'
-      ],
-      [
-        'Connect your loved ones.',
-        'ہم آپ کے پیاروں کو آپ کی بہتر مدد کے لیے جوڑیں گے۔'
-      ],
+      ['These details are optional.', 'یہ معلومات دینا اختیاری ہے۔'],
+      ['You can skip these questions.', 'آپ یہ سوالات چھوڑ سکتی ہیں۔'],
       [
         'Choose what you\'re comfortable with.',
         'غور سے پڑھیں اور اپنی پسند کا انتخاب کریں۔'
@@ -253,26 +247,26 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
         crossAxisAlignment:
             isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment:
-                isUrdu ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: stepColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Step ${_currentStep + 1} of ${AppConstants.totalOnboardingSteps}',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: stepColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: stepColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _currentStep == 0
+                    ? (isUrdu ? 'ضروری ۱ / ۲' : 'Required 1 of 2')
+                    : _currentStep == 3
+                        ? (isUrdu ? 'ضروری ۲ / ۲' : 'Required 2 of 2')
+                        : (isUrdu ? 'اختیاری معلومات' : 'Optional details'),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: stepColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 10),
           Text(

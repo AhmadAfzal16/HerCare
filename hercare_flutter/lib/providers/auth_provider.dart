@@ -17,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
   String? _errorMessage;
+  bool _offlineSession = false;
 
   AuthProvider({AuthRepository? repo}) : _repo = repo ?? AuthRepository();
 
@@ -26,6 +27,7 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == AuthStatus.loading;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get isOfflineSession => _offlineSession;
 
   // ─── Register ─────────────────────────────────────────────────────────────
   Future<bool> register({
@@ -43,6 +45,7 @@ class AuthProvider extends ChangeNotifier {
         language: language,
       );
       _status = AuthStatus.authenticated;
+      _offlineSession = false;
       notifyListeners();
       await PushNotificationService.instance.onAuthenticated();
       return true;
@@ -61,6 +64,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _user = await _repo.login(phone: phone, password: password);
       _status = AuthStatus.authenticated;
+      _offlineSession = false;
       notifyListeners();
       await PushNotificationService.instance.onAuthenticated();
       return true;
@@ -78,6 +82,7 @@ class AuthProvider extends ChangeNotifier {
       await _repo.logout();
     } finally {
       _user = null;
+      _offlineSession = false;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
     }
@@ -88,26 +93,37 @@ class AuthProvider extends ChangeNotifier {
     _setLoading();
     try {
       _user = await _repo.getMe();
+      _offlineSession = _repo.restoredOffline;
       _status =
           _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
-      if (_user != null) {
+      if (_user != null && !_offlineSession) {
         await PushNotificationService.instance.onAuthenticated();
       }
-    } catch (_) {
-      _status = AuthStatus.unauthenticated;
+    } catch (error) {
+      _errorMessage = error.toString();
+      _status = AuthStatus.error;
     }
     notifyListeners();
   }
 
   Future<UserModel?> refreshCurrentUser() async {
     try {
-      _user = await _repo.getMe();
+      _user = await _repo.getMe(allowCached: false);
+      _offlineSession = false;
       _status =
           _user == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
       notifyListeners();
       return _user;
     } catch (error) {
-      _setError(error.toString());
+      _errorMessage = error.toString();
+      // Failed revalidation is not a logout. Keep a previously restored shell.
+      if (_user != null) {
+        _offlineSession = true;
+        _status = AuthStatus.authenticated;
+      } else {
+        _status = AuthStatus.error;
+      }
+      notifyListeners();
       return null;
     }
   }

@@ -2,6 +2,8 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { authenticate } = require('../../middleware/auth');
 const ctrl = require('./guardian.controller');
+const trends = require('./guardian.trends');
+const { accountScope } = require('../../middleware/account_scope');
 const {
   validateAcceptInvite,
   validateGetReports,
@@ -13,7 +15,7 @@ const {
 } = require('./guardian.validator');
 
 const router = Router();
-router.use(authenticate);
+router.use(authenticate, accountScope('X-Guardian-Account-Id'));
 
 const inviteLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -30,6 +32,10 @@ router.get('/link', ctrl.getLink);
 router.delete('/link', ctrl.revokeLink);
 
 router.get('/dashboard', validateGetDashboard, ctrl.getDashboard);
+router.get('/wellbeing-trends', accountScope('X-Guardian-Account-Id', { required: true }), async (req, res, next) => {
+  try { res.json({ success: true, data: await trends.getTrends(req.user.userId, req.user.role) }); }
+  catch (error) { next(error); }
+});
 
 router.get('/reports', validateGetReports, ctrl.getReports);
 router.get('/reports/:id', validateReportId, ctrl.getReportById);

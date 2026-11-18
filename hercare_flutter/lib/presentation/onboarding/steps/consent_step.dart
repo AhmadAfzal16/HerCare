@@ -12,7 +12,7 @@ import '../../../data/models/onboarding_model.dart';
 /// Tier 2 — Guardian reports (RECOMMENDED): aggregated clinical summaries.
 /// Tier 3 — Notification & usage analysis (OPTIONAL): passive telemetry.
 ///
-/// Legal/ethical: Users can revoke any consent at any time from Settings.
+/// Optional sharing can be changed from Settings → Privacy.
 /// Tier 1 is required to use the app (enforced in [OnboardingWizard]).
 class ConsentStep extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -59,8 +59,7 @@ class ConsentStep extends StatelessWidget {
               badgeEn: 'REQUIRED',
               badgeUr: 'ضروری',
               badgeColor: AppColors.error,
-              descEn:
-                  'EPDS screening scores, daily mood logs, sleep data, and app usage — '
+              descEn: 'EPDS screening scores, daily mood logs and sleep data — '
                   'used to personalize your experience and generate clinical reports.',
               descUr: 'EPDS اسکریننگ سکورز، روزانہ کا موڈ، نیند کا ڈیٹا — '
                   'آپ کے تجربے کو ذاتی بنانے اور طبی رپورٹس بنانے کے لیے۔',
@@ -356,8 +355,8 @@ class _PrivacyNote extends StatelessWidget {
           Expanded(
             child: Text(
               isUrdu
-                  ? 'آپ کسی بھی اجازت کو کسی بھی وقت ترتیبات → رازداری سے واپس لے سکتی ہیں۔'
-                  : 'You may withdraw any permission at any time from Settings → Privacy.',
+                  ? 'اختیاری شیئرنگ کی اجازت ترتیبات → رازداری سے تبدیل کر سکتی ہیں۔'
+                  : 'You can change optional sharing permissions in Settings → Privacy.',
               style: isUrdu ? AppTextStyles.urduLabel : AppTextStyles.bodySmall,
               textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
             ),
@@ -377,14 +376,14 @@ class _DataRightsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rights = isUrdu
         ? [
-            'اپنا ڈیٹا ڈاؤن لوڈ کریں',
-            'اپنا اکاؤنٹ حذف کریں',
-            'کسی بھی وقت اجازت واپس لیں',
+            'اپنے نجی جریدے کے اندراجات حذف کریں',
+            'سرپرست کا رابطہ ختم کریں',
+            'اختیاری شیئرنگ بند کریں',
           ]
         : [
-            'Download your data',
-            'Delete your account',
-            'Revoke any permission at any time',
+            'Delete individual private journal entries',
+            'Disconnect your guardian link',
+            'Turn off optional sharing',
           ];
 
     return Container(
@@ -405,7 +404,7 @@ class _DataRightsCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                   child: Text(
-                isUrdu ? 'آپ کے ڈیٹا کے حقوق' : 'Your Data Rights',
+                isUrdu ? 'آپ کا اختیار' : 'Your controls',
                 style: isUrdu
                     ? AppTextStyles.urduLabel.copyWith(
                         color: context.hcTextPrimary,

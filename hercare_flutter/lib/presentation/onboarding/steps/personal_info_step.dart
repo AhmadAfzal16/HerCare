@@ -6,8 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/onboarding_model.dart';
 
 /// Step 1: Personal Information
-/// Collects: full name, age, education, city, months since birth.
-/// All fields feed into [OnboardingData] and later into the ML risk model.
+/// Age and postpartum stage are required; other profile details are optional.
 class PersonalInfoStep extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final OnboardingData data;
@@ -27,40 +26,16 @@ class PersonalInfoStep extends StatelessWidget {
       child: Form(
         key: formKey,
         child: Column(
-          crossAxisAlignment: isUrdu
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isUrdu ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // Full Name
-            _OnboardingField(
-              label: isUrdu ? 'پورا نام' : 'Full Name',
-              hint: isUrdu ? 'جیسے: سارہ خان' : 'e.g. Sara Khan',
-              isUrdu: isUrdu,
-              keyboardType: TextInputType.name,
-              textCapitalization: TextCapitalization.words,
-              onSaved: (v) => data.fullName = v?.trim(),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return isUrdu
-                      ? 'نام درج کریں'
-                      : 'Please enter your name';
-                }
-                if (v.trim().length < 2) {
-                  return isUrdu
-                      ? 'نام بہت چھوٹا ہے'
-                      : 'Name is too short';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 18),
-
             // Age
             _OnboardingField(
               label: isUrdu ? 'عمر (سال)' : 'Age (years)',
               hint: isUrdu ? 'جیسے: 26' : 'e.g. 26',
               isUrdu: isUrdu,
               keyboardType: TextInputType.number,
+              initialValue: data.age?.toString(),
               onSaved: (v) => data.age = int.tryParse(v ?? ''),
               validator: (v) {
                 final age = int.tryParse(v ?? '');
@@ -77,54 +52,11 @@ class PersonalInfoStep extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // Education
-            _OnboardingDropdown(
-              label: isUrdu ? 'اعلیٰ تعلیم' : 'Highest Education',
-              isUrdu: isUrdu,
-              items: isUrdu
-                  ? [
-                      'کوئی رسمی تعلیم نہیں',
-                      'پرائمری (1-5)',
-                      'مڈل (6-8)',
-                      'میٹرک',
-                      'انٹرمیڈیٹ',
-                      'گریجویشن',
-                      'ماسٹرز یا اس سے اوپر',
-                    ]
-                  : [
-                      'No Formal Education',
-                      'Primary (Grade 1–5)',
-                      'Middle (Grade 6–8)',
-                      'Matric (Grade 9–10)',
-                      'Intermediate (Grade 11–12)',
-                      'Graduation (Bachelor\'s)',
-                      'Masters or above',
-                    ],
-              onSaved: (v) => data.educationLevel = v,
-              validator: (v) => v == null
-                  ? (isUrdu ? 'تعلیم منتخب کریں' : 'Select education level')
-                  : null,
-            ),
-            const SizedBox(height: 18),
-
-            // City
-            _OnboardingField(
-              label: isUrdu ? 'شہر' : 'City',
-              hint: isUrdu ? 'جیسے: لاہور' : 'e.g. Lahore',
-              isUrdu: isUrdu,
-              keyboardType: TextInputType.text,
-              textCapitalization: TextCapitalization.words,
-              onSaved: (v) => data.city = v?.trim(),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? (isUrdu ? 'شہر درج کریں' : 'Enter your city')
-                  : null,
-            ),
-            const SizedBox(height: 18),
-
             // Months since birth
             _OnboardingField(
               label: isUrdu ? 'پیدائش کے بعد مہینے' : 'Months since birth',
               hint: isUrdu ? 'جیسے: 3' : 'e.g. 3',
+              initialValue: data.monthsSinceBirth?.toString(),
               isUrdu: isUrdu,
               keyboardType: TextInputType.number,
               onSaved: (v) => data.monthsSinceBirth = int.tryParse(v ?? ''),
@@ -142,6 +74,60 @@ class PersonalInfoStep extends StatelessWidget {
                 }
                 return null;
               },
+            ),
+
+            const SizedBox(height: 12),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              maintainState: true,
+              title: Text(isUrdu
+                  ? 'مزید معلومات (اختیاری)'
+                  : 'More about you (optional)'),
+              children: [
+                _OnboardingField(
+                  label: isUrdu ? 'نام (اختیاری)' : 'Name (optional)',
+                  hint: isUrdu ? 'جیسے: سارہ' : 'e.g. Sara',
+                  initialValue: data.fullName,
+                  isUrdu: isUrdu,
+                  keyboardType: TextInputType.name,
+                  textCapitalization: TextCapitalization.words,
+                  onSaved: (v) => data.fullName =
+                      v?.trim().isEmpty == true ? null : v?.trim(),
+                  validator: (v) =>
+                      v != null && v.trim().isNotEmpty && v.trim().length < 2
+                          ? (isUrdu ? 'نام بہت چھوٹا ہے' : 'Name is too short')
+                          : null,
+                ),
+                const SizedBox(height: 18),
+                _OnboardingDropdown(
+                  label: isUrdu ? 'تعلیم (اختیاری)' : 'Education (optional)',
+                  isUrdu: isUrdu,
+                  value: data.educationLevel,
+                  items: {
+                    'Uneducated':
+                        isUrdu ? 'کوئی رسمی تعلیم نہیں' : 'No formal education',
+                    'Primary': isUrdu ? 'پرائمری' : 'Primary',
+                    'Middle': isUrdu ? 'مڈل' : 'Middle',
+                    'Matric': isUrdu ? 'میٹرک' : 'Matric',
+                    'Intermediate': isUrdu ? 'انٹرمیڈیٹ' : 'Intermediate',
+                    'Graduation': isUrdu ? 'گریجویشن' : 'Graduation',
+                    'Masters':
+                        isUrdu ? 'ماسٹرز یا اس سے اوپر' : 'Masters or above',
+                  },
+                  onChanged: (v) => data.educationLevel = v,
+                ),
+                const SizedBox(height: 18),
+                _OnboardingField(
+                  label: isUrdu ? 'شہر (اختیاری)' : 'City (optional)',
+                  hint: isUrdu ? 'جیسے: لاہور' : 'e.g. Lahore',
+                  initialValue: data.city,
+                  isUrdu: isUrdu,
+                  textCapitalization: TextCapitalization.words,
+                  onSaved: (v) =>
+                      data.city = v?.trim().isEmpty == true ? null : v?.trim(),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -165,6 +151,7 @@ class PersonalInfoStep extends StatelessWidget {
 class _OnboardingField extends StatelessWidget {
   final String label;
   final String hint;
+  final String? initialValue;
   final bool isUrdu;
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
@@ -174,6 +161,7 @@ class _OnboardingField extends StatelessWidget {
   const _OnboardingField({
     required this.label,
     required this.hint,
+    this.initialValue,
     required this.isUrdu,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
@@ -199,6 +187,7 @@ class _OnboardingField extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          initialValue: initialValue,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -218,16 +207,16 @@ class _OnboardingField extends StatelessWidget {
 class _OnboardingDropdown extends StatelessWidget {
   final String label;
   final bool isUrdu;
-  final List<String> items;
-  final void Function(String?)? onSaved;
-  final String? Function(String?)? validator;
+  final String? value;
+  final Map<String, String> items;
+  final void Function(String?)? onChanged;
 
   const _OnboardingDropdown({
     required this.label,
     required this.isUrdu,
     required this.items,
-    this.onSaved,
-    this.validator,
+    this.value,
+    this.onChanged,
   });
 
   @override
@@ -248,6 +237,7 @@ class _OnboardingDropdown extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          initialValue: value,
           decoration: const InputDecoration(),
           isExpanded: true,
           style: isUrdu
@@ -258,19 +248,17 @@ class _OnboardingDropdown extends StatelessWidget {
               : AppTextStyles.bodyLarge.copyWith(
                   color: context.hcTextPrimary,
                 ),
-          items: items
+          items: items.entries
               .map((e) => DropdownMenuItem(
-                    value: e,
+                    value: e.key,
                     child: Text(
-                      e,
+                      e.value,
                       textDirection:
                           isUrdu ? TextDirection.rtl : TextDirection.ltr,
                     ),
                   ))
               .toList(),
-          onChanged: (_) {},
-          onSaved: onSaved,
-          validator: validator,
+          onChanged: onChanged,
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
       ],

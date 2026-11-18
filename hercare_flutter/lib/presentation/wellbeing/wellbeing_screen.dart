@@ -8,13 +8,35 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/theme_ext.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/mood_provider.dart';
+import '../../providers/screening_provider.dart';
+import 'package:intl/intl.dart';
 
-/// Full Wellbeing screen � deeper view of EPDS, mood, sleep, and chat.
-/// Navigated to from "View all ?" on the Home Dashboard.
-class WellbeingScreen extends StatelessWidget {
+/// Saved wellbeing summaries and shortcuts; no fabricated measurements.
+class WellbeingScreen extends StatefulWidget {
   final bool hideBackButton;
 
   const WellbeingScreen({super.key, this.hideBackButton = false});
+
+  @override
+  State<WellbeingScreen> createState() => _WellbeingScreenState();
+}
+
+class _WellbeingScreenState extends State<WellbeingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  Future<void> _refresh({bool force = false}) async {
+    final mood = context.read<MoodProvider>();
+    await Future.wait([
+      context.read<ScreeningProvider>().loadOverview(force: force),
+      if (!mood.isLoading) mood.load(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +49,8 @@ class WellbeingScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        automaticallyImplyLeading: !hideBackButton,
-        leading: hideBackButton
+        automaticallyImplyLeading: !widget.hideBackButton,
+        leading: widget.hideBackButton
             ? null
             : IconButton(
                 icon: Icon(Icons.arrow_back_ios_new_rounded,
@@ -41,50 +63,53 @@ class WellbeingScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        children: [
-          _SectionHeader(
-            title: isUrdu ? 'EPDS اسکور' : 'EPDS Score',
-            subtitle: isUrdu ? 'ایڈنبرا اسکریننگ' : 'Edinburgh Screening',
-          ),
-          const SizedBox(height: 12),
-          RepaintBoundary(child: _EpdsScoreCard(isUrdu: isUrdu)),
-          const SizedBox(height: 24),
-          _SectionHeader(
-            title: isUrdu ? 'موڈ کی تاریخ' : 'Mood History',
-            subtitle: isUrdu ? 'پچھلے 7 دن' : 'Last 7 days',
-          ),
-          const SizedBox(height: 12),
-          RepaintBoundary(child: _MoodHistoryCard(isUrdu: isUrdu)),
-          const SizedBox(height: 24),
-          _SectionHeader(
-            title: isUrdu ? 'نیند کے اعداد و شمار' : 'Sleep Stats',
-            subtitle: isUrdu ? 'اس ہفتہ' : 'This week',
-          ),
-          const SizedBox(height: 12),
-          RepaintBoundary(child: _SleepStatsCard(isUrdu: isUrdu)),
-          const SizedBox(height: 24),
-          _SectionHeader(
-            title: isUrdu ? 'سکون اور مشقیں' : 'Calm & Activities',
-            subtitle: isUrdu
-                ? 'سانس، مراقبہ، سی بی ٹی اور ہلکے کھیل'
-                : 'Breathing, meditation, CBT, and light games',
-          ),
-          const SizedBox(height: 12),
-          RepaintBoundary(child: _TherapyCard(isUrdu: isUrdu)),
-          const SizedBox(height: 24),
-          _SectionHeader(
-            title: isUrdu ? 'ہم راز AI' : 'Hum-Raaz AI',
-            subtitle: isUrdu
-                ? '24/7 ذہنی صحت کا ساتھی'
-                : '24/7 mental health companion',
-          ),
-          const SizedBox(height: 12),
-          RepaintBoundary(child: _HumRaazCard(isUrdu: isUrdu)),
-        ],
-      ),
+      body: RefreshIndicator(
+          onRefresh: () => _refresh(force: true),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            children: [
+              _SectionHeader(
+                title: isUrdu ? 'EPDS اسکور' : 'EPDS Score',
+                subtitle: isUrdu ? 'ایڈنبرا اسکریننگ' : 'Edinburgh Screening',
+              ),
+              const SizedBox(height: 12),
+              RepaintBoundary(child: _EpdsScoreCard(isUrdu: isUrdu)),
+              const SizedBox(height: 24),
+              _SectionHeader(
+                title: isUrdu ? 'موڈ کی تاریخ' : 'Mood History',
+                subtitle: isUrdu ? 'حالیہ اندراجات' : 'Recent check-ins',
+              ),
+              const SizedBox(height: 12),
+              RepaintBoundary(child: _MoodHistoryCard(isUrdu: isUrdu)),
+              const SizedBox(height: 24),
+              _SectionHeader(
+                title: isUrdu ? 'نیند کے اعداد و شمار' : 'Sleep Stats',
+                subtitle:
+                    isUrdu ? 'آپ کے درج کردہ اوقات' : 'Your recorded sleep',
+              ),
+              const SizedBox(height: 12),
+              RepaintBoundary(child: _SleepStatsCard(isUrdu: isUrdu)),
+              const SizedBox(height: 24),
+              _SectionHeader(
+                title: isUrdu ? 'سکون اور مشقیں' : 'Calm & Activities',
+                subtitle: isUrdu
+                    ? 'سانس، مراقبہ، سی بی ٹی اور ہلکے کھیل'
+                    : 'Breathing, meditation, CBT, and light games',
+              ),
+              const SizedBox(height: 12),
+              RepaintBoundary(child: _TherapyCard(isUrdu: isUrdu)),
+              const SizedBox(height: 24),
+              _SectionHeader(
+                title: isUrdu ? 'ہم راز AI' : 'Hum-Raaz AI',
+                subtitle: isUrdu
+                    ? '24/7 ذہنی صحت کا ساتھی'
+                    : '24/7 mental health companion',
+              ),
+              const SizedBox(height: 12),
+              RepaintBoundary(child: _HumRaazCard(isUrdu: isUrdu)),
+            ],
+          )),
     );
   }
 }
@@ -141,9 +166,7 @@ class _TherapyCard extends StatelessWidget {
       );
 }
 
-// Shared border-only card decoration.
-// BoxShadow with blurRadius is CPU-rendered on Android and causes scroll jank.
-// A simple 1px border achieves the same visual depth at zero GPU overhead.
+// Consistent card styling for the summary sections.
 BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
       color: context.hcSurface,
       borderRadius: BorderRadius.circular(20),
@@ -153,158 +176,54 @@ BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
 // --- EPDS Score Card ----------------------------------------------------------
 
 class _EpdsScoreCard extends StatelessWidget {
-  final bool isUrdu;
   const _EpdsScoreCard({required this.isUrdu});
-
-  static const _history = [6, 8, 7, 9, 8, 7, 8];
-  static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _daysUr = [
-    'پیر',
-    'منگل',
-    'بدھ',
-    'جمعرات',
-    'جمعہ',
-    'ہفتہ',
-    'اتوار'
-  ];
+  final bool isUrdu;
 
   @override
   Widget build(BuildContext context) {
+    final screening = context.watch<ScreeningProvider>();
+    final latest = screening.latest;
+    final date = latest?.completedAt;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: _cardDecoration(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(isUrdu ? 'موجودہ اسکور' : 'Current Score',
-                      style: AppTextStyles.bodySmall),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('8',
-                          style: AppTextStyles.headlineMedium.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w800)),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 6, left: 4),
-                        child: Text('/ 30'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.successContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  isUrdu ? '😐 معتدل خطرہ' : '😐 Mild Risk',
-                  style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.success, fontWeight: FontWeight.w700),
-                ),
-              ),
-              const Spacer(),
-              Text(isUrdu ? '2 دن پہلے' : '2 days ago',
-                  style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(isUrdu ? 'پچھلی 7 اسکریننگز' : 'Last 7 screenings',
-              style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 80,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_history.length, (i) {
-                final isLast = i == _history.length - 1;
-                final barH = (_history[i] / 30 * 56).clamp(8.0, 56.0);
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text('${_history[i]}',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          fontSize: 10,
-                          color: isLast
-                              ? AppColors.primary
-                              : context.hcTextSecondary,
-                          fontWeight:
-                              isLast ? FontWeight.w700 : FontWeight.w400,
-                        )),
-                    const SizedBox(height: 3),
-                    Container(
-                      width: 26,
-                      height: barH,
-                      decoration: BoxDecoration(
-                        color: isLast
-                            ? AppColors.primary
-                            : AppColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(isUrdu ? _daysUr[i] : _days[i],
-                        style: AppTextStyles.labelSmall.copyWith(fontSize: 9)),
-                  ],
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _RiskChip(
-                  label: isUrdu ? 'معمول' : 'Normal',
-                  color: AppColors.success,
-                  range: '0–8'),
-              _RiskChip(
-                  label: isUrdu ? 'معتدل' : 'Mild',
-                  color: AppColors.warning,
-                  range: '9–12'),
-              _RiskChip(
-                  label: isUrdu ? 'زیادہ' : 'High',
-                  color: AppColors.error,
-                  range: '13+'),
-            ],
-          ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(
+            latest?.totalScore == null
+                ? (screening.overviewLoaded
+                    ? (isUrdu
+                        ? 'ابھی کوئی مکمل جانچ نہیں'
+                        : 'No completed screening yet')
+                    : (isUrdu
+                        ? 'جانچ کا خلاصہ دستیاب نہیں'
+                        : 'Screening summary unavailable'))
+                : '${latest!.totalScore} / 30',
+            style: AppTextStyles.titleLarge),
+        if (date != null) ...[
+          const SizedBox(height: 8),
+          Text(DateFormat.yMMMd(isUrdu ? 'ur' : 'en').format(date.toLocal())),
         ],
-      ),
-    );
-  }
-}
-
-class _RiskChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final String range;
-  const _RiskChip(
-      {required this.label, required this.color, required this.range});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text('$label ($range)',
-          style: AppTextStyles.labelSmall.copyWith(
-              color: color, fontWeight: FontWeight.w600, fontSize: 10)),
+        const SizedBox(height: 12),
+        Text(
+            isUrdu
+                ? 'جانچ علامات سمجھنے میں مدد کرتی ہے، تشخیص نہیں ہے۔'
+                : 'Screening helps you understand symptoms; it is not a diagnosis.',
+            style: AppTextStyles.bodySmall),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          TextButton.icon(
+              onPressed: () => context.push(AppRoutes.tests),
+              icon: const Icon(Icons.assignment_outlined),
+              label: Text(isUrdu ? 'میری جانچیں' : 'My tests')),
+          if (latest != null)
+            TextButton(
+                onPressed: () => context.push(AppRoutes.screeningHistory),
+                child: Text(isUrdu ? 'پچھلی جانچیں' : 'Screening history')),
+          if (!screening.overviewLoaded)
+            TextButton(
+                onPressed: () => screening.loadOverview(force: true),
+                child: Text(isUrdu ? 'دوبارہ کوشش' : 'Retry')),
+        ]),
+      ]),
     );
   }
 }
@@ -341,10 +260,10 @@ class _MoodHistoryCard extends StatelessWidget {
             Row(
               children: List.generate(entries.length, (i) {
                 final entry = entries[i];
-                final isToday = i == entries.length - 1;
+                final now = DateTime.now();
+                final isToday = DateUtils.isSameDay(entry.entryDate, now);
                 return Column(
                   children: [
-                    // Rounded rect instead of BoxShape.circle � much cheaper paint
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -434,7 +353,7 @@ class _SleepStatsCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(isUrdu
               ? 'حقیقی استعمال دیکھیں، رسائی دیں اور نیند کے اوقات محفوظ کریں۔'
-              : 'Connect Android usage access and record your actual bedtime, wake time and sleep quality.'),
+              : 'Record bedtime and wake time. Sleep details and phone access are optional.'),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: () => context.push(AppRoutes.digitalWellbeing),
@@ -455,7 +374,6 @@ class _HumRaazCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Solid color only  no LinearGradient + BoxShadow combo (expensive)
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -485,8 +403,8 @@ class _HumRaazCard extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   isUrdu
-                      ? '24/7 ذہنی صحت کا AI ساتھی'
-                      : '24/7 AI mental health companion',
+                      ? 'اپنی پسند کی زبان میں جذباتی معاونت'
+                      : 'Emotional support in your preferred language',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: Colors.white.withValues(alpha: 0.85)),
                 ),
@@ -494,7 +412,7 @@ class _HumRaazCard extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () => context.push(AppRoutes.chatbot),
             style: TextButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF0EA5E9),
@@ -532,14 +450,15 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Column(
+        Expanded(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: AppTextStyles.titleSmall.copyWith(fontSize: 16)),
             Text(subtitle,
                 style: AppTextStyles.bodySmall.copyWith(fontSize: 11)),
           ],
-        ),
+        )),
       ],
     );
   }

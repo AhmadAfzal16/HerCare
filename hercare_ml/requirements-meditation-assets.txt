@@ -1,0 +1,4 @@
+# Build-time only: no TTS engine or model is shipped inside Flutter.
+espeakng-loader==0.2.4
+av==19.0.1
+numpy==2.2.5

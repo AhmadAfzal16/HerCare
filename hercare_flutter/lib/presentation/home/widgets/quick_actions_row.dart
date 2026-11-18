@@ -38,7 +38,7 @@ class QuickActionsRow extends StatelessWidget {
         labelUr: 'ہم راز',
         bg: const Color(0xFFCFFAFE),
         iconColor: AppColors.accent,
-        onTap: () {},
+        onTap: () => context.push(AppRoutes.chatbot),
       ),
       _QuickAction(
         icon: '🌿',

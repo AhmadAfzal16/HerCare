@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateSleep, summarize } = require('../src/modules/sleep/sleep.logic');
+const { validateSleep } = require('../src/modules/sleep/sleep.logic');
+const { buildInsights } = require('../src/modules/sleep/sleep.insights');
 
 const now = Date.parse('2026-09-26T08:00:00Z');
 const sample = {
@@ -20,6 +21,8 @@ test('sleep rejects future times, invalid intervals, mismatched dates, and priva
   ]) assert.throws(() => validateSleep({ ...sample, ...change }, now));
 });
 test('sleep summary preserves missing data and accepts database numeric strings', () => {
-  assert.equal(summarize([]).average_minutes, null);
-  assert.equal(summarize([{ sleep_minutes: '420' }, { sleep_minutes: '480' }]).average_minutes, 450);
+  const summary = (sleep) => buildInsights({ sleep, asOf: '2026-09-26' }).windows[0].current;
+  assert.equal(summary([]).average_minutes, null);
+  assert.equal(summary([{ sleep_date: '2026-09-26', sleep_minutes: '420' },
+    { sleep_date: '2026-09-25', sleep_minutes: '480' }]).average_minutes, 450);
 });

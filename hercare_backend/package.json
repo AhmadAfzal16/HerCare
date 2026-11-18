@@ -11,12 +11,11 @@
     "dev": "nodemon server.js",
     "migrate": "node migrations/run.js",
     "lint": "eslint src migrations test",
-    "test": "node --test"
+    "test": "node --test \"test/*.test.js\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
     "@aws-sdk/s3-request-presigner": "^3.1138.0",
-    "@google-cloud/speech": "^7.5.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -29,7 +28,6 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.11.5",
-    "uuid": "^11.1.1",
     "winston": "^3.13.0"
   },
   "devDependencies": {

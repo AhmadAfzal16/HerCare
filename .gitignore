@@ -26,3 +26,18 @@ hercare_backend/.env
 # ─── OS ──────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+
+# Local builds, exported bundles, and deployment configuration
+/.local-run/
+/HerCare-export/
+.idea/
+.env.*
+!.env.example
+hercare_flutter/android/app/google-services.json
+hercare_flutter/ios/Runner/GoogleService-Info.plist
+hercare_flutter/macos/Runner/GoogleService-Info.plist
+key.properties
+*.keystore
+*.jks
+*.p12

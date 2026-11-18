@@ -1,11 +1,17 @@
 const { Router } = require('express');
 const { authenticate } = require('../../middleware/auth');
+const { AppError } = require('../../middleware/error_handler');
+const policy = require('./community.policy');
 const service = require('./community.service');
 const router = Router();
 router.use(authenticate);
 router.use((_req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 router.use(async (req, _res, next) => {
   try {
+    const expected = req.get('X-Community-Account-Id');
+    if (expected !== undefined && policy.uuid(expected) !== req.user.userId.toLowerCase()) {
+      throw new AppError('The account changed. Please reopen the community.', 409);
+    }
     await service.actor(req.user.userId, false);
     if (!['GET', 'HEAD'].includes(req.method)) await service.spendQuota(req.user.userId);
     next();
@@ -28,8 +34,10 @@ router.put('/blocks/:id', endpoint((r) => service.block(r.user.userId, r.params.
 router.delete('/blocks/:id', endpoint((r) => service.block(r.user.userId, r.params.id, false)));
 router.get('/sessions', endpoint((r) => service.sessions(r.user.userId)));
 router.get('/moderation', endpoint((r) => service.queue(r.user.userId, r.query.cursor)));
+router.get('/moderation/status', endpoint((r) => service.moderationStatus(r.user.userId)));
 router.put('/moderation/:id', endpoint((r) => service.review(r.user.userId, r.params.id, r.body)));
 router.put('/members/:id/suspension', endpoint((r) => service.suspend(r.user.userId, r.params.id, r.body)));
+router.get('/members', endpoint((r) => service.members(r.user.userId, r.query.cursor)));
 router.post('/sessions', endpoint((r) => service.schedule(r.user.userId, r.body)));
 router.delete('/sessions/:id', endpoint((r) => service.cancelSession(r.user.userId, r.params.id)));
 module.exports = router;

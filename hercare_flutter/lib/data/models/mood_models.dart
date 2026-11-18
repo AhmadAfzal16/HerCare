@@ -36,9 +36,9 @@ class MoodCheckin {
   final String id;
   final DateTime entryDate;
   final int moodRating;
-  final int energyLevel;
-  final int sleepQuality;
-  final int socialSupport;
+  final int? energyLevel;
+  final int? sleepQuality;
+  final int? socialSupport;
   final double compositeScore;
   final bool isSynced;
 
@@ -46,11 +46,16 @@ class MoodCheckin {
         id: json['id']?.toString() ?? '',
         entryDate: DateTime.parse(json['entry_date'] as String),
         moodRating: _jsonInt(json['mood_rating'], 'mood_rating'),
-        energyLevel: _jsonInt(json['energy_level'], 'energy_level'),
-        sleepQuality: _jsonInt(json['sleep_quality'], 'sleep_quality'),
-        socialSupport: _jsonInt(json['social_support'], 'social_support'),
-        compositeScore:
-            _jsonDouble(json['composite_score'], 'composite_score'),
+        energyLevel: json['energy_level'] == null
+            ? null
+            : _jsonInt(json['energy_level'], 'energy_level'),
+        sleepQuality: json['sleep_quality'] == null
+            ? null
+            : _jsonInt(json['sleep_quality'], 'sleep_quality'),
+        socialSupport: json['social_support'] == null
+            ? null
+            : _jsonInt(json['social_support'], 'social_support'),
+        compositeScore: _jsonDouble(json['composite_score'], 'composite_score'),
         isSynced: json['is_synced'] as bool? ?? true,
       );
 }
@@ -62,6 +67,8 @@ class JournalEntry {
     required this.language,
     required this.processingStatus,
     required this.containsDanger,
+    this.hasAudio = false,
+    this.voiceContentType,
     required this.createdAt,
     this.content,
     this.sentimentLabel,
@@ -79,6 +86,8 @@ class JournalEntry {
   final double? sentimentScore;
   final double? distressScore;
   final bool containsDanger;
+  final bool hasAudio;
+  final String? voiceContentType;
   final DateTime createdAt;
   final bool isSynced;
 
@@ -94,6 +103,8 @@ class JournalEntry {
         distressScore:
             _jsonNullableDouble(json['distress_score'], 'distress_score'),
         containsDanger: json['contains_danger'] as bool? ?? false,
+        hasAudio: json['has_audio'] as bool? ?? false,
+        voiceContentType: json['voice_content_type'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
         isSynced: json['is_synced'] as bool? ?? true,
       );

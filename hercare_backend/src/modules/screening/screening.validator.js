@@ -1,6 +1,10 @@
 const { body, param, query, validationResult } = require('express-validator');
 
-const instrumentParam = param('type').isIn(['epds', 'phq9']);
+const instrumentParam = [
+  param('type').isIn(['epds', 'phq9']),
+  query('version').optional().isString().isLength({ min: 1, max: 20 })
+    .matches(/^[a-zA-Z0-9-]+$/),
+];
 const assessmentId = param('assessmentId').isUUID();
 const answersRule = body('answers')
   .isArray({ min: 0, max: 10 })

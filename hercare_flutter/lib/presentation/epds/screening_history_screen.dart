@@ -23,7 +23,9 @@ class _ScreeningHistoryScreenState extends State<ScreeningHistoryScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<ScreeningProvider>().loadOverview(),
+      (_) {
+        if (mounted) context.read<ScreeningProvider>().loadHistory(type: _type);
+      },
     );
   }
 
@@ -31,7 +33,9 @@ class _ScreeningHistoryScreenState extends State<ScreeningHistoryScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<ScreeningProvider>();
     final isUrdu = context.watch<LanguageProvider>().isUrdu;
-    final history = provider.history;
+    final history = provider.history
+        .where((item) => item.instrumentType == _type)
+        .toList(growable: false);
     return Scaffold(
       backgroundColor: context.hcBg,
       appBar: AppBar(

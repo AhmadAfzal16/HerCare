@@ -7,6 +7,7 @@ import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../providers/language_provider.dart';
 import '../../../providers/screening_provider.dart';
+import '../../../core/routing/app_router.dart';
 
 /// Card prompting the user to complete their weekly EPDS screening.
 /// Shows a progress bar of last score against the 30-point maximum.
@@ -19,12 +20,14 @@ class EpdsPromptCard extends StatelessWidget {
     final screening = context.watch<ScreeningProvider>();
     if (!screening.overviewLoaded) {
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => context.read<ScreeningProvider>().loadOverview(),
+        (_) {
+          if (context.mounted) screening.loadOverview();
+        },
       );
     }
     final lastScore = screening.latest?.totalScore;
     final progress = (lastScore ?? 0) / 30;
-    final isDue = screening.reminder?.due ?? true;
+    final isDue = screening.reminder?.due;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -32,32 +35,35 @@ class EpdsPromptCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section header with DUE badge
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Text(
                 isUrdu ? 'ہفتہ وار جانچ' : 'Weekly Check-in',
                 style: AppTextStyles.titleSmall.copyWith(fontSize: 16),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (isDue ? AppColors.error : AppColors.success)
-                      .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isDue
-                      ? (isUrdu ? 'واجب' : 'DUE')
-                      : (isUrdu ? 'مکمل' : 'UP TO DATE'),
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: isDue ? AppColors.error : AppColors.success,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 10,
-                    letterSpacing: 0.8,
+              if (isDue != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (isDue ? AppColors.error : AppColors.success)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isDue
+                        ? (isUrdu ? 'واجب' : 'DUE')
+                        : (isUrdu ? 'مکمل' : 'UP TO DATE'),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: isDue ? AppColors.error : AppColors.success,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -155,9 +161,9 @@ class EpdsPromptCard extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // CTA Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                        minHeight: 48, minWidth: double.infinity),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
@@ -172,7 +178,7 @@ class EpdsPromptCard extends StatelessWidget {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          context.pushNamed('epds');
+                          context.push(AppRoutes.tests);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -183,13 +189,7 @@ class EpdsPromptCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          isUrdu
-                              ? (lastScore == null
-                                  ? 'اسکریننگ شروع کریں ←'
-                                  : 'اسکریننگ دوبارہ کریں ←')
-                              : (lastScore == null
-                                  ? 'Start Screening →'
-                                  : 'Take Screening Again →'),
+                          isUrdu ? 'میری جانچیں دیکھیں' : 'View my tests',
                           style: AppTextStyles.labelLarge
                               .copyWith(color: Colors.white),
                         ),

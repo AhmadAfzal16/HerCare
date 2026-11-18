@@ -9,6 +9,7 @@ import '../../core/theme/theme_ext.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/guardian_provider.dart';
 import '../../providers/language_provider.dart';
+import '../content/content_for_you_card.dart';
 
 class GuardianHomeScreen extends StatefulWidget {
   const GuardianHomeScreen({super.key});
@@ -113,7 +114,7 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
                 isUrdu: isUrdu,
                 unreadAlerts: provider.unreadAlertCount,
                 onDashboard: () => context.push(AppRoutes.guardianDashboard),
-                onReports: () => context.push(AppRoutes.reports),
+                onReports: () => context.push(AppRoutes.guardianTrends),
                 onChat: () => context.push(AppRoutes.secureChat),
               ),
               const SizedBox(height: 22),
@@ -138,6 +139,8 @@ class _GuardianHomeScreenState extends State<GuardianHomeScreen> {
                 onConnect: () => context.push(AppRoutes.guardianLink),
               ),
             ],
+            const SizedBox(height: 22),
+            ContentForYouCard(onOpen: () => context.push(AppRoutes.content)),
             const SizedBox(height: 22),
             _PrivacyNotice(isUrdu: isUrdu),
           ],

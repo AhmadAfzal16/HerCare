@@ -4,12 +4,14 @@ const app = require('./src/app');
 const { pool } = require('./src/config/database');
 const logger = require('./src/utils/logger');
 const pushNotifications = require('./src/modules/notifications/notification.service');
+const voiceTranscriptions = require('./src/modules/mood/transcription.worker');
 
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   logger.info(`HerCare API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
   pushNotifications.startWorker();
+  voiceTranscriptions.startWorker();
 });
 
 // Graceful shutdown
@@ -22,6 +24,7 @@ const shutdown = (signal) => {
   server.close(async () => {
     logger.info('HTTP server closed');
     try {
+      await voiceTranscriptions.stopWorker();
       await pool.end();
       process.exit(0);
     } catch (error) {

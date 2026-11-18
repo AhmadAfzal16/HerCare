@@ -1,0 +1,57 @@
+{
+  "personalization_enabled": true,
+  "as_of": "2026-10-08T12:00:00.000Z",
+  "mood": {
+    "window_days": 14,
+    "record_count": 2,
+    "mean_rating": 3,
+    "latest_date": "2026-10-08",
+    "coverage_fraction": 0.14285714285714285,
+    "trend_per_day": 2,
+    "clinical_validation": false
+  },
+  "screenings": [
+    {
+      "instrument": "epds",
+      "version": "epds-v1",
+      "language": "en",
+      "score": 12,
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "safety_positive": false,
+      "age_days": 10,
+      "stale": true,
+      "interpretation": "screening_not_diagnosis"
+    },
+    {
+      "instrument": "phq9",
+      "version": "phq9-v1",
+      "language": "ur",
+      "score": 10,
+      "completed_at": "2026-10-02T12:00:00.000Z",
+      "safety_positive": false,
+      "age_days": 6,
+      "stale": false,
+      "interpretation": "screening_not_diagnosis"
+    }
+  ],
+  "risk": {
+    "probability": 0.65,
+    "risk_level": "moderate",
+    "generated_at": "2026-10-05T12:00:00.000Z",
+    "model_version": "synthetic-peri-dep-v1",
+    "model_scope": "cross_sectional_baseline",
+    "validation_status": "research_only",
+    "confidence": null,
+    "stale": true,
+    "interpretation": "research_estimate_not_diagnosis_or_validated_forecast"
+  },
+  "sentiment": {
+    "window_days": 14,
+    "record_count": 4,
+    "mean_score": -0.25,
+    "rule_safety_count": 1,
+    "latest_at": "2026-10-08T08:00:00.000Z",
+    "clinical_validation": false,
+    "interpretation": "general_sentiment_and_rule_flags_not_clinical_distress_probability"
+  }
+}

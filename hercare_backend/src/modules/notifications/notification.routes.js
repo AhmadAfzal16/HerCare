@@ -5,7 +5,18 @@ const { authenticate } = require('../../middleware/auth');
 const controller = require('./notification.controller');
 
 const router = Router();
+router.use((_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 router.use(authenticate);
+router.use((req, res, next) => {
+  const account = req.get('X-Notification-Account-Id');
+  if (account && account !== req.user.userId) {
+    return res.status(409).json({ success: false, message: 'Notification account changed. Please try again.' });
+  }
+  return next();
+});
 const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false,
   message: { success: false, message: 'Too many device registration attempts.' },

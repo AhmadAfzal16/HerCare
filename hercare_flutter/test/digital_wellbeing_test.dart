@@ -29,7 +29,8 @@ void main() {
                 home: DigitalWellbeingScreen(service: _Fake(granted)))));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        final log = find.text(language == 'ur' ? 'نیند درج یا درست کریں' : 'Log / correct sleep');
+        final log = find.text(
+            language == 'ur' ? 'نیند درج یا درست کریں' : 'Log / correct sleep');
         for (var i = 0; i < 30 && log.hitTestable().evaluate().isEmpty; i++) {
           await tester.drag(find.byType(ListView).first, const Offset(0, -180));
           await tester.pumpAndSettle();
@@ -37,7 +38,8 @@ void main() {
         await tester.tap(log);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        final save = find.text(language == 'ur' ? 'نیند محفوظ کریں' : 'Save sleep');
+        final save =
+            find.text(language == 'ur' ? 'نیند محفوظ کریں' : 'Save sleep');
         for (var i = 0; i < 30 && save.hitTestable().evaluate().isEmpty; i++) {
           await tester.drag(find.byType(ListView).last, const Offset(0, -150));
           await tester.pumpAndSettle();
@@ -71,7 +73,7 @@ class _Fake extends DigitalWellbeingService {
       };
   @override
   Future<Map<String, dynamic>> sleep() async => {
-        'summary': {'average_minutes': 420},
+        'summary': {'average_minutes': 420, 'recorded_nights': 1},
         'records': [
           {
             'sleep_date': '2026-09-25',
@@ -79,6 +81,8 @@ class _Fake extends DigitalWellbeingService {
             'bedtime': '2026-09-24T18:00:00Z',
             'wake_time': '2026-09-25T01:30:00Z',
             'quality': 3,
+            'awake_minutes': 30,
+            'timezone_offset_minutes': 0,
             'awakenings': 2
           }
         ],

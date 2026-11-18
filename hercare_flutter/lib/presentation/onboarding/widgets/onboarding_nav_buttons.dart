@@ -54,7 +54,8 @@ class OnboardingNavButtons extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                side: BorderSide(color: stepColor.withValues(alpha: 0.5), width: 1.5),
+                side: BorderSide(
+                    color: stepColor.withValues(alpha: 0.5), width: 1.5),
               ),
               child: Icon(
                 isUrdu
@@ -71,7 +72,7 @@ class OnboardingNavButtons extends StatelessWidget {
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              height: 54,
+              constraints: const BoxConstraints(minHeight: 54),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [stepColor, stepColor.withValues(alpha: 0.75)],
@@ -117,12 +118,17 @@ class OnboardingNavButtons extends StatelessWidget {
                             isUrdu ? TextDirection.rtl : TextDirection.ltr,
                         children: [
                           if (isUrdu) ...[
-                            Text(
-                              _nextLabel,
-                              style: AppTextStyles.urduLabel.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
+                            Flexible(
+                              child: Text(
+                                _nextLabel,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.urduLabel.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -133,7 +139,12 @@ class OnboardingNavButtons extends StatelessWidget {
                               size: 18,
                             ),
                           ] else ...[
-                            Text(_nextLabel),
+                            Flexible(
+                              child: Text(_nextLabel,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center),
+                            ),
                             const SizedBox(width: 8),
                             Icon(
                               _isLastStep

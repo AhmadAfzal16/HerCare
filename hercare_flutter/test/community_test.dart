@@ -42,6 +42,7 @@ class FakeCommunity extends CommunityService {
           {String? topic,
           String? cursor,
           bool mine = false,
+          bool includeReplies = false,
           String? sessionId}) async =>
       CommunityPage({
         'items': [postData],
@@ -53,6 +54,8 @@ class FakeCommunity extends CommunityService {
   Future<CommunityPage> comments(String id, {String? cursor}) => feed();
   @override
   Future<CommunityPage> queue({String? cursor}) => feed();
+  @override
+  Future<Map<String, dynamic>> moderationStatus() async => {'ready': true};
   @override
   Future<Map<String, dynamic>> submit(Map<String, dynamic> data) async =>
       {'safety_support': false};

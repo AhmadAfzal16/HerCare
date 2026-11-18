@@ -5,6 +5,10 @@ import '../../data/models/community_models.dart';
 import '../../services/community_service.dart';
 import 'community_composer.dart';
 import 'community_widgets.dart';
+import 'community_account_scope.dart';
+import 'community_members.dart';
+import 'community_sessions.dart';
+export 'community_sessions.dart' show CommunitySessions;
 
 class CommunityEntryCard extends StatelessWidget {
   const CommunityEntryCard({super.key});
@@ -17,7 +21,9 @@ class CommunityEntryCard extends StatelessWidget {
         title: Text(context.watch<LanguageProvider>().isUrdu
             ? 'ساتھیوں کا حلقہ'
             : 'Peer community'),
-        subtitle: const Text('A moderated space to share and support'),
+        subtitle: Text(context.watch<LanguageProvider>().isUrdu
+            ? 'بات کرنے اور مدد کا محفوظ حلقہ'
+            : 'A moderated space to share and support'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const CommunityScreen())),
@@ -25,28 +31,55 @@ class CommunityEntryCard extends StatelessWidget {
 }
 
 /// One paginated view serves topics, personal threads, discussions and review.
-class CommunityScreen extends StatefulWidget {
+class CommunityScreen extends StatelessWidget {
   const CommunityScreen(
       {super.key,
       this.service,
       this.parentId,
       this.sessionId,
+      this.sessionClosed = false,
       this.moderation = false});
   final CommunityService? service;
   final String? parentId, sessionId;
-  final bool moderation;
+  final bool moderation, sessionClosed;
   @override
-  State<CommunityScreen> createState() => _CommunityScreenState();
+  Widget build(BuildContext context) => CommunityAccountScope(
+      builder: (context, accountId) => _CommunityView(
+          service: service ?? CommunityService(accountId: accountId),
+          accountId: accountId,
+          parentId: parentId,
+          sessionId: sessionId,
+          sessionClosed: sessionClosed,
+          moderation: moderation));
 }
 
-class _CommunityScreenState extends State<CommunityScreen> {
-  late final CommunityService _service = widget.service ?? CommunityService();
+class _CommunityView extends StatefulWidget {
+  const _CommunityView(
+      {required this.service,
+      required this.accountId,
+      this.parentId,
+      this.sessionId,
+      this.sessionClosed = false,
+      this.moderation = false});
+  final CommunityService service;
+  final String? accountId, parentId, sessionId;
+  final bool moderation, sessionClosed;
+  @override
+  State<_CommunityView> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<_CommunityView> {
+  late final CommunityService _service = widget.service;
   Map<String, dynamic>? _status;
   final List<CommunityPost> _posts = [];
   CommunityPost? _parent;
+  Map<String, dynamic>? _moderationStatus;
   String? _topic, _cursor, _error;
   bool _mine = false, _loading = false, _accepted = false;
   int _generation = 0;
+  static const _maxLoaded = 200;
+  bool get _current =>
+      mounted && CommunityAccountScope.current(context, widget.accountId);
   bool get ur => context.read<LanguageProvider>().isUrdu;
   String tr(String en, String other) => ur ? other : en;
   @override
@@ -56,109 +89,121 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Future<void> _load({bool more = false}) async {
-    if (more && (_loading || _cursor == null)) return;
+    if (!_current || (more && (_loading || _cursor == null))) return;
     final generation = ++_generation;
+    final cursor = more ? _cursor : null;
+    final topic = _topic;
+    final mine = _mine;
     setState(() {
       _loading = true;
       _error = null;
+      if (!more) {
+        _posts.clear();
+        _parent = null;
+        _cursor = null;
+      }
     });
     try {
       final status = await _service.status();
+      if (!_current || generation != _generation) return;
       CommunityPost? parent;
       CommunityPage? page;
       if (status['joined'] == true) {
+        if (widget.moderation) {
+          _moderationStatus = await _service.moderationStatus();
+          if (!_current || generation != _generation) return;
+        }
         if (widget.parentId != null) {
           parent = await _service.detail(widget.parentId!);
+          if (!_current || generation != _generation) return;
         }
         page = widget.moderation
-            ? await _service.queue(cursor: more ? _cursor : null)
+            ? await _service.queue(cursor: cursor)
             : widget.parentId != null
-                ? await _service.comments(widget.parentId!,
-                    cursor: more ? _cursor : null)
+                ? await _service.comments(widget.parentId!, cursor: cursor)
                 : await _service.feed(
-                    topic: _topic,
-                    mine: _mine,
+                    topic: topic,
+                    mine: mine,
+                    includeReplies: mine,
                     sessionId: widget.sessionId,
-                    cursor: more ? _cursor : null);
+                    cursor: cursor);
       }
-      if (!mounted || generation != _generation) return;
+      if (!_current || generation != _generation) return;
       setState(() {
+        if (status['joined'] == true ||
+            _status?['rules_version'] != status['rules_version']) {
+          _accepted = false;
+        }
         _status = status;
         _parent = parent;
-        if (!more) _posts.clear();
+        if (!more || status['joined'] != true) _posts.clear();
         if (page != null) {
           final ids = _posts.map((p) => p.id).toSet();
-          _posts.addAll(page.items.where((p) => !ids.contains(p.id)));
+          _posts.addAll(page.items
+              .where((p) => !ids.contains(p.id))
+              .take(_maxLoaded - _posts.length));
         }
-        _cursor = page?.cursor;
+        _cursor = _posts.length >= _maxLoaded ? null : page?.cursor;
       });
     } catch (e) {
-      if (mounted && generation == _generation) {
-        setState(() => _error = e.toString());
+      if (_current && generation == _generation) {
+        setState(() {
+          _error = e.toString();
+          if (e is CommunityException && e.unavailable) {
+            _posts.clear();
+            _parent = null;
+            _cursor = null;
+            _status = null;
+            _accepted = false;
+          }
+        });
       }
     } finally {
-      if (mounted && generation == _generation) {
+      if (_current && generation == _generation) {
         setState(() => _loading = false);
       }
     }
   }
 
   Future<void> _run(Future<void> Function() action) async {
-    if (_loading) return;
+    if (!_current || _loading) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       await action();
-      if (mounted) await _load();
+      if (_current) await _load();
     } catch (e) {
-      if (mounted) {
+      if (_current) {
         setState(() {
           _error = e.toString();
           _loading = false;
+          if (e is CommunityException && e.unavailable) {
+            _posts.clear();
+            _parent = null;
+            _status = null;
+            _accepted = false;
+            _cursor = null;
+          }
         });
       }
     }
   }
 
-  Future<String?> _reason(String title) async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: Text(title),
-              content: SingleChildScrollView(
-                  child: TextField(
-                      controller: controller,
-                      minLines: 2,
-                      maxLines: 5,
-                      maxLength: 500,
-                      decoration: const InputDecoration(
-                          labelText: 'Reason (at least 3 characters)'))),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cancel')),
-                TextButton(
-                    onPressed: () {
-                      if (controller.text.trim().length >= 3) {
-                        Navigator.pop(ctx, controller.text.trim());
-                      }
-                    },
-                    child: const Text('Confirm'))
-              ],
-            ));
-    // Dialog transition can still reference its controller until the next frame.
-    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
-    return result;
-  }
+  Widget _dialog(Widget child) => CommunityAccountScope(
+      accountId: widget.accountId, builder: (_, __) => child);
+
+  Future<String?> _reason(String title) => showDialog<String>(
+      context: context,
+      builder: (_) => _dialog(CommunityReasonDialog(title: title)));
 
   Future<void> _action(CommunityPost post, String action) async {
+    if (!_current || _loading) return;
     if (action == 'report') {
       final reason = await showDialog<String>(
           context: context,
-          builder: (ctx) => SimpleDialog(
+          builder: (ctx) => _dialog(SimpleDialog(
                   title: Text(tr('Report reason', 'رپورٹ کی وجہ')),
                   children: [
                     for (final entry in {
@@ -173,15 +218,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       SimpleDialogOption(
                           onPressed: () => Navigator.pop(ctx, entry.key),
                           child: Text(entry.value))
-                  ]));
-      if (reason != null && mounted) {
+                  ])));
+      if (reason != null && _current) {
         await _run(() => _service.report(post.id, reason));
       }
       return;
     }
     final confirmed = await showDialog<bool>(
         context: context,
-        builder: (ctx) => AlertDialog(
+        builder: (ctx) => _dialog(CommunityDialog(
                 title: Text(action == 'delete'
                     ? tr('Delete this content?', 'یہ مواد حذف کریں؟')
                     : tr('Block this member?', 'اس رکن کو بلاک کریں؟')),
@@ -196,8 +241,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   TextButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       child: Text(tr('Confirm', 'تصدیق')))
-                ]));
-    if (confirmed == true && mounted) {
+                ])));
+    if (confirmed == true && _current) {
       await _run(() => action == 'delete'
           ? _service.remove(post.id)
           : _service.block(post.authorId));
@@ -205,25 +250,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Future<void> _compose() async {
+    if (!_current || _loading) return;
     await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (_) => CommunityComposer(
                 service: _service,
+                accountId: widget.accountId,
                 urdu: ur,
                 parentId: widget.parentId,
-                sessionId: widget.sessionId,
-                topic: _topic)));
-    if (mounted) await _load();
+                sessionId: widget.sessionId ?? _parent?.sessionId,
+                topic: _parent?.topic ?? _topic)));
+    if (_current) await _load();
   }
 
   Future<void> _blocks() async {
+    if (!_current || _loading) return;
     try {
       final blocks = await _service.blocks();
-      if (!mounted) return;
+      if (!mounted || !_current) return;
       final id = await showDialog<String>(
           context: context,
-          builder: (ctx) => SimpleDialog(
+          builder: (ctx) => _dialog(SimpleDialog(
               title: Text(tr('Blocked members', 'بلاک کیے گئے اراکین')),
               children: blocks.isEmpty
                   ? [
@@ -238,12 +286,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             onPressed: () => Navigator.pop(ctx, b['id']),
                             child: Text(
                                 '${b['alias']} — ${tr('Unblock', 'بلاک ہٹائیں')}'))
-                    ]));
-      if (id != null && mounted) {
+                    ])));
+      if (id != null && _current) {
         await _run(() => _service.block(id, active: false));
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (_current) setState(() => _error = e.toString());
     }
   }
 
@@ -259,27 +307,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 ? null
                 : (kind) => _run(() =>
                     _service.react(p.id, kind, !p.myReactions.contains(kind))),
-            onOpen: parent || widget.parentId != null || widget.moderation
+            onOpen: parent ||
+                    widget.parentId != null ||
+                    (widget.moderation && p.status != 'published')
                 ? null
                 : () async {
                     await Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (_) => CommunityScreen(
-                                service: _service, parentId: p.id)));
-                    if (mounted) await _load();
+                                service: _service,
+                                parentId: p.parentId ?? p.id,
+                                sessionClosed: p.sessionClosed)));
+                    if (_current) await _load();
                   }),
         if (widget.moderation) ...[
-          Text('Triage: ${p.moderation}\nReports: ${p.reports.join(', ')}'),
+          _triage(p),
+          if (!p.canPublish)
+            Text(tr(
+                'Publication is blocked: member or parent discussion is unavailable. You may remove this content.',
+                'رکن یا اصل گفتگو دستیاب نہ ہونے کی وجہ سے اشاعت بند ہے۔ مواد ہٹا سکتے ہیں۔')),
           Wrap(spacing: 8, children: [
             for (final decision in ['publish', 'remove', 'suspend', 'restore'])
               OutlinedButton(
-                  onPressed: _loading
+                  onPressed: _loading ||
+                          (decision == 'publish' &&
+                              (!p.canPublish ||
+                                  (_moderationStatus?['required'] == true &&
+                                      _moderationStatus?['ready'] != true)))
                       ? null
                       : () async {
                           final reason =
-                              await _reason('$decision content / member');
-                          if (reason != null && mounted) {
+                              await _reason(_decisionLabel(decision));
+                          if (reason != null && _current) {
                             await _run(() => decision == 'suspend' ||
                                     decision == 'restore'
                                 ? _service.suspend(
@@ -287,28 +347,85 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 : _service.review(p, decision, reason));
                           }
                         },
-                  child: Text(decision))
+                  child: Text(_decisionLabel(decision)))
           ]),
           const SizedBox(height: 20),
         ],
       ]);
+  String _decisionLabel(String decision) => switch (decision) {
+        'publish' => tr('Approve publication', 'شائع کرنے کی اجازت'),
+        'remove' => tr('Remove content', 'مواد ہٹائیں'),
+        'suspend' => tr('Suspend member', 'رکن معطل کریں'),
+        _ => tr('Restore member', 'رکن بحال کریں'),
+      };
+  Widget _triage(CommunityPost post) {
+    final data = post.moderation;
+    final scores = data['scores'] is Map ? data['scores'] as Map : const {};
+    final flags = data['flags'] is List ? data['flags'] as List : const [];
+    final labels = {
+      'self_harm': tr('Safety concern', 'تحفظ کی تشویش'),
+      'bullying': tr('Bullying', 'ہراسانی'),
+      'spam': tr('Spam', 'فضول مواد'),
+      'medical_advice': tr('Medical advice', 'طبی مشورہ'),
+      'support': tr('Supportive content', 'حوصلہ افزا مواد'),
+      'privacy_or_link':
+          tr('Personal information or link', 'نجی معلومات یا لنک'),
+      'abuse_or_spam': tr('Abuse or spam', 'ہراسانی یا فضول مواد'),
+    };
+    return ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title:
+            Text(tr('Review hints and reports', 'جائزے کے اشارے اور رپورٹس')),
+        childrenPadding: const EdgeInsets.only(bottom: 12),
+        children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(tr(
+                'Triage hints are not clinical probabilities or a diagnosis. Read the full content before deciding.',
+                'یہ اشارے طبی احتمال یا تشخیص نہیں۔ فیصلہ کرنے سے پہلے پورا مواد پڑھیں۔')),
+            Text(
+                '${tr('Rule flags', 'اصولوں کے اشارے')}: ${flags.isEmpty ? tr('None detected', 'کوئی اشارہ نہیں ملا') : flags.map((v) => labels[v] ?? v).join(', ')}'),
+            Text(
+                '${tr('AI triage', 'خودکار جائزہ')}: ${data['ai'] == 'available' ? tr('Available', 'دستیاب') : tr('Unavailable — check readiness', 'دستیاب نہیں — نظام جانچیں')}'),
+            for (final key in [
+              'self_harm',
+              'bullying',
+              'spam',
+              'medical_advice',
+              'support'
+            ])
+              if (scores[key] is num)
+                Text(
+                    '${labels[key]}: ${(scores[key] as num).toStringAsFixed(2)}'),
+            if (data['model_version'] is String)
+              Text(
+                  '${tr('Model version', 'ماڈل کا ورژن')}: ${data['model_version']}'),
+            Text(
+                '${tr('Reports', 'رپورٹس')}: ${post.reports.isEmpty ? tr('None', 'کوئی نہیں') : post.reports.map((v) => labels[v] ?? v).join(', ')}'),
+          ])
+        ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<LanguageProvider>();
     final joined = _status?['joined'] == true;
     return Scaffold(
         appBar: AppBar(
-            title: Text(widget.moderation
-                ? 'Moderation'
-                : tr('Peer community', 'ساتھیوں کا حلقہ')),
+            title: Text(
+                widget.moderation
+                    ? tr('Moderation', 'نگرانی')
+                    : tr('Peer community', 'ساتھیوں کا حلقہ'),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis),
             actions: [
               IconButton(
                   onPressed: _loading ? null : () => _load(),
                   icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh'),
+                  tooltip: tr('Refresh', 'تازہ کریں')),
               if (joined)
                 PopupMenuButton<String>(
                     onSelected: (v) {
+                      if (!_current || _loading) return;
                       if (v == 'blocks') _blocks();
                       if (v == 'review') {
                         Navigator.push(
@@ -325,18 +442,32 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     service: _service,
                                     admin: _status?['is_moderator'] == true)));
                       }
+                      if (v == 'members') {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    CommunityMembers(service: _service)));
+                      }
                     },
                     itemBuilder: (_) => [
-                          const PopupMenuItem(
+                          PopupMenuItem(
                               value: 'sessions',
-                              child: Text('Expert Q&A / ماہر سے سوال')),
-                          const PopupMenuItem(
+                              child: Text(tr('Expert Q&A', 'ماہر سے سوال'))),
+                          PopupMenuItem(
                               value: 'blocks',
-                              child: Text('Blocked members / بلاک اراکین')),
-                          if (_status?['is_moderator'] == true)
-                            const PopupMenuItem(
+                              child:
+                                  Text(tr('Blocked members', 'بلاک اراکین'))),
+                          if (_status?['is_moderator'] == true) ...[
+                            PopupMenuItem(
                                 value: 'review',
-                                child: Text('Moderation queue'))
+                                child: Text(
+                                    tr('Moderation queue', 'جائزے کی فہرست'))),
+                            PopupMenuItem(
+                                value: 'members',
+                                child: Text(
+                                    tr('Manage members', 'اراکین کی نگرانی'))),
+                          ]
                         ]),
             ]),
         body: SafeArea(
@@ -347,6 +478,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       if (_loading) const LinearProgressIndicator(),
+                      if (widget.moderation && _moderationStatus != null)
+                        CommunityNotice(
+                            text: tr(
+                                'AI provides triage hints only. Every post and reply still needs human review. Check AI readiness and arrange moderator staffing before launch.',
+                                'خودکار نظام صرف جائزے کے اشارے دیتا ہے۔ ہر پوسٹ اور جواب کو انسانی جائزہ درکار ہے۔ اجرا سے پہلے نظام اور نگرانوں کی دستیابی جانچیں۔')),
+                      if (widget.moderation && _moderationStatus != null)
+                        Text(
+                            '${tr('AI availability', 'خودکار نظام کی دستیابی')}: ${_moderationStatus!['ready'] == true ? tr('Ready', 'دستیاب') : tr('Unavailable', 'دستیاب نہیں')}'),
+                      if (widget.moderation &&
+                          _moderationStatus?['required'] == true &&
+                          _moderationStatus?['ready'] != true)
+                        Text(tr(
+                            'Publication is paused until required AI triage is available. You can still review, report and remove content.',
+                            'ضروری خودکار جائزہ دستیاب ہونے تک اشاعت رکی ہوئی ہے۔ جائزہ لے سکتے ہیں اور مواد ہٹا سکتے ہیں۔')),
                       if (_error != null)
                         CommunityNotice(
                             text: _error!,
@@ -382,6 +527,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         Text(
                             '${tr('Your community name', 'حلقے میں آپ کا نام')}: ${_status!['alias']}'),
                         const SizedBox(height: 12),
+                        if (widget.sessionClosed ||
+                            _parent?.sessionClosed == true)
+                          CommunityNotice(
+                              text: tr(
+                                  'This Q&A is closed. You can read approved discussions but cannot submit new messages.',
+                                  'یہ نشست بند ہے۔ منظور شدہ گفتگو پڑھ سکتے ہیں، نیا پیغام نہیں بھیج سکتے۔')),
                         if (widget.parentId == null && !widget.moderation) ...[
                           Wrap(spacing: 8, runSpacing: 6, children: [
                             ChoiceChip(
@@ -416,6 +567,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           const SizedBox(height: 12),
                         ],
                         if (!widget.moderation &&
+                            !widget.sessionClosed &&
+                            _parent?.sessionClosed != true &&
                             (widget.parentId == null ||
                                 _parent?.status == 'published'))
                           FilledButton.icon(
@@ -428,6 +581,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         const SizedBox(height: 16),
                         if (_parent != null) _card(_parent!, parent: true),
                         for (final post in _posts) _card(post),
+                        if (_posts.length >= _maxLoaded)
+                          Text(tr(
+                              'Showing 200 messages. Choose a topic or refresh to view recent content.',
+                              'دو سو پیغامات دکھائے گئے ہیں۔ تازہ مواد کے لیے موضوع چنیں یا تازہ کریں۔')),
                         if (!_loading && _posts.isEmpty)
                           CommunityNotice(
                               text: tr(
@@ -441,140 +598,4 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ],
                     ]))));
   }
-}
-
-class CommunitySessions extends StatefulWidget {
-  const CommunitySessions(
-      {super.key, required this.service, required this.admin});
-  final CommunityService service;
-  final bool admin;
-  @override
-  State<CommunitySessions> createState() => _CommunitySessionsState();
-}
-
-class _CommunitySessionsState extends State<CommunitySessions> {
-  late Future<List<Map<String, dynamic>>> _future = widget.service.sessions();
-  void reload() => setState(() => _future = widget.service.sessions());
-  Future<void> schedule() async {
-    final fields = {
-      for (final k in [
-        'title',
-        'description',
-        'expert_name',
-        'credentials',
-        'starts_at',
-        'ends_at'
-      ])
-        k: TextEditingController()
-    };
-    String? error;
-    bool saving = false;
-    await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => StatefulBuilder(
-            builder: (ctx, update) => AlertDialog(
-                  title: const Text('Schedule verified expert Q&A'),
-                  content: SizedBox(
-                      width: 450,
-                      child: SingleChildScrollView(
-                          child:
-                              Column(mainAxisSize: MainAxisSize.min, children: [
-                        const Text(
-                            'Verify professional credentials before scheduling. Dates: YYYY-MM-DDTHH:mm with timezone (for example +05:00).'),
-                        for (final e in fields.entries)
-                          TextField(
-                              controller: e.value,
-                              enabled: !saving,
-                              decoration: InputDecoration(labelText: e.key)),
-                        if (error != null) Text(error!),
-                      ]))),
-                  actions: [
-                    TextButton(
-                        onPressed: saving ? null : () => Navigator.pop(ctx),
-                        child: const Text('Cancel')),
-                    FilledButton(
-                        onPressed: saving
-                            ? null
-                            : () async {
-                                update(() => saving = true);
-                                try {
-                                  await widget.service.schedule(fields.map(
-                                      (k, v) => MapEntry(k, v.text.trim())));
-                                  if (ctx.mounted) Navigator.pop(ctx);
-                                } catch (e) {
-                                  if (ctx.mounted) {
-                                    update(() {
-                                      error = e.toString();
-                                      saving = false;
-                                    });
-                                  }
-                                }
-                              },
-                        child: const Text('Schedule'))
-                  ],
-                )));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (final c in fields.values) {
-        c.dispose();
-      }
-    });
-    if (mounted) reload();
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Expert Q&A / ماہر سے سوال'), actions: [
-        IconButton(onPressed: reload, icon: const Icon(Icons.refresh))
-      ]),
-      body: SafeArea(
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _future,
-              builder: (context, snapshot) =>
-                  ListView(padding: const EdgeInsets.all(16), children: [
-                    const Text(
-                        'Scheduled, moderated text discussions. Not individual medical care. / یہ انفرادی طبی علاج نہیں۔'),
-                    if (widget.admin)
-                      OutlinedButton(
-                          onPressed: schedule,
-                          child: const Text('Schedule a session')),
-                    if (snapshot.connectionState == ConnectionState.waiting)
-                      const LinearProgressIndicator(),
-                    if (snapshot.hasError)
-                      CommunityNotice(text: snapshot.error.toString()),
-                    if (snapshot.hasData && snapshot.data!.isEmpty)
-                      const CommunityNotice(
-                          text:
-                              'No sessions scheduled yet. / ابھی کوئی نشست طے نہیں۔'),
-                    for (final s in snapshot.data ?? <Map<String, dynamic>>[])
-                      Card(
-                          child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(s['title'] as String,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium),
-                                    Text(
-                                        '${s['expert_name']} · ${s['credentials']}'),
-                                    Text(s['description'] as String),
-                                    if (s['cancelled'] == true)
-                                      const Text('Cancelled / منسوخ'),
-                                    Text(
-                                        '${DateTime.parse(s['starts_at'] as String).toLocal()} – ${DateTime.parse(s['ends_at'] as String).toLocal()}'),
-                                    TextButton(
-                                        onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (_) => CommunityScreen(
-                                                    service: widget.service,
-                                                    sessionId:
-                                                        s['id'] as String))),
-                                        child: const Text(
-                                            'Open discussion / گفتگو کھولیں')),
-                                  ]))),
-                  ]))));
 }

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "activities": {
+    "body_scan": [
+      {"en": "Settle into a comfortable, supported position. Keep your breathing natural. You may keep your eyes open. Notice the support beneath you.", "ur": "آرام دہ اور سہارے والی حالت میں بیٹھیں۔ سانس کو قدرتی رہنے دیں۔ آپ آنکھیں کھلی رکھ سکتی ہیں۔ اپنے نیچے موجود سہارے کو محسوس کریں۔"},
+      {"en": "Notice your forehead, jaw, and shoulders. There is no need to change anything. If it feels comfortable, let your shoulders soften. Take your time.", "ur": "پیشانی، جبڑے اور کندھوں کو محسوس کریں۔ کچھ بدلنا ضروری نہیں۔ اگر آرام دہ لگے تو کندھوں کو ڈھیلا چھوڑ دیں۔ جلدی کی ضرورت نہیں۔"},
+      {"en": "Let your attention move gently towards your chest and belly. Notice your natural breathing without forcing it. If a feeling is uncomfortable, return your attention to the room.", "ur": "توجہ نرمی سے سینے اور پیٹ کی طرف لائیں۔ سانس کو بغیر زور کے محسوس کریں۔ اگر کوئی احساس بے آرام کرے تو توجہ کمرے کی طرف واپس لے آئیں۔"},
+      {"en": "Feel the support beneath your legs and feet. Let your whole body rest. When this session ends, gently look around and return at your own pace.", "ur": "ٹانگوں اور پاؤں کے نیچے سہارا محسوس کریں۔ جسم کو آرام دیں۔ مشق ختم ہونے پر آہستہ سے آس پاس دیکھیں اور اپنی رفتار سے واپس آئیں۔"}
+    ],
+    "muscle_relaxation": [
+      {"en": "Keep breathing naturally. Gently tighten your hands, then release them. Do not squeeze hard. You can skip tightening and simply imagine your hands becoming soft.", "ur": "سانس کو قدرتی رہنے دیں۔ ہاتھ ہلکے سے سخت کریں، پھر ڈھیلا چھوڑ دیں۔ زور نہ لگائیں۔ آپ سخت کیے بغیر صرف ہاتھوں کے آرام کا تصور بھی کر سکتی ہیں۔"},
+      {"en": "If it feels comfortable, lift your shoulders a little, then let them drop gently. Leave any painful or healing area alone. Rest between movements.", "ur": "اگر آرام دہ لگے تو کندھوں کو تھوڑا اٹھائیں، پھر آہستہ چھوڑ دیں۔ درد والی یا صحت یاب ہوتی جگہ پر زور نہ دیں۔ حرکتوں کے درمیان آرام کریں۔"},
+      {"en": "Press your feet lightly into their support, then release. Notice any difference. Keep your belly relaxed. Skip any movement that does not feel comfortable.", "ur": "پاؤں کو سہارے پر ہلکا دبائیں، پھر چھوڑ دیں۔ فرق کو محسوس کریں۔ پیٹ کو آرام میں رکھیں۔ جو حرکت آرام دہ نہ ہو اسے چھوڑ دیں۔"},
+      {"en": "Let the whole body rest without forcing anything. You do not need to feel a particular way. When the session ends, move gently and take your time.", "ur": "بغیر زور کے جسم کو آرام دیں۔ کسی خاص احساس کی ضرورت نہیں۔ مشق ختم ہو تو آہستہ حرکت کریں اور اپنی رفتار سے واپس آئیں۔"}
+    ],
+    "mindfulness": [
+      {"en": "Notice one natural breath just as it is. There is no need to make it deeper or slower. Feel the chair or floor supporting you. This moment is enough.", "ur": "ایک قدرتی سانس کو ویسا ہی محسوس کریں۔ اسے گہرا یا آہستہ کرنا ضروری نہیں۔ کرسی یا فرش کا سہارا محسوس کریں۔ یہی لمحہ کافی ہے۔"},
+      {"en": "When your attention wanders, gently come back to breathing or the support beneath you. Wandering is normal. There is no need to judge yourself.", "ur": "توجہ بھٹکے تو نرمی سے سانس یا اپنے نیچے موجود سہارے کی طرف واپس آئیں۔ توجہ بھٹکنا معمول ہے۔ خود کو برا کہنے کی ضرورت نہیں۔"},
+      {"en": "Notice a sound around you. You do not have to respond to it. If focusing on breathing feels uncomfortable, you may focus on a sound or an object instead.", "ur": "آس پاس کی ایک آواز سنیں۔ اس کا جواب دینا ضروری نہیں۔ اگر سانس پر توجہ بے آرام کرے تو کسی آواز یا چیز پر توجہ رکھ سکتی ہیں۔"},
+      {"en": "Bring kindness to this moment and to yourself. You are allowed to take a gentle pause. When the session ends, notice your surroundings and return slowly.", "ur": "اس لمحے اور اپنے لیے مہربانی لائیں۔ آپ کو آرام کا وقفہ لینے کا حق ہے۔ مشق ختم ہونے پر آس پاس دیکھیں اور آہستہ واپس آئیں۔"}
+    ]
+  }
+}

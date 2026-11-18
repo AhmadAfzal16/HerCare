@@ -1,11 +1,25 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { getInstrument } = require('../src/modules/screening/screening.instruments');
 const { riskForScore, scoreAnswers } = require('../src/modules/screening/screening.scoring');
 
+function fixture(type) {
+  const optionScores = type === 'epds'
+    ? [[0, 1, 2, 3], [0, 1, 2, 3], [3, 2, 1, 0], [0, 1, 2, 3],
+      ...Array.from({ length: 6 }, () => [3, 2, 1, 0])]
+    : Array.from({ length: 9 }, () => [0, 1, 2, 3]);
+  return {
+    type,
+    crisis_question: type === 'epds' ? 10 : 9,
+    questions: optionScores.map((scores, index) => ({
+      number: index + 1,
+      options: scores.map((score, optionIndex) => ({ index: optionIndex, score })),
+    })),
+  };
+}
+
 test('EPDS derives all answer scores on the server', () => {
-  const instrument = getInstrument('epds');
+  const instrument = fixture('epds');
   const result = scoreAnswers(instrument, instrument.questions.map((question) => ({
     question_number: question.number,
     option_index: 0,
@@ -16,7 +30,7 @@ test('EPDS derives all answer scores on the server', () => {
 });
 
 test('EPDS Q10 positive activates safety independently of total band', () => {
-  const instrument = getInstrument('epds');
+  const instrument = fixture('epds');
   const answers = instrument.questions.map((question) => ({
     question_number: question.number,
     option_index: question.options.findIndex((option) => option.score === 0),
@@ -36,7 +50,7 @@ test('EPDS uses the four configured screening bands', () => {
 });
 
 test('PHQ-9 instrument is versioned and safety-aware', () => {
-  const instrument = getInstrument('phq9');
+  const instrument = fixture('phq9');
   assert.equal(instrument.questions.length, 9);
   const result = scoreAnswers(instrument, instrument.questions.map((question) => ({
     question_number: question.number,
@@ -48,7 +62,7 @@ test('PHQ-9 instrument is versioned and safety-aware', () => {
 });
 
 test('screening rejects incomplete or duplicate answer payloads', () => {
-  const instrument = getInstrument('epds');
+  const instrument = fixture('epds');
   assert.throws(() => scoreAnswers(instrument, []), /All 10 questions/);
   const duplicate = instrument.questions.map((question) => ({
     question_number: question.number,
